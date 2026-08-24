@@ -4,8 +4,17 @@ import {
 } from 'phaser';
 
 import { GameConfig } from '../config/GameConfig';
+
 import { RandomGenerator } from '../logic/RandomGenerator';
-import { WinChecker } from '../logic/WinChecker';
+
+import {
+    WinChecker,
+} from '../logic/WinChecker';
+
+import {
+    PayoutCalculator,
+} from '../logic/PayoutCalculator';
+
 import { Reel } from '../objects/Reel';
 
 export class SlotMachine extends Scene {
@@ -20,17 +29,53 @@ export class SlotMachine extends Scene {
     private resultText?:
         GameObjects.Text;
 
+    private balanceText?:
+        GameObjects.Text;
+
+    private betText?:
+        GameObjects.Text;
+
+    /**
+     * Saldo atual do jogador.
+     */
+    private balance =
+        GameConfig.bet.initialBalance;
+
+    /**
+     * Aposta atual.
+     */
+    private currentBet =
+        GameConfig.bet.defaultBet;
+
+    /**
+     * Indica se estamos executando um spin.
+     */
+    private isSpinning = false;
+
     constructor() {
         super('SlotMachine');
     }
 
     create(): void {
         this.createBackground();
+
         this.createTitle();
+
         this.createReels();
+
         this.createDebugText();
+
         this.createResultText();
+
+        this.createBalanceText();
+
+        this.createBetText();
+
         this.createSpinButton();
+
+        this.updateBalanceUI();
+
+        this.updateBetUI();
     }
 
     private createBackground(): void {
@@ -46,7 +91,9 @@ export class SlotMachine extends Scene {
             'Slot Machine MVP',
             {
                 fontSize: '32px',
-                color: GameConfig.colors.text,
+
+                color:
+                    GameConfig.colors.text,
             }
         );
     }
@@ -75,7 +122,10 @@ export class SlotMachine extends Scene {
                 '',
                 {
                     fontSize: '16px',
-                    color: GameConfig.colors.text,
+
+                    color:
+                        GameConfig.colors.text,
+
                     lineSpacing: 4,
                 }
             );
@@ -89,7 +139,39 @@ export class SlotMachine extends Scene {
                 '',
                 {
                     fontSize: '24px',
-                    color: GameConfig.colors.win,
+
+                    color:
+                        GameConfig.colors.win,
+                }
+            );
+    }
+
+    private createBalanceText(): void {
+        this.balanceText =
+            this.add.text(
+                GameConfig.layout.balance.x,
+                GameConfig.layout.balance.y,
+                '',
+                {
+                    fontSize: '22px',
+
+                    color:
+                        GameConfig.colors.balance,
+                }
+            );
+    }
+
+    private createBetText(): void {
+        this.betText =
+            this.add.text(
+                GameConfig.layout.bet.x,
+                GameConfig.layout.bet.y,
+                '',
+                {
+                    fontSize: '22px',
+
+                    color:
+                        GameConfig.colors.bet,
                 }
             );
     }
@@ -115,6 +197,7 @@ export class SlotMachine extends Scene {
             'SPIN',
             {
                 fontSize: '28px',
+
                 color:
                     GameConfig.colors.buttonText,
             }
@@ -129,20 +212,45 @@ export class SlotMachine extends Scene {
     }
 
     private spin(): void {
-        if (
-            !this.spinBtn ||
-            !this.debugText ||
-            !this.resultText
-        ) {
+        // ==========================================
+        // PREVENÇÃO DE SPIN DUPLICADO
+        // ==========================================
+
+        if (this.isSpinning) {
             return;
         }
 
-        // Impede múltiplos spins simultâneos
-        this.spinBtn.disableInteractive();
+        // ==========================================
+        // VALIDAÇÕES
+        // ==========================================
 
-        // ==================================================
-        // 1. GERA O RESULTADO ANTES DA ANIMAÇÃO
-        // ==================================================
+        if (this.balance < this.currentBet) {
+            this.showError(
+                'INSUFFICIENT BALANCE'
+            );
+
+            return;
+        }
+
+        // ==========================================
+        // COMEÇA O SPIN
+        // ==========================================
+
+        this.isSpinning = true;
+
+        this.spinBtn?.disableInteractive();
+
+        // ==========================================
+        // DESCONTA A APOSTA
+        // ==========================================
+
+        this.balance -= this.currentBet;
+
+        this.updateBalanceUI();
+
+        // ==========================================
+        // GERA O RESULTADO
+        // ==========================================
 
         const result =
             RandomGenerator.generateOutcome(
@@ -150,19 +258,19 @@ export class SlotMachine extends Scene {
                 GameConfig.rows
             );
 
-        // ==================================================
-        // 2. MOSTRA O RESULTADO DE DEBUG
-        // ==================================================
+        // ==========================================
+        // DEBUG
+        // ==========================================
 
         this.updateDebug(result);
 
-        this.resultText.setText(
+        this.resultText?.setText(
             'SPINNING...'
         );
 
-        // ==================================================
-        // 3. INICIA OS REELS
-        // ==================================================
+        // ==========================================
+        // INICIA OS REELS
+        // ==========================================
 
         let stoppedReels = 0;
 
@@ -171,6 +279,7 @@ export class SlotMachine extends Scene {
                 this.time.delayedCall(
                     index *
                         GameConfig.reel.reelStartDelay,
+
                     () => {
                         reel.setOnComplete(
                             () => {
@@ -180,18 +289,13 @@ export class SlotMachine extends Scene {
                                     stoppedReels ===
                                     this.reels.length
                                 ) {
-                                    this.checkResult(
+                                    this.finishSpin(
                                         result
                                     );
-
-                                    this.spinBtn
-                                        ?.setInteractive();
                                 }
                             }
                         );
 
-                        // O resultado já está definido.
-                        // O reel apenas anima até ele.
                         reel.startSpin(
                             result[index]
                         );
@@ -201,40 +305,118 @@ export class SlotMachine extends Scene {
         );
     }
 
-    private checkResult(
+    private finishSpin(
         result: string[][]
     ): void {
-        if (!this.resultText) {
-            return;
-        }
+        // ==========================================
+        // VERIFICA LINHAS VENCEDORAS
+        // ==========================================
 
         const winningLines =
             WinChecker.checkWinningLines(
                 result
             );
 
-        if (winningLines.length === 0) {
-            this.resultText.setText(
+        // ==========================================
+        // CALCULA O PAGAMENTO
+        // ==========================================
+
+        const payout =
+            PayoutCalculator.calculate(
+                result,
+                this.currentBet
+            );
+
+        // ==========================================
+        // ADICIONA O PRÊMIO AO SALDO
+        // ==========================================
+
+        this.balance +=
+            payout.totalPayout;
+
+        // ==========================================
+        // ATUALIZA A INTERFACE
+        // ==========================================
+
+        this.updateBalanceUI();
+
+        // ==========================================
+        // MOSTRA RESULTADO
+        // ==========================================
+
+        if (
+            winningLines.length === 0
+        ) {
+            this.resultText?.setText(
                 'NO WIN'
             );
 
             console.log(
                 'No winning lines.'
             );
+        } else {
+            const lines =
+                winningLines.join(', ');
 
+            this.resultText?.setText(
+                `WIN: ${payout.totalPayout} | LINES: ${lines}`
+            );
+
+            console.log(
+                'Winning lines:',
+                winningLines
+            );
+
+            console.log(
+                'Payout details:',
+                payout
+            );
+        }
+
+        // ==========================================
+        // FINALIZA O SPIN
+        // ==========================================
+
+        this.isSpinning = false;
+
+        this.spinBtn?.setInteractive();
+
+        // Debug útil
+        console.log(
+            'Final balance:',
+            this.balance
+        );
+    }
+
+    private updateBalanceUI(): void {
+        if (!this.balanceText) {
             return;
         }
 
-        const lines =
-            winningLines.join(', ');
+        this.balanceText.setText(
+            `BALANCE: ${this.balance.toFixed(2)}`
+        );
+    }
 
-        this.resultText.setText(
-            `WINNING LINES: ${lines}`
+    private updateBetUI(): void {
+        if (!this.betText) {
+            return;
+        }
+
+        this.betText.setText(
+            `BET: ${this.currentBet.toFixed(2)}`
+        );
+    }
+
+    private showError(
+        message: string
+    ): void {
+        this.resultText?.setText(
+            message
         );
 
-        console.log(
-            'Winning lines:',
-            winningLines
+        console.warn(
+            message
         );
     }
 

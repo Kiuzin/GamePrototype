@@ -47,12 +47,12 @@ export const GameConfig = {
 
         balance: {
             x: 400,
-            y: 560,
+            y: 600,
         },
 
         bet: {
             x: 400,
-            y: 600,
+            y: 625,
         },
 
         result: {
