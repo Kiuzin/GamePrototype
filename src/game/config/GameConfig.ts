@@ -2,6 +2,14 @@ export const GameConfig = {
     reels: 3,
     rows: 3,
 
+    bet: {
+        initialBalance: 1000,
+        defaultBet: 10,
+        minBet: 1,
+        maxBet: 100,
+        step: 1,
+    },
+
     reel: {
         symbolWidth: 100,
         symbolHeight: 100,
@@ -37,6 +45,16 @@ export const GameConfig = {
             y: 150,
         },
 
+        balance: {
+            x: 400,
+            y: 600,
+        },
+
+        bet: {
+            x: 400,
+            y: 625,
+        },
+
         result: {
             x: 600,
             y: 550,
@@ -55,6 +73,9 @@ export const GameConfig = {
         button: 0xaaaaaa,
         buttonText: '#000000',
         text: '#ffffff',
+        balance: '#00ff00',
+        bet: '#ffffff',
         win: '#ffff00',
+        error: '#ff4444',
     },
 } as const;
