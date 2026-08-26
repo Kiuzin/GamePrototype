@@ -20,7 +20,7 @@ export const SymbolConfig = {
             count: 25,
 
             payout: {
-                3: 2,
+                3: 0.6,
             },
         },
 
@@ -30,7 +30,7 @@ export const SymbolConfig = {
             count: 15,
 
             payout: {
-                3: 5,
+                3: 1,
             },
         },
 
@@ -40,7 +40,7 @@ export const SymbolConfig = {
             count: 8,
 
             payout: {
-                3: 10,
+                3: 1.6,
             },
         },
 
