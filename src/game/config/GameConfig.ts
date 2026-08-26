@@ -21,7 +21,7 @@ export const GameConfig = {
     reel: {
         symbolWidth: 100,
         symbolHeight: 100,
-        symbolGap: 5,
+        symbolGap: 10,
 
         // Precisamos de 5 objetos visuais:
         // 1 acima da área visível

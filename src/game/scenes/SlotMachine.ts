@@ -5,15 +5,13 @@ import {
 
 import { GameConfig } from '../config/GameConfig';
 
-import { RandomGenerator } from '../logic/RandomGenerator';
-
 import {
-    WinChecker,
-} from '../logic/WinChecker';
+    SlotCore,
+} from '../logic/SlotCore';
 
-import {
-    PayoutCalculator,
-} from '../logic/PayoutCalculator';
+import type {
+    CornPlayResult,
+} from '../logic/SlotCore';
 
 import {
     BetManager,
@@ -423,17 +421,16 @@ export class SlotMachine extends Scene {
         // GERA O RESULTADO
         // -----------------------------------------
 
-        const result =
-            RandomGenerator.generateOutcome(
-                GameConfig.reels,
-                GameConfig.rows
-            );
+        const playResult =
+            SlotCore.play(currentBet);
 
         // -----------------------------------------
         // DEBUG
         // -----------------------------------------
 
-        this.updateDebug(result);
+        this.updateDebug(
+            playResult.grid
+        );
 
         this.resultText?.setText(
             'SPINNING...'
@@ -461,15 +458,14 @@ export class SlotMachine extends Scene {
                                     this.reels.length
                                 ) {
                                     this.finishSpin(
-                                        result,
-                                        currentBet
+                                        playResult
                                     );
                                 }
                             }
                         );
 
                         reel.startSpin(
-                            result[index]
+                            playResult.grid[index]
                         );
                     }
                 );
@@ -482,27 +478,12 @@ export class SlotMachine extends Scene {
     // =====================================================
 
     private finishSpin(
-        result: string[][],
-        betUsed: number
+        playResult: CornPlayResult
     ): void {
-        // ==========================================
-        // ANALISA VITÓRIAS
-        // ==========================================
-
-        const winningLines =
-            WinChecker.checkWinningLines(
-                result
-            );
-
-        // ==========================================
-        // CALCULA PAGAMENTOS
-        // ==========================================
-
-        const payout =
-            PayoutCalculator.calculate(
-                winningLines,
-                betUsed
-            );
+        const {
+            winningLines,
+            payout,
+        } = playResult;
 
         // ==========================================
         // CREDITA PRÊMIO
@@ -549,7 +530,7 @@ export class SlotMachine extends Scene {
 
         console.log(
             'Bet used:',
-            betUsed
+            playResult.bet
         );
 
         console.log(
