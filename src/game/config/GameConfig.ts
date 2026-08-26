@@ -4,10 +4,18 @@ export const GameConfig = {
 
     bet: {
         initialBalance: 1000,
+
         defaultBet: 10,
-        minBet: 1,
-        maxBet: 100,
-        step: 1,
+
+        values: [
+            1,
+            2,
+            5,
+            10,
+            20,
+            50,
+            100,
+        ],
     },
 
     reel: {
@@ -29,6 +37,21 @@ export const GameConfig = {
     },
 
     layout: {
+
+        betDecreaseButton: {
+            x: 350,
+            y: 700,
+            width: 50,
+            height: 50,
+        },
+
+        betIncreaseButton: {
+            x: 650,
+            y: 700,
+            width: 50,
+            height: 50,
+        },
+
         reelPositions: [
             { x: 200, y: 200 },
             { x: 350, y: 200 },
@@ -77,5 +100,6 @@ export const GameConfig = {
         bet: '#ffffff',
         win: '#ffff00',
         error: '#ff4444',
+        disabledButton: 0x555555,
     },
 } as const;

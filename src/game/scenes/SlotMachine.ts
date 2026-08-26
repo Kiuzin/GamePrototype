@@ -15,12 +15,22 @@ import {
     PayoutCalculator,
 } from '../logic/PayoutCalculator';
 
+import {
+    BetManager,
+} from '../logic/BetManager';
+
 import { Reel } from '../objects/Reel';
 
 export class SlotMachine extends Scene {
     private reels: Reel[] = [];
 
     private spinBtn?:
+        GameObjects.Rectangle;
+
+    private betDecreaseBtn?:
+        GameObjects.Rectangle;
+
+    private betIncreaseBtn?:
         GameObjects.Rectangle;
 
     private debugText?:
@@ -42,13 +52,17 @@ export class SlotMachine extends Scene {
         GameConfig.bet.initialBalance;
 
     /**
-     * Aposta atual.
+     * Controlador dos níveis de aposta.
      */
-    private currentBet =
-        GameConfig.bet.defaultBet;
+    private readonly betManager =
+        new BetManager(
+            GameConfig.bet.values,
+            GameConfig.bet.defaultBet
+        );
 
     /**
-     * Indica se estamos executando um spin.
+     * Impede alterações enquanto
+     * os reels estão girando.
      */
     private isSpinning = false;
 
@@ -71,12 +85,20 @@ export class SlotMachine extends Scene {
 
         this.createBetText();
 
+        this.createBetControls();
+
         this.createSpinButton();
 
         this.updateBalanceUI();
 
         this.updateBetUI();
+
+        this.updateBetButtons();
     }
+
+    // =====================================================
+    // SCENE
+    // =====================================================
 
     private createBackground(): void {
         this.cameras.main.setBackgroundColor(
@@ -98,6 +120,10 @@ export class SlotMachine extends Scene {
         );
     }
 
+    // =====================================================
+    // REELS
+    // =====================================================
+
     private createReels(): void {
         this.reels = [];
 
@@ -113,6 +139,10 @@ export class SlotMachine extends Scene {
             }
         );
     }
+
+    // =====================================================
+    // TEXTOS
+    // =====================================================
 
     private createDebugText(): void {
         this.debugText =
@@ -176,6 +206,118 @@ export class SlotMachine extends Scene {
             );
     }
 
+    // =====================================================
+    // BET CONTROLS
+    // =====================================================
+
+    private createBetControls(): void {
+        const decrease =
+            GameConfig.layout.betDecreaseButton;
+
+        const increase =
+            GameConfig.layout.betIncreaseButton;
+
+        // -----------------------------------------
+        // BOTÃO -
+        // -----------------------------------------
+
+        this.betDecreaseBtn =
+            this.add
+                .rectangle(
+                    decrease.x,
+                    decrease.y,
+                    decrease.width,
+                    decrease.height,
+                    GameConfig.colors.button
+                )
+                .setInteractive();
+
+        this.add
+            .text(
+                decrease.x,
+                decrease.y,
+                '-',
+                {
+                    fontSize: '30px',
+
+                    color:
+                        GameConfig.colors.buttonText,
+                }
+            )
+            .setOrigin(0.5);
+
+        this.betDecreaseBtn.on(
+            'pointerdown',
+            () => {
+                this.decreaseBet();
+            }
+        );
+
+        // -----------------------------------------
+        // BOTÃO +
+        // -----------------------------------------
+
+        this.betIncreaseBtn =
+            this.add
+                .rectangle(
+                    increase.x,
+                    increase.y,
+                    increase.width,
+                    increase.height,
+                    GameConfig.colors.button
+                )
+                .setInteractive();
+
+        this.add
+            .text(
+                increase.x,
+                increase.y,
+                '+',
+                {
+                    fontSize: '30px',
+
+                    color:
+                        GameConfig.colors.buttonText,
+                }
+            )
+            .setOrigin(0.5);
+
+        this.betIncreaseBtn.on(
+            'pointerdown',
+            () => {
+                this.increaseBet();
+            }
+        );
+    }
+
+    private increaseBet(): void {
+        if (this.isSpinning) {
+            return;
+        }
+
+        this.betManager.increase();
+
+        this.updateBetUI();
+
+        this.updateBetButtons();
+    }
+
+    private decreaseBet(): void {
+        if (this.isSpinning) {
+            return;
+        }
+
+        this.betManager.decrease();
+
+        this.updateBetUI();
+
+        this.updateBetButtons();
+    }
+
+    // =====================================================
+    // SPIN BUTTON
+    // =====================================================
+
     private createSpinButton(): void {
         const button =
             GameConfig.layout.spinButton;
@@ -191,17 +333,19 @@ export class SlotMachine extends Scene {
                 )
                 .setInteractive();
 
-        this.add.text(
-            button.x,
-            button.y,
-            'SPIN',
-            {
-                fontSize: '28px',
+        this.add
+            .text(
+                button.x,
+                button.y,
+                'SPIN',
+                {
+                    fontSize: '28px',
 
-                color:
-                    GameConfig.colors.buttonText,
-            }
-        ).setOrigin(0.5);
+                    color:
+                        GameConfig.colors.buttonText,
+                }
+            )
+            .setOrigin(0.5);
 
         this.spinBtn.on(
             'pointerdown',
@@ -211,20 +355,26 @@ export class SlotMachine extends Scene {
         );
     }
 
-    private spin(): void {
-        // ==========================================
-        // PREVENÇÃO DE SPIN DUPLICADO
-        // ==========================================
+    // =====================================================
+    // SPIN
+    // =====================================================
 
+    private spin(): void {
         if (this.isSpinning) {
             return;
         }
 
-        // ==========================================
-        // VALIDAÇÕES
-        // ==========================================
+        const currentBet =
+            this.betManager.getCurrentBet();
 
-        if (this.balance < this.currentBet) {
+        // -----------------------------------------
+        // VALIDA SALDO
+        // -----------------------------------------
+
+        if (
+            this.balance <
+            currentBet
+        ) {
             this.showError(
                 'INSUFFICIENT BALANCE'
             );
@@ -232,25 +382,26 @@ export class SlotMachine extends Scene {
             return;
         }
 
-        // ==========================================
-        // COMEÇA O SPIN
-        // ==========================================
+        // -----------------------------------------
+        // INICIA SPIN
+        // -----------------------------------------
 
         this.isSpinning = true;
 
-        this.spinBtn?.disableInteractive();
+        this.disableControls();
 
-        // ==========================================
+        // -----------------------------------------
         // DESCONTA A APOSTA
-        // ==========================================
+        // -----------------------------------------
 
-        this.balance -= this.currentBet;
+        this.balance -=
+            currentBet;
 
         this.updateBalanceUI();
 
-        // ==========================================
+        // -----------------------------------------
         // GERA O RESULTADO
-        // ==========================================
+        // -----------------------------------------
 
         const result =
             RandomGenerator.generateOutcome(
@@ -258,9 +409,9 @@ export class SlotMachine extends Scene {
                 GameConfig.rows
             );
 
-        // ==========================================
+        // -----------------------------------------
         // DEBUG
-        // ==========================================
+        // -----------------------------------------
 
         this.updateDebug(result);
 
@@ -268,9 +419,9 @@ export class SlotMachine extends Scene {
             'SPINNING...'
         );
 
-        // ==========================================
-        // INICIA OS REELS
-        // ==========================================
+        // -----------------------------------------
+        // REELS
+        // -----------------------------------------
 
         let stoppedReels = 0;
 
@@ -290,7 +441,8 @@ export class SlotMachine extends Scene {
                                     this.reels.length
                                 ) {
                                     this.finishSpin(
-                                        result
+                                        result,
+                                        currentBet
                                     );
                                 }
                             }
@@ -305,44 +457,37 @@ export class SlotMachine extends Scene {
         );
     }
 
-    private finishSpin(
-        result: string[][]
-    ): void {
-        // ==========================================
-        // VERIFICA LINHAS VENCEDORAS
-        // ==========================================
+    // =====================================================
+    // FINAL DO SPIN
+    // =====================================================
 
+    private finishSpin(
+        result: string[][],
+        betUsed: number
+    ): void {
         const winningLines =
             WinChecker.checkWinningLines(
                 result
             );
 
-        // ==========================================
-        // CALCULA O PAGAMENTO
-        // ==========================================
-
         const payout =
             PayoutCalculator.calculate(
                 result,
-                this.currentBet
+                betUsed
             );
 
-        // ==========================================
-        // ADICIONA O PRÊMIO AO SALDO
-        // ==========================================
+        // -----------------------------------------
+        // CREDITAR PRÊMIO
+        // -----------------------------------------
 
         this.balance +=
             payout.totalPayout;
 
-        // ==========================================
-        // ATUALIZA A INTERFACE
-        // ==========================================
-
         this.updateBalanceUI();
 
-        // ==========================================
-        // MOSTRA RESULTADO
-        // ==========================================
+        // -----------------------------------------
+        // RESULTADO
+        // -----------------------------------------
 
         if (
             winningLines.length === 0
@@ -359,7 +504,9 @@ export class SlotMachine extends Scene {
                 winningLines.join(', ');
 
             this.resultText?.setText(
-                `WIN: ${payout.totalPayout} | LINES: ${lines}`
+                `WIN: ${payout.totalPayout.toFixed(
+                    2
+                )} | LINES: ${lines}`
             );
 
             console.log(
@@ -373,39 +520,140 @@ export class SlotMachine extends Scene {
             );
         }
 
-        // ==========================================
-        // FINALIZA O SPIN
-        // ==========================================
+        console.log(
+            'Bet used:',
+            betUsed
+        );
 
-        this.isSpinning = false;
-
-        this.spinBtn?.setInteractive();
-
-        // Debug útil
         console.log(
             'Final balance:',
             this.balance
         );
+
+        // -----------------------------------------
+        // LIBERA CONTROLES
+        // -----------------------------------------
+
+        this.isSpinning = false;
+
+        this.enableControls();
     }
 
-    private updateBalanceUI(): void {
-        if (!this.balanceText) {
-            return;
-        }
+    // =====================================================
+    // CONTROLE DE INTERAÇÃO
+    // =====================================================
 
-        this.balanceText.setText(
-            `BALANCE: ${this.balance.toFixed(2)}`
+    private disableControls(): void {
+        this.spinBtn
+            ?.disableInteractive();
+
+        this.betDecreaseBtn
+            ?.disableInteractive();
+
+        this.betIncreaseBtn
+            ?.disableInteractive();
+
+        this.spinBtn?.setFillStyle(
+            GameConfig.colors.disabledButton
+        );
+
+        this.betDecreaseBtn?.setFillStyle(
+            GameConfig.colors.disabledButton
+        );
+
+        this.betIncreaseBtn?.setFillStyle(
+            GameConfig.colors.disabledButton
+        );
+    }
+
+    private enableControls(): void {
+        this.spinBtn
+            ?.setInteractive();
+
+        this.spinBtn?.setFillStyle(
+            GameConfig.colors.button
+        );
+
+        this.updateBetButtons();
+    }
+
+    // =====================================================
+    // UI
+    // =====================================================
+
+    private updateBalanceUI(): void {
+        this.balanceText?.setText(
+            `BALANCE: ${this.balance.toFixed(
+                2
+            )}`
         );
     }
 
     private updateBetUI(): void {
-        if (!this.betText) {
+        const currentBet =
+            this.betManager.getCurrentBet();
+
+        this.betText?.setText(
+            `BET: ${currentBet.toFixed(2)}`
+        );
+    }
+
+    /**
+     * Também oferece feedback visual quando
+     * chegamos ao mínimo/máximo.
+     */
+    private updateBetButtons(): void {
+        if (this.isSpinning) {
             return;
         }
 
-        this.betText.setText(
-            `BET: ${this.currentBet.toFixed(2)}`
-        );
+        // -----------------------------------------
+        // -
+        // -----------------------------------------
+
+        if (
+            this.betManager.canDecrease()
+        ) {
+            this.betDecreaseBtn
+                ?.setInteractive();
+
+            this.betDecreaseBtn
+                ?.setFillStyle(
+                    GameConfig.colors.button
+                );
+        } else {
+            this.betDecreaseBtn
+                ?.disableInteractive();
+
+            this.betDecreaseBtn
+                ?.setFillStyle(
+                    GameConfig.colors.disabledButton
+                );
+        }
+
+        // -----------------------------------------
+        // +
+        // -----------------------------------------
+
+        if (
+            this.betManager.canIncrease()
+        ) {
+            this.betIncreaseBtn
+                ?.setInteractive();
+
+            this.betIncreaseBtn
+                ?.setFillStyle(
+                    GameConfig.colors.button
+                );
+        } else {
+            this.betIncreaseBtn
+                ?.disableInteractive();
+
+            this.betIncreaseBtn
+                ?.setFillStyle(
+                    GameConfig.colors.disabledButton
+                );
+        }
     }
 
     private showError(
@@ -415,10 +663,12 @@ export class SlotMachine extends Scene {
             message
         );
 
-        console.warn(
-            message
-        );
+        console.warn(message);
     }
+
+    // =====================================================
+    // DEBUG
+    // =====================================================
 
     private updateDebug(
         result: string[][]
@@ -438,11 +688,13 @@ export class SlotMachine extends Scene {
                     `REEL ${reelIndex + 1}`
                 );
 
-                column.forEach(symbol => {
-                    lines.push(
-                        `[${symbol}]`
-                    );
-                });
+                column.forEach(
+                    symbol => {
+                        lines.push(
+                            `[${symbol}]`
+                        );
+                    }
+                );
 
                 lines.push('');
             }
