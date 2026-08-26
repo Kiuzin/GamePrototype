@@ -36,6 +36,24 @@ export const GameConfig = {
         reelStartDelay: 300,
     },
 
+    winPresentation: {
+        lineDuration: 900,
+
+        lineWidth: 8,
+
+        lineColor: 0xffff00,
+
+        symbolStrokeWidth: 6,
+
+        symbolStrokeColor: 0xffffff,
+
+        symbolPulseScale: 1.12,
+
+        symbolPulseDuration: 220,
+
+        finalPauseDuration: 350,
+    },
+
     layout: {
 
         betDecreaseButton: {

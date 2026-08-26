@@ -8,6 +8,11 @@ import { SymbolConfig } from '../config/SymbolConfig';
 import { GameConfig } from '../config/GameConfig';
 import { RandomGenerator } from '../logic/RandomGenerator';
 
+export interface ReelSymbolPosition {
+    x: number;
+    y: number;
+}
+
 export class Reel {
     private readonly scene: Scene;
 
@@ -41,9 +46,11 @@ export class Reel {
 
     public isSpinning = false;
 
-    private readonly symbolObjects: GameObjects.Rectangle[] = [];
+    private readonly symbolObjects:
+        GameObjects.Rectangle[] = [];
 
-    private readonly container: GameObjects.Container;
+    private readonly container:
+        GameObjects.Container;
 
     private onCompleteCallback?: () => void;
 
@@ -68,17 +75,20 @@ export class Reel {
             this.reelStrip.length;
 
         this.container =
-            this.scene.add.container(x, y);
+            this.scene.add.container(
+                x,
+                y
+            );
 
         this.createVisualSymbols();
 
         this.render();
     }
 
-    /**
-     * Inicia um spin e recebe o resultado final
-     * que obrigatoriamente deverá aparecer.
-     */
+    // =====================================================
+    // SPIN
+    // =====================================================
+
     public startSpin(
         finalColumn: string[]
     ): void {
@@ -86,7 +96,10 @@ export class Reel {
             return;
         }
 
-        if (finalColumn.length !== this.visibleRows) {
+        if (
+            finalColumn.length !==
+            this.visibleRows
+        ) {
             console.error(
                 'Invalid final column:',
                 finalColumn
@@ -95,20 +108,30 @@ export class Reel {
             return;
         }
 
+        // Remove qualquer efeito visual
+        // da vitória anterior.
+        this.clearWinEffects();
+
         this.isSpinning = true;
 
         const targetIndex =
-            this.findTargetPosition(finalColumn);
+            this.findTargetPosition(
+                finalColumn
+            );
 
         const currentIndex =
-            Math.floor(this.position) %
+            Math.floor(
+                this.position
+            ) %
             this.stripLength;
 
         let distance =
-            targetIndex - currentIndex;
+            targetIndex -
+            currentIndex;
 
         if (distance < 0) {
-            distance += this.stripLength;
+            distance +=
+                this.stripLength;
         }
 
         const totalDistance =
@@ -123,12 +146,14 @@ export class Reel {
         this.scene.tweens.add({
             targets: this,
 
-            position: this.targetPosition,
+            position:
+                this.targetPosition,
 
             duration:
                 GameConfig.reel.spinDuration,
 
-            ease: 'Cubic.easeOut',
+            ease:
+                'Cubic.easeOut',
 
             onUpdate: () => {
                 this.render();
@@ -154,15 +179,151 @@ export class Reel {
             callback;
     }
 
+    // =====================================================
+    // WIN PRESENTATION API
+    // =====================================================
+
     /**
-     * Cria os 5 objetos visuais:
+     * Retorna a posição no mundo do centro
+     * de uma row visível.
      *
-     * índice 0 = fora da área superior
-     * índice 1 = linha superior
-     * índice 2 = linha central
-     * índice 3 = linha inferior
-     * índice 4 = fora da área inferior
+     * row:
+     *
+     * 0 = superior
+     * 1 = central
+     * 2 = inferior
      */
+    public getRowCenter(
+        row: number
+    ): ReelSymbolPosition {
+        return {
+            x: this.x,
+
+            y:
+                this.y +
+                row *
+                    this.symbolStep,
+        };
+    }
+
+    /**
+     * Destaca visualmente uma row.
+     */
+    public highlightRow(
+        row: number
+    ): void {
+        const symbolObject =
+            this.getVisibleSymbolObject(
+                row
+            );
+
+        if (!symbolObject) {
+            return;
+        }
+
+        this.scene.tweens.killTweensOf(
+            symbolObject
+        );
+
+        symbolObject.setScale(1);
+
+        symbolObject.setAlpha(1);
+
+        symbolObject.setStrokeStyle(
+            GameConfig.winPresentation
+                .symbolStrokeWidth,
+
+            GameConfig.winPresentation
+                .symbolStrokeColor
+        );
+
+        this.scene.tweens.add({
+            targets:
+                symbolObject,
+
+            scaleX:
+                GameConfig.winPresentation
+                    .symbolPulseScale,
+
+            scaleY:
+                GameConfig.winPresentation
+                    .symbolPulseScale,
+
+            duration:
+                GameConfig.winPresentation
+                    .symbolPulseDuration,
+
+            ease:
+                'Sine.easeInOut',
+
+            yoyo: true,
+
+            repeat: -1,
+        });
+    }
+
+    /**
+     * Remove os efeitos de vitória
+     * deste reel.
+     */
+    public clearWinEffects(): void {
+        for (
+            let row = 0;
+            row < this.visibleRows;
+            row++
+        ) {
+            const symbolObject =
+                this.getVisibleSymbolObject(
+                    row
+                );
+
+            if (!symbolObject) {
+                continue;
+            }
+
+            this.scene.tweens.killTweensOf(
+                symbolObject
+            );
+
+            symbolObject.setScale(1);
+
+            symbolObject.setAlpha(1);
+
+            symbolObject.setStrokeStyle(
+                2,
+                0x000000
+            );
+        }
+    }
+
+    /**
+     * Nossos objetos visuais são:
+     *
+     * index 0 = símbolo acima
+     * index 1 = row 0
+     * index 2 = row 1
+     * index 3 = row 2
+     * index 4 = símbolo abaixo
+     */
+    private getVisibleSymbolObject(
+        row: number
+    ): GameObjects.Rectangle | undefined {
+        if (
+            row < 0 ||
+            row >= this.visibleRows
+        ) {
+            return undefined;
+        }
+
+        return this.symbolObjects[
+            row + 1
+        ];
+    }
+
+    // =====================================================
+    // VISUAL SYMBOLS
+    // =====================================================
+
     private createVisualSymbols(): void {
         for (
             let i = 0;
@@ -183,16 +344,20 @@ export class Reel {
                 0x000000
             );
 
-            this.container.add(rect);
+            this.container.add(
+                rect
+            );
 
-            this.symbolObjects.push(rect);
+            this.symbolObjects.push(
+                rect
+            );
         }
     }
 
-    /**
-     * Encontra uma posição no strip onde conseguimos
-     * colocar exatamente o resultado final.
-     */
+    // =====================================================
+    // TARGET RESULT
+    // =====================================================
+
     private findTargetPosition(
         finalColumn: string[]
     ): number {
@@ -200,7 +365,6 @@ export class Reel {
             this.stripLength -
             this.visibleRows;
 
-        // Tentativa aleatória
         for (
             let attempt = 0;
             attempt < 100;
@@ -230,7 +394,6 @@ export class Reel {
             }
         }
 
-        // Fallback determinístico
         for (
             let startIndex = 0;
             startIndex <= maxStart;
@@ -262,10 +425,6 @@ export class Reel {
         return 0;
     }
 
-    /**
-     * Move os símbolos no strip até que as 3 posições
-     * desejadas sejam exatamente o resultado determinado.
-     */
     private prepareResultOnStrip(
         strip: string[],
         startIndex: number,
@@ -280,12 +439,12 @@ export class Reel {
             row++
         ) {
             const targetIndex =
-                startIndex + row;
+                startIndex +
+                row;
 
             const desiredSymbol =
                 finalColumn[row];
 
-            // Já está no lugar correto
             if (
                 strip[targetIndex] ===
                 desiredSymbol
@@ -299,8 +458,6 @@ export class Reel {
 
             let sourceIndex = -1;
 
-            // Primeiro tenta encontrar o símbolo
-            // fora da área final.
             for (
                 let i = 0;
                 i < strip.length;
@@ -319,13 +476,14 @@ export class Reel {
                         desiredSymbol
                 ) {
                     sourceIndex = i;
+
                     break;
                 }
             }
 
-            // Segunda tentativa:
-            // procura dentro da própria área final.
-            if (sourceIndex === -1) {
+            if (
+                sourceIndex === -1
+            ) {
                 for (
                     let i = startIndex;
                     i <
@@ -334,22 +492,28 @@ export class Reel {
                     i++
                 ) {
                     if (
-                        i !== targetIndex &&
-                        !lockedPositions.has(i) &&
+                        i !==
+                            targetIndex &&
+                        !lockedPositions.has(
+                            i
+                        ) &&
                         strip[i] ===
                             desiredSymbol
                     ) {
-                        sourceIndex = i;
+                        sourceIndex =
+                            i;
+
                         break;
                     }
                 }
             }
 
-            if (sourceIndex === -1) {
+            if (
+                sourceIndex === -1
+            ) {
                 return false;
             }
 
-            // Troca as posições
             [
                 strip[targetIndex],
                 strip[sourceIndex],
@@ -363,14 +527,14 @@ export class Reel {
             );
         }
 
-        // Validação final
         for (
             let row = 0;
             row < finalColumn.length;
             row++
         ) {
             const index =
-                startIndex + row;
+                startIndex +
+                row;
 
             if (
                 strip[index] !==
@@ -383,16 +547,23 @@ export class Reel {
         return true;
     }
 
+    // =====================================================
+    // COMPLETE
+    // =====================================================
+
     private onSpinComplete(): void {
         this.onCompleteCallback?.();
     }
 
-    /**
-     * Atualiza visualmente os 5 símbolos.
-     */
+    // =====================================================
+    // RENDER
+    // =====================================================
+
     private render(): void {
         const baseIndex =
-            Math.floor(this.position);
+            Math.floor(
+                this.position
+            );
 
         const fractional =
             this.position -
@@ -400,7 +571,8 @@ export class Reel {
 
         for (
             let i = 0;
-            i < this.symbolObjects.length;
+            i <
+            this.symbolObjects.length;
             i++
         ) {
             const stripIndex =
@@ -425,7 +597,9 @@ export class Reel {
             }
 
             const rect =
-                this.symbolObjects[i];
+                this.symbolObjects[
+                    i
+                ];
 
             rect.y =
                 (i - 1) *

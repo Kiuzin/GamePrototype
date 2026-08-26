@@ -21,11 +21,18 @@ import {
 
 import { Reel } from '../objects/Reel';
 
+import {
+    WinPresentation,
+} from '../presentation/WinPresentation';
+
 export class SlotMachine extends Scene {
     private reels: Reel[] = [];
 
     private spinBtn?:
         GameObjects.Rectangle;
+
+    private winPresentation?:
+        WinPresentation;
 
     private betDecreaseBtn?:
         GameObjects.Rectangle;
@@ -94,6 +101,8 @@ export class SlotMachine extends Scene {
         this.updateBetUI();
 
         this.updateBetButtons();
+
+        this.createWinPresentation();
     }
 
     // =====================================================
@@ -105,6 +114,14 @@ export class SlotMachine extends Scene {
             GameConfig.colors.background
         );
     }
+
+    private createWinPresentation(): void {
+    this.winPresentation =
+        new WinPresentation(
+            this,
+            this.reels
+        );
+}
 
     private createTitle(): void {
         this.add.text(
@@ -364,6 +381,9 @@ export class SlotMachine extends Scene {
             return;
         }
 
+        this.winPresentation
+            ?.clearVisuals();
+
         const currentBet =
             this.betManager.getCurrentBet();
 
@@ -465,10 +485,18 @@ export class SlotMachine extends Scene {
         result: string[][],
         betUsed: number
     ): void {
+        // ==========================================
+        // ANALISA VITÓRIAS
+        // ==========================================
+
         const winningLines =
             WinChecker.checkWinningLines(
                 result
             );
+
+        // ==========================================
+        // CALCULA PAGAMENTOS
+        // ==========================================
 
         const payout =
             PayoutCalculator.calculate(
@@ -476,18 +504,18 @@ export class SlotMachine extends Scene {
                 betUsed
             );
 
-        // -----------------------------------------
-        // CREDITAR PRÊMIO
-        // -----------------------------------------
+        // ==========================================
+        // CREDITA PRÊMIO
+        // ==========================================
 
         this.balance +=
             payout.totalPayout;
 
         this.updateBalanceUI();
 
-        // -----------------------------------------
-        // RESULTADO
-        // -----------------------------------------
+        // ==========================================
+        // NO WIN
+        // ==========================================
 
         if (
             winningLines.length === 0
@@ -499,28 +527,25 @@ export class SlotMachine extends Scene {
             console.log(
                 'No winning lines.'
             );
-        } else {
-            const lines =
-                winningLines
-                    .map(win => win.lineId)
-                    .join(', ');
 
-            this.resultText?.setText(
-                `WIN: ${payout.totalPayout.toFixed(
-                    2
-                )} | LINES: ${lines}`
-            );
+            this.finishSpinInteraction();
 
-            console.log(
-                'Winning lines:',
-                winningLines
-            );
-
-            console.log(
-                'Payout details:',
-                payout
-            );
+            return;
         }
+
+        // ==========================================
+        // WIN
+        // ==========================================
+
+        console.log(
+            'Winning lines:',
+            winningLines
+        );
+
+        console.log(
+            'Payout details:',
+            payout
+        );
 
         console.log(
             'Bet used:',
@@ -532,10 +557,47 @@ export class SlotMachine extends Scene {
             this.balance
         );
 
-        // -----------------------------------------
-        // LIBERA CONTROLES
-        // -----------------------------------------
+        // ==========================================
+        // APRESENTAÇÃO VISUAL
+        // ==========================================
 
+        this.winPresentation?.play(
+            winningLines,
+
+            payout.wins,
+
+            {
+                onLineStart:
+                    (
+                        win,
+                        linePayout
+                    ) => {
+                        const payoutValue =
+                            linePayout?.payout ??
+                            0;
+
+                        this.resultText?.setText(
+                            `LINE ${win.lineId} | ${win.symbolId} | WIN ${payoutValue.toFixed(
+                                2
+                            )}`
+                        );
+                    },
+
+                onComplete:
+                    () => {
+                        this.resultText?.setText(
+                            `TOTAL WIN: ${payout.totalPayout.toFixed(
+                                2
+                            )}`
+                        );
+
+                        this.finishSpinInteraction();
+                    },
+            }
+        );
+    }
+
+    private finishSpinInteraction(): void {
         this.isSpinning = false;
 
         this.enableControls();
