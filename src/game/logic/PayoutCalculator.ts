@@ -1,10 +1,18 @@
-import { SymbolConfig } from '../config/SymbolConfig';
-import { WIN_LINES } from './WinChecker';
+import {
+    SymbolConfig,
+} from '../config/SymbolConfig';
 
-export interface WinResult {
+import type {
+    WinningLineResult,
+} from './WinChecker';
+
+export interface LinePayoutResult {
+
     lineId: number;
 
     symbolId: string;
+
+    wildCount: number;
 
     multiplier: number;
 
@@ -12,59 +20,45 @@ export interface WinResult {
 }
 
 export interface SpinPayoutResult {
-    wins: WinResult[];
+
+    wins: LinePayoutResult[];
 
     totalPayout: number;
 }
 
 export class PayoutCalculator {
+
     /**
-     * Calcula os pagamentos de todas as linhas vencedoras.
-     *
-     * Exemplo:
-     *
-     * Bet = 10
-     *
-     * Purple x3
-     * Multiplier = 50
-     *
-     * Payout = 10 * 50 = 500
+     * Recebe as combinações vencedoras
+     * já resolvidas pelo WinChecker
+     * e calcula apenas os valores.
      */
     static calculate(
-        result: string[][],
+        winningLines:
+            WinningLineResult[],
+
         bet: number
+
     ): SpinPayoutResult {
-        const wins: WinResult[] = [];
+
+        const wins:
+            LinePayoutResult[] = [];
 
         let totalPayout = 0;
 
-        for (const line of WIN_LINES) {
-            const symbols =
-                line.positions.map(position => {
-                    return result[
-                        position.reel
-                    ][position.row];
-                });
-
-            if (
-                symbols.length !== 3 ||
-                symbols[0] !== symbols[1] ||
-                symbols[1] !== symbols[2]
-            ) {
-                continue;
-            }
-
-            const symbolId =
-                symbols[0];
+        for (
+            const win of winningLines
+        ) {
 
             const symbol =
                 SymbolConfig.getById(
-                    symbolId
+                    win.symbolId
                 );
 
             if (!symbol) {
+
                 console.warn(
-                    `Unknown symbol: ${symbolId}`
+                    `Unknown symbol: ${win.symbolId}`
                 );
 
                 continue;
@@ -74,12 +68,19 @@ export class PayoutCalculator {
                 symbol.payout[3];
 
             const payout =
-                bet * multiplier;
+                bet *
+                multiplier;
 
             wins.push({
-                lineId: line.id,
 
-                symbolId,
+                lineId:
+                    win.lineId,
+
+                symbolId:
+                    win.symbolId,
+
+                wildCount:
+                    win.wildCount,
 
                 multiplier,
 

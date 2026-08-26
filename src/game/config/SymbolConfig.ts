@@ -13,6 +13,9 @@ export interface SlotSymbol {
 }
 
 export const SymbolConfig = {
+
+    WILD_ID: 'Wild',
+
     SYMBOLS: [
         {
             id: 'Blue',
@@ -63,7 +66,21 @@ export const SymbolConfig = {
                 3: 50,
             },
         },
+
+        {
+            id: 'Wild',
+            color: 0xffa500,
+            count: 3,
+
+            payout: {
+                3: 100,
+            },
+        }
     ] as SlotSymbol[],
+
+    isWild(id: string): boolean {
+        return id === this.WILD_ID;
+    },
 
     getById(id: string): SlotSymbol | undefined {
         return this.SYMBOLS.find(

@@ -472,7 +472,7 @@ export class SlotMachine extends Scene {
 
         const payout =
             PayoutCalculator.calculate(
-                result,
+                winningLines,
                 betUsed
             );
 
@@ -501,7 +501,9 @@ export class SlotMachine extends Scene {
             );
         } else {
             const lines =
-                winningLines.join(', ');
+                winningLines
+                    .map(win => win.lineId)
+                    .join(', ');
 
             this.resultText?.setText(
                 `WIN: ${payout.totalPayout.toFixed(
