@@ -133,25 +133,78 @@ export class SlotMachine extends Scene {
     }
 
     private createWinPresentation(): void {
-    this.winPresentation =
-        new WinPresentation(
-            this,
-            this.reels
-        );
-}
+        this.winPresentation =
+            new WinPresentation(
+                this,
+                this.reels
+            );
+    }
 
     private createTitle(): void {
-        this.add.text(
+        this.createLabel(
             GameConfig.layout.title.x,
             GameConfig.layout.title.y,
             'Slot Machine MVP',
             {
                 fontSize: '32px',
-
                 color:
                     GameConfig.colors.text,
             }
         );
+    }
+
+    private createLabel(
+        x: number,
+        y: number,
+        text: string,
+        style: Phaser.Types.GameObjects.Text.TextStyle = {}
+    ): GameObjects.Text {
+        return this.add.text(
+            x,
+            y,
+            text,
+            {
+                fontFamily: 'Arial',
+                ...style,
+            }
+        ).setOrigin(0.5);
+    }
+
+    private createActionButton(
+        x: number,
+        y: number,
+        width: number,
+        height: number,
+        label: string,
+        fillColor: number,
+        textColor: string,
+        onPointerDown: () => void
+    ): GameObjects.Rectangle {
+        const button = this.add.rectangle(
+            x,
+            y,
+            width,
+            height,
+            fillColor
+        ).setInteractive();
+
+        this.add.text(
+            x,
+            y,
+            label,
+            {
+                fontSize: '30px',
+                color: textColor,
+                fontFamily: 'Arial',
+            }
+        ).setOrigin(0.5);
+
+        button.on(
+            'pointerdown',
+            onPointerDown
+        );
+
+        return button;
     }
 
     // =====================================================
@@ -197,16 +250,14 @@ export class SlotMachine extends Scene {
 
     private createDebugText(): void {
         this.debugText =
-            this.add.text(
+            this.createLabel(
                 GameConfig.layout.debug.x,
                 GameConfig.layout.debug.y,
                 '',
                 {
                     fontSize: '16px',
-
                     color:
                         GameConfig.colors.text,
-
                     lineSpacing: 4,
                 }
             );
@@ -214,13 +265,12 @@ export class SlotMachine extends Scene {
 
     private createResultText(): void {
         this.resultText =
-            this.add.text(
+            this.createLabel(
                 GameConfig.layout.result.x,
                 GameConfig.layout.result.y,
                 '',
                 {
                     fontSize: '24px',
-
                     color:
                         GameConfig.colors.win,
                 }
@@ -229,13 +279,12 @@ export class SlotMachine extends Scene {
 
     private createBalanceText(): void {
         this.balanceText =
-            this.add.text(
+            this.createLabel(
                 GameConfig.layout.balance.x,
                 GameConfig.layout.balance.y,
                 '',
                 {
                     fontSize: '22px',
-
                     color:
                         GameConfig.colors.balance,
                 }
@@ -244,13 +293,12 @@ export class SlotMachine extends Scene {
 
     private createBetText(): void {
         this.betText =
-            this.add.text(
+            this.createLabel(
                 GameConfig.layout.bet.x,
                 GameConfig.layout.bet.y,
                 '',
                 {
                     fontSize: '22px',
-
                     color:
                         GameConfig.colors.bet,
                 }
@@ -268,77 +316,33 @@ export class SlotMachine extends Scene {
         const increase =
             GameConfig.layout.betIncreaseButton;
 
-        // -----------------------------------------
-        // BOTÃO -
-        // -----------------------------------------
-
         this.betDecreaseBtn =
-            this.add
-                .rectangle(
-                    decrease.x,
-                    decrease.y,
-                    decrease.width,
-                    decrease.height,
-                    GameConfig.colors.button
-                )
-                .setInteractive();
-
-        this.add
-            .text(
+            this.createActionButton(
                 decrease.x,
                 decrease.y,
+                decrease.width,
+                decrease.height,
                 '-',
-                {
-                    fontSize: '30px',
-
-                    color:
-                        GameConfig.colors.buttonText,
+                GameConfig.colors.button,
+                GameConfig.colors.buttonText,
+                () => {
+                    this.decreaseBet();
                 }
-            )
-            .setOrigin(0.5);
-
-        this.betDecreaseBtn.on(
-            'pointerdown',
-            () => {
-                this.decreaseBet();
-            }
-        );
-
-        // -----------------------------------------
-        // BOTÃO +
-        // -----------------------------------------
+            );
 
         this.betIncreaseBtn =
-            this.add
-                .rectangle(
-                    increase.x,
-                    increase.y,
-                    increase.width,
-                    increase.height,
-                    GameConfig.colors.button
-                )
-                .setInteractive();
-
-        this.add
-            .text(
+            this.createActionButton(
                 increase.x,
                 increase.y,
+                increase.width,
+                increase.height,
                 '+',
-                {
-                    fontSize: '30px',
-
-                    color:
-                        GameConfig.colors.buttonText,
+                GameConfig.colors.button,
+                GameConfig.colors.buttonText,
+                () => {
+                    this.increaseBet();
                 }
-            )
-            .setOrigin(0.5);
-
-        this.betIncreaseBtn.on(
-            'pointerdown',
-            () => {
-                this.increaseBet();
-            }
-        );
+            );
     }
 
     private increaseBet(): void {
@@ -374,36 +378,18 @@ export class SlotMachine extends Scene {
             GameConfig.layout.spinButton;
 
         this.spinBtn =
-            this.add
-                .rectangle(
-                    button.x,
-                    button.y,
-                    button.width,
-                    button.height,
-                    GameConfig.colors.button
-                )
-                .setInteractive();
-
-        this.add
-            .text(
+            this.createActionButton(
                 button.x,
                 button.y,
+                button.width,
+                button.height,
                 'SPIN',
-                {
-                    fontSize: '28px',
-
-                    color:
-                        GameConfig.colors.buttonText,
+                GameConfig.colors.button,
+                GameConfig.colors.buttonText,
+                () => {
+                    this.spin();
                 }
-            )
-            .setOrigin(0.5);
-
-        this.spinBtn.on(
-            'pointerdown',
-            () => {
-                this.spin();
-            }
-        );
+            );
     }
 
     // =====================================================
