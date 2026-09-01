@@ -75,8 +75,8 @@ export const GameConfig = {
         },
 
         reelPositions: [
-            { x: 260, y: 750 },
-            { x: 550, y: 750 },
+            { x: 250, y: 750 },
+            { x: 540, y: 750 },
             { x: 830, y: 750 },
         ],
 
@@ -115,7 +115,7 @@ export const GameConfig = {
         },
 
         title: {
-            x: 440,
+            x: 540,
             y: 50,
         },
 
