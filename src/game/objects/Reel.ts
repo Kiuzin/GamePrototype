@@ -226,40 +226,36 @@ export class Reel {
     public highlightRow(
         row: number
     ): void {
-        const symbolObject =
-            this.getVisibleSymbolObject(
+        const symbolImage =
+            this.getVisibleSymbolImage(
                 row
             );
 
-        if (!symbolObject) {
+        if (!symbolImage) {
             return;
         }
 
         this.scene.tweens.killTweensOf(
-            symbolObject
+            symbolImage
         );
 
-        symbolObject.setScale(1);
+        const initialScaleX =
+            symbolImage.scaleX;
 
-        symbolObject.setAlpha(1);
-
-        symbolObject.setStrokeStyle(
-            GameConfig.winPresentation
-                .symbolStrokeWidth,
-
-            GameConfig.winPresentation
-                .symbolStrokeColor
-        );
+        const initialScaleY =
+            symbolImage.scaleY;
 
         this.scene.tweens.add({
             targets:
-                symbolObject,
+                symbolImage,
 
             scaleX:
+                initialScaleX *
                 GameConfig.winPresentation
                     .symbolPulseScale,
 
             scaleY:
+                initialScaleY *
                 GameConfig.winPresentation
                     .symbolPulseScale,
 
@@ -268,7 +264,7 @@ export class Reel {
                     .symbolPulseDuration,
 
             ease:
-                'Sine.easeInOut',
+                'Bounce.easeOut',
 
             yoyo: true,
 
@@ -298,6 +294,24 @@ export class Reel {
             this.scene.tweens.killTweensOf(
                 symbolObject
             );
+
+            const symbolImage =
+                this.getVisibleSymbolImage(
+                    row
+                );
+
+            if (symbolImage) {
+                this.scene.tweens.killTweensOf(
+                    symbolImage
+                );
+
+                symbolImage.setDisplaySize(
+                    this.symbolWidth,
+                    this.symbolHeight
+                );
+
+                symbolImage.setAlpha(1);
+            }
 
             symbolObject.setScale(1);
 
@@ -330,6 +344,21 @@ export class Reel {
         }
 
         return this.symbolObjects[
+            row + 1
+        ];
+    }
+
+    private getVisibleSymbolImage(
+        row: number
+    ): GameObjects.Image | undefined {
+        if (
+            row < 0 ||
+            row >= this.visibleRows
+        ) {
+            return undefined;
+        }
+
+        return this.symbolImages[
             row + 1
         ];
     }

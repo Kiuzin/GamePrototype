@@ -19,8 +19,8 @@ export const GameConfig = {
     },
 
     reel: {
-        symbolWidth: 180,
-        symbolHeight: 180,
+        symbolWidth: 230,
+        symbolHeight: 230,
         symbolGap: 5,
         // Precisamos de 5 objetos visuais:
         // 1 acima da área visível
@@ -57,23 +57,35 @@ export const GameConfig = {
 
         betDecreaseButton: {
             x: 400,
-            y: 1500,
+            y: 1700,
             width: 50,
             height: 50,
         },
 
         betIncreaseButton: {
             x: 700,
-            y: 1500,
+            y: 1700,
             width: 50,
             height: 50,
         },
 
         reelPositions: [
-            { x: 280, y: 800 },
-            { x: 550, y: 800 },
-            { x: 800, y: 800 },
+            { x: 260, y: 750 },
+            { x: 550, y: 750 },
+            { x: 830, y: 750 },
         ],
+
+        reelBackdrop: {
+            // Painel decorativo atrás dos rolos.
+            x: 540,
+            y: 1000,
+            width: 950,
+            height: 870,
+            cornerRadius: 36,
+            color: 0x24150e,
+            grainColor: 0x3b2317,
+            grainSpacing: 58,
+        },
 
         reelFrame: {
             // Ajuste horizontal e vertical da moldura.
@@ -82,19 +94,19 @@ export const GameConfig = {
             y: 980,
 
             // Ajuste manual do tamanho da moldura.
-            width: 1000,
-            height: 1000,
+            width: 1100,
+            height: 1100,
         },
 
         reelMask: {
             // Janela visível de cada rolo.
             width: 200,
-            height: 700,
+            height: 800,
 
             // Deslocamento relativo ao centro do primeiro símbolo.
             // Diminua offsetY para subir; aumente para descer.
             offsetX: 0,
-            offsetY: 160,
+            offsetY: 200,
         },
 
         title: {
@@ -108,23 +120,23 @@ export const GameConfig = {
         },
 
         balance: {
-            x: 400,
+            x: 550,
             y: 1600,
         },
 
         bet: {
-            x: 400,
+            x: 550,
             y: 1550,
         },
 
         result: {
-            x: 450,
-            y: 1400,
+            x: 550,
+            y: 1500,
         },
 
         spinButton: {
             x: 550,
-            y: 1500,
+            y: 1700,
             width: 200,
             height: 60,
         },

@@ -80,6 +80,8 @@ export class SlotMachine extends Scene {
 
         this.createTitle();
 
+        this.createReelBackdrop();
+
         this.createReels();
 
         this.createReelFrame();
@@ -210,6 +212,67 @@ export class SlotMachine extends Scene {
     // =====================================================
     // REELS
     // =====================================================
+
+    private createReelBackdrop(): void {
+        const backdrop =
+            GameConfig.layout.reelBackdrop;
+
+        const left =
+            backdrop.x -
+            backdrop.width / 2;
+
+        const top =
+            backdrop.y -
+            backdrop.height / 2;
+
+        const graphics =
+            this.add.graphics();
+
+        graphics.fillStyle(
+            backdrop.color
+        );
+
+        graphics.fillRoundedRect(
+            left,
+            top,
+            backdrop.width,
+            backdrop.height,
+            backdrop.cornerRadius
+        );
+
+        graphics.strokeRoundedRect(
+            left,
+            top,
+            backdrop.width,
+            backdrop.height,
+            backdrop.cornerRadius
+        );
+
+        graphics.lineStyle(
+            3,
+            backdrop.grainColor,
+            0.7
+        );
+
+        for (
+            let y =
+                top + backdrop.grainSpacing;
+            y <
+            top +
+                backdrop.height -
+                backdrop.grainSpacing;
+            y += backdrop.grainSpacing
+        ) {
+            graphics.lineBetween(
+                left + backdrop.cornerRadius,
+                y,
+                left +
+                    backdrop.width -
+                    backdrop.cornerRadius,
+                y
+            );
+        }
+    }
 
     private createReels(): void {
         this.reels = [];
