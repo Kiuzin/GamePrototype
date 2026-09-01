@@ -43,6 +43,41 @@ export class Preloader extends Scene
             'slotMachineFrame',
             'CornGame/moldura.png'
         );
+
+        this.load.image(
+            'symbolCrow',
+            'CornGame/corvo_.png'
+        );
+
+        this.load.image(
+            'symbolPopcorn',
+            'CornGame/pipoca_.png'
+        );
+
+        this.load.image(
+            'symbolCake',
+            'CornGame/bolo_.png'
+        );
+
+        this.load.image(
+            'symbolPamonha',
+            'CornGame/pamonha_.png'
+        );
+
+        this.load.image(
+            'symbolCanjica',
+            'CornGame/canjica_.png'
+        );
+
+        this.load.image(
+            'symbolCorn',
+            'CornGame/milho_.png'
+        );
+
+        this.load.image(
+            'symbolWild',
+            'CornGame/wild_.png'
+        );
     }
 
     create ()

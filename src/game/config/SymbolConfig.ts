@@ -6,6 +6,7 @@ export interface SlotSymbol {
     id: string;
     color: number;
     count: number;
+    textureKey?: string;
 
     // Multiplicador pago quando aparecem
     // 3 símbolos iguais em uma linha.
@@ -18,9 +19,10 @@ export const SymbolConfig = {
 
     SYMBOLS: [
         {
-            id: 'Blue',
+            id: 'Crow',
             color: 0x0000ff,
             count: 25,
+            textureKey: 'symbolCrow',
 
             payout: {
                 3: 0.6,
@@ -28,9 +30,10 @@ export const SymbolConfig = {
         },
 
         {
-            id: 'Red',
+            id: 'Popcorn',
             color: 0xff0000,
             count: 15,
+            textureKey: 'symbolPopcorn',
 
             payout: {
                 3: 1,
@@ -38,9 +41,10 @@ export const SymbolConfig = {
         },
 
         {
-            id: 'Green',
+            id: 'Cake',
             color: 0x00ff00,
             count: 8,
+            textureKey: 'symbolCake',
 
             payout: {
                 3: 1.6,
@@ -48,9 +52,10 @@ export const SymbolConfig = {
         },
 
         {
-            id: 'Yellow',
+            id: 'Pamonha',
             color: 0xffff00,
             count: 7,
+            textureKey: 'symbolPamonha',
 
             payout: {
                 3: 20,
@@ -58,9 +63,21 @@ export const SymbolConfig = {
         },
 
         {
-            id: 'Purple',
+            id: 'Canjica',
             color: 0x800080,
             count: 5,
+            textureKey: 'symbolCanjica',
+
+            payout: {
+                3: 50,
+            },
+        },
+
+        {
+            id: 'Corn',
+            color: 0x000000,
+            count: 5,
+            textureKey: 'symbolCorn',
 
             payout: {
                 3: 50,
@@ -71,6 +88,7 @@ export const SymbolConfig = {
             id: 'Wild',
             color: 0xffa500,
             count: 3,
+            textureKey: 'symbolWild',
 
             payout: {
                 3: 100,

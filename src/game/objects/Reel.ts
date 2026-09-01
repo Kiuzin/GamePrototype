@@ -49,6 +49,9 @@ export class Reel {
     private readonly symbolObjects:
         GameObjects.Rectangle[] = [];
 
+    private readonly symbolImages:
+        GameObjects.Image[] = [];
+
     private readonly container:
         GameObjects.Container;
 
@@ -359,8 +362,32 @@ export class Reel {
                 rect
             );
 
+            const image =
+                this.scene.add.image(
+                    0,
+                    0,
+                    'symbolCrow'
+
+                );
+
+
+            image
+                .setDisplaySize(
+                    this.symbolWidth,
+                    this.symbolHeight
+                )
+                .setVisible(false);
+
+            this.container.add(
+                image
+            );
+
             this.symbolObjects.push(
                 rect
+            );
+
+            this.symbolImages.push(
+                image
             );
         }
     }
@@ -635,12 +662,13 @@ export class Reel {
                     symbolId
                 );
 
-            if (!symbol) {
-                continue;
-            }
-
             const rect =
                 this.symbolObjects[
+                    i
+                ];
+
+            const image =
+                this.symbolImages[
                     i
                 ];
 
@@ -650,8 +678,42 @@ export class Reel {
                 fractional *
                     this.symbolStep;
 
+            image.y = rect.y;
+
+            if (!symbol) {
+                rect.setVisible(
+                    false
+                );
+                image.setVisible(
+                    false
+                );
+
+                continue;
+            }
+
             rect.setFillStyle(
                 symbol.color
+            );
+
+            const textureKey =
+                symbol.textureKey ??
+                'symbolCrow';
+
+            image.setTexture(
+                textureKey
+            );
+
+            image.setDisplaySize(
+                this.symbolWidth,
+                this.symbolHeight
+            );
+
+            image.setVisible(
+                true
+            );
+
+            rect.setVisible(
+                false
             );
         }
     }
