@@ -22,7 +22,7 @@ import type {
     WinningLineResult,
 } from './WinChecker';
 
-export interface CornPlayResult {
+export interface SpinResult {
     bet: number;
 
     grid: string[][];
@@ -33,21 +33,21 @@ export interface CornPlayResult {
 }
 
 /**
-  Fachada da rodada do jogo. 
-  Centraliza o sorteio, a identificação das linhas
-  vencedoras e o cálculo do pagamento para que a
-  interface não dependa desses detalhes.
+ * Fachada da rodada do jogo.
+ * Centraliza o sorteio, a identificação das linhas
+ * vencedoras e o cálculo do pagamento para que a
+ * interface não dependa desses detalhes.
  */
 export class SlotCore {
     public static play(
         bet: number
-    ): CornPlayResult {
+    ): SpinResult {
         if (
             !Number.isFinite(bet) ||
             bet <= 0
         ) {
             throw new Error(
-                'Corn.play requires a positive bet.'
+                'SlotCore.play requires a positive bet.'
             );
         }
 

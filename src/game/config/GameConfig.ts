@@ -1,4 +1,9 @@
 export const GameConfig = {
+    screen: {
+        width: 1080,
+        height: 1920,
+    },
+
     reels: 3,
     rows: 3,
 
@@ -100,7 +105,7 @@ export const GameConfig = {
 
         reelMask: {
             // Janela visível de cada rolo.
-            width: 200,
+            width: 250,
             height: 800,
 
             // Deslocamento relativo ao centro do primeiro símbolo.

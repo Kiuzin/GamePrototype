@@ -130,15 +130,30 @@ export class WinChecker {
 
         for (const line of WIN_LINES) {
 
-            const symbols =
-                line.positions.map(position => {
+            const symbols: string[] = [];
 
-                    return result[
-                        position.reel
-                    ][
+            for (
+                const position of
+                line.positions
+            ) {
+                const symbol =
+                    result[position.reel]?.[
                         position.row
                     ];
-                });
+
+                if (symbol === undefined) {
+                    break;
+                }
+
+                symbols.push(symbol);
+            }
+
+            if (
+                symbols.length !==
+                line.positions.length
+            ) {
+                continue;
+            }
 
             const win =
                 this.evaluateLine(

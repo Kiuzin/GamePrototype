@@ -13,6 +13,11 @@ export interface ReelSymbolPosition {
     y: number;
 }
 
+interface ReelSymbolVisual {
+    background: GameObjects.Rectangle;
+    image: GameObjects.Image;
+}
+
 export class Reel {
     private readonly scene: Scene;
 
@@ -46,11 +51,8 @@ export class Reel {
 
     public isSpinning = false;
 
-    private readonly symbolObjects:
-        GameObjects.Rectangle[] = [];
-
-    private readonly symbolImages:
-        GameObjects.Image[] = [];
+    private readonly symbolVisuals:
+        ReelSymbolVisual[] = [];
 
     private readonly container:
         GameObjects.Container;
@@ -227,9 +229,9 @@ export class Reel {
         row: number
     ): void {
         const symbolImage =
-            this.getVisibleSymbolImage(
+            this.getVisibleSymbolVisual(
                 row
-            );
+            )?.image;
 
         if (!symbolImage) {
             return;
@@ -282,45 +284,37 @@ export class Reel {
             row < this.visibleRows;
             row++
         ) {
-            const symbolObject =
-                this.getVisibleSymbolObject(
+            const symbolVisual =
+                this.getVisibleSymbolVisual(
                     row
                 );
 
-            if (!symbolObject) {
+            if (!symbolVisual) {
                 continue;
             }
 
             this.scene.tweens.killTweensOf(
-                symbolObject
+                symbolVisual.background
             );
 
-            const symbolImage =
-                this.getVisibleSymbolImage(
-                    row
+            this.scene.tweens.killTweensOf(
+                symbolVisual.image
+            );
+
+            symbolVisual.background
+                .setScale(1)
+                .setAlpha(1)
+                .setStrokeStyle(
+                    2,
+                    0x000000
                 );
 
-            if (symbolImage) {
-                this.scene.tweens.killTweensOf(
-                    symbolImage
-                );
-
-                symbolImage.setDisplaySize(
+            symbolVisual.image
+                .setDisplaySize(
                     this.symbolWidth,
                     this.symbolHeight
-                );
-
-                symbolImage.setAlpha(1);
-            }
-
-            symbolObject.setScale(1);
-
-            symbolObject.setAlpha(1);
-
-            symbolObject.setStrokeStyle(
-                2,
-                0x000000
-            );
+                )
+                .setAlpha(1);
         }
     }
 
@@ -333,9 +327,9 @@ export class Reel {
      * index 3 = row 2
      * index 4 = símbolo abaixo
      */
-    private getVisibleSymbolObject(
+    private getVisibleSymbolVisual(
         row: number
-    ): GameObjects.Rectangle | undefined {
+    ): ReelSymbolVisual | undefined {
         if (
             row < 0 ||
             row >= this.visibleRows
@@ -343,22 +337,7 @@ export class Reel {
             return undefined;
         }
 
-        return this.symbolObjects[
-            row + 1
-        ];
-    }
-
-    private getVisibleSymbolImage(
-        row: number
-    ): GameObjects.Image | undefined {
-        if (
-            row < 0 ||
-            row >= this.visibleRows
-        ) {
-            return undefined;
-        }
-
-        return this.symbolImages[
+        return this.symbolVisuals[
             row + 1
         ];
     }
@@ -373,7 +352,7 @@ export class Reel {
             i < this.visualObjects;
             i++
         ) {
-            const rect =
+            const background =
                 this.scene.add.rectangle(
                     0,
                     0,
@@ -382,13 +361,13 @@ export class Reel {
                     0xffffff
                 );
 
-            rect.setStrokeStyle(
+            background.setStrokeStyle(
                 2,
                 0x000000
             );
 
             this.container.add(
-                rect
+                background
             );
 
             const image =
@@ -396,10 +375,7 @@ export class Reel {
                     0,
                     0,
                     'symbolCrow'
-
                 );
-
-
             image
                 .setDisplaySize(
                     this.symbolWidth,
@@ -411,16 +387,12 @@ export class Reel {
                 image
             );
 
-            this.symbolObjects.push(
-                rect
-            );
-
-            this.symbolImages.push(
-                image
-            );
+            this.symbolVisuals.push({
+                background,
+                image,
+            });
         }
     }
-
     /**
      * Recorta os símbolos à janela visível do rolo.
      * Os objetos acima e abaixo continuam animando,
@@ -671,7 +643,7 @@ export class Reel {
         for (
             let i = 0;
             i <
-            this.symbolObjects.length;
+            this.symbolVisuals.length;
             i++
         ) {
             const stripIndex =
@@ -691,58 +663,60 @@ export class Reel {
                     symbolId
                 );
 
-            const rect =
-                this.symbolObjects[
-                    i
-                ];
+            const symbolVisual =
+                this.symbolVisuals[i];
 
-            const image =
-                this.symbolImages[
-                    i
-                ];
-
-            rect.y =
+            const symbolY =
                 (i - 1) *
                     this.symbolStep -
                 fractional *
                     this.symbolStep;
 
-            image.y = rect.y;
+            symbolVisual.background.y =
+                symbolY;
+
+            symbolVisual.image.y =
+                symbolY;
 
             if (!symbol) {
-                rect.setVisible(
+                symbolVisual.background.setVisible(
                     false
                 );
-                image.setVisible(
+                symbolVisual.image.setVisible(
                     false
                 );
 
                 continue;
             }
 
-            rect.setFillStyle(
+            symbolVisual.background.setFillStyle(
                 symbol.color
             );
 
-            const textureKey =
-                symbol.textureKey ??
-                'symbolCrow';
+            if (symbol.textureKey) {
+                symbolVisual.image
+                    .setTexture(
+                        symbol.textureKey
+                    )
+                    .setDisplaySize(
+                        this.symbolWidth,
+                        this.symbolHeight
+                    )
+                    .setVisible(true);
 
-            image.setTexture(
-                textureKey
-            );
+                symbolVisual.background.setVisible(
+                    false
+                );
 
-            image.setDisplaySize(
-                this.symbolWidth,
-                this.symbolHeight
-            );
+                continue;
+            }
 
-            image.setVisible(
-                true
-            );
-
-            rect.setVisible(
+            symbolVisual.image.setVisible(
                 false
+            );
+
+            symbolVisual.background.setVisible(
+                true
             );
         }
     }

@@ -13,7 +13,20 @@ export class BetManager {
             );
         }
 
-        this.betValues = betValues;
+        if (
+            betValues.some(
+                value =>
+                    !Number.isFinite(value) ||
+                    value <= 0
+            )
+        ) {
+            throw new Error(
+                'Bet values must be positive finite numbers.'
+            );
+        }
+
+        this.betValues =
+            [...betValues];
 
         const defaultIndex =
             this.betValues.indexOf(defaultBet);

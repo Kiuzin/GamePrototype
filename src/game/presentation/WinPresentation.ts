@@ -1,6 +1,7 @@
 import {
     Scene,
     GameObjects,
+    Time,
 } from 'phaser';
 
 import {
@@ -36,6 +37,9 @@ export class WinPresentation {
 
     private readonly graphics:
         GameObjects.Graphics;
+
+    private pendingTimer?:
+        Time.TimerEvent;
 
     private isPlaying = false;
 
@@ -104,7 +108,7 @@ export class WinPresentation {
         this.isPlaying =
             false;
 
-        //this.scene.time.removeAllEvents();
+        this.cancelPendingTimer();
 
         this.clearVisuals();
     }
@@ -181,10 +185,9 @@ export class WinPresentation {
             payout
         );
 
-        this.scene.time.delayedCall(
+        this.schedule(
             GameConfig.winPresentation
                 .lineDuration,
-
             () => {
                 this.playLine(
                     winningLines,
@@ -284,10 +287,9 @@ export class WinPresentation {
         options:
             WinPresentationOptions
     ): void {
-        this.scene.time.delayedCall(
+        this.schedule(
             GameConfig.winPresentation
                 .finalPauseDuration,
-
             () => {
                 this.clearVisuals();
 
@@ -297,5 +299,34 @@ export class WinPresentation {
                 options.onComplete?.();
             }
         );
+    }
+
+    private schedule(
+        delay: number,
+        callback: () => void
+    ): void {
+        this.pendingTimer =
+            this.scene.time.delayedCall(
+                delay,
+                () => {
+                    this.pendingTimer =
+                        undefined;
+
+                    callback();
+                }
+            );
+    }
+
+    private cancelPendingTimer(): void {
+        if (!this.pendingTimer) {
+            return;
+        }
+
+        this.scene.time.removeEvent(
+            this.pendingTimer
+        );
+
+        this.pendingTimer =
+            undefined;
     }
 }

@@ -41,15 +41,7 @@ export class PayoutCalculator {
 
     ): SpinPayoutResult {
 
-        const wins:
-            LinePayoutResult[] = [];
-
-        let totalPayout = 0;
-
-        for (
-            const win of winningLines
-        ) {
-
+        const wins = winningLines.map(win => {
             const symbol =
                 SymbolConfig.getById(
                     win.symbolId
@@ -57,21 +49,15 @@ export class PayoutCalculator {
 
             if (!symbol) {
 
-                console.warn(
-                    `Unknown symbol: ${win.symbolId}`
+                throw new Error(
+                    `Unknown symbol: ${win.symbolId}.`
                 );
-
-                continue;
             }
 
             const multiplier =
                 symbol.payout[3];
 
-            const payout =
-                bet *
-                multiplier;
-
-            wins.push({
+            return {
 
                 lineId:
                     win.lineId,
@@ -84,11 +70,17 @@ export class PayoutCalculator {
 
                 multiplier,
 
-                payout,
-            });
+                payout:
+                    bet * multiplier,
+            };
+        });
 
-            totalPayout += payout;
-        }
+        const totalPayout =
+            wins.reduce(
+                (total, win) =>
+                    total + win.payout,
+                0
+            );
 
         return {
             wins,

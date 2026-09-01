@@ -10,7 +10,7 @@ import {
 } from '../logic/SlotCore';
 
 import type {
-    CornPlayResult,
+    SpinResult,
 } from '../logic/SlotCore';
 
 import {
@@ -240,14 +240,6 @@ export class SlotMachine extends Scene {
             backdrop.cornerRadius
         );
 
-        graphics.strokeRoundedRect(
-            left,
-            top,
-            backdrop.width,
-            backdrop.height,
-            backdrop.cornerRadius
-        );
-
         graphics.lineStyle(
             3,
             backdrop.grainColor,
@@ -464,8 +456,7 @@ export class SlotMachine extends Scene {
             return;
         }
 
-        this.winPresentation
-            ?.clearVisuals();
+        this.winPresentation?.stop();
 
         const currentBet =
             this.betManager.getCurrentBet();
@@ -563,7 +554,7 @@ export class SlotMachine extends Scene {
     // =====================================================
 
     private finishSpin(
-        playResult: CornPlayResult
+        playResult: SpinResult
     ): void {
         const {
             winningLines,
@@ -590,10 +581,6 @@ export class SlotMachine extends Scene {
                 'NO WIN'
             );
 
-            console.log(
-                'No winning lines.'
-            );
-
             this.finishSpinInteraction();
 
             return;
@@ -601,30 +588,6 @@ export class SlotMachine extends Scene {
 
         // ==========================================
         // WIN
-        // ==========================================
-
-        console.log(
-            'Winning lines:',
-            winningLines
-        );
-
-        console.log(
-            'Payout details:',
-            payout
-        );
-
-        console.log(
-            'Bet used:',
-            playResult.bet
-        );
-
-        console.log(
-            'Final balance:',
-            this.balance
-        );
-
-        // ==========================================
-        // APRESENTAÇÃO VISUAL
         // ==========================================
 
         this.winPresentation?.play(
@@ -674,34 +637,26 @@ export class SlotMachine extends Scene {
     // =====================================================
 
     private disableControls(): void {
-        this.spinBtn
-            ?.disableInteractive();
-
-        this.betDecreaseBtn
-            ?.disableInteractive();
-
-        this.betIncreaseBtn
-            ?.disableInteractive();
-
-        this.spinBtn?.setFillStyle(
-            GameConfig.colors.disabledButton
+        this.setButtonEnabled(
+            this.spinBtn,
+            false
         );
 
-        this.betDecreaseBtn?.setFillStyle(
-            GameConfig.colors.disabledButton
+        this.setButtonEnabled(
+            this.betDecreaseBtn,
+            false
         );
 
-        this.betIncreaseBtn?.setFillStyle(
-            GameConfig.colors.disabledButton
+        this.setButtonEnabled(
+            this.betIncreaseBtn,
+            false
         );
     }
 
     private enableControls(): void {
-        this.spinBtn
-            ?.setInteractive();
-
-        this.spinBtn?.setFillStyle(
-            GameConfig.colors.button
+        this.setButtonEnabled(
+            this.spinBtn,
+            true
         );
 
         this.updateBetButtons();
@@ -737,53 +692,40 @@ export class SlotMachine extends Scene {
             return;
         }
 
-        // -----------------------------------------
-        // -
-        // -----------------------------------------
-
-        if (
+        this.setButtonEnabled(
+            this.betDecreaseBtn,
             this.betManager.canDecrease()
-        ) {
-            this.betDecreaseBtn
-                ?.setInteractive();
+        );
 
-            this.betDecreaseBtn
-                ?.setFillStyle(
-                    GameConfig.colors.button
-                );
-        } else {
-            this.betDecreaseBtn
-                ?.disableInteractive();
-
-            this.betDecreaseBtn
-                ?.setFillStyle(
-                    GameConfig.colors.disabledButton
-                );
-        }
-
-        // -----------------------------------------
-        // +
-        // -----------------------------------------
-
-        if (
+        this.setButtonEnabled(
+            this.betIncreaseBtn,
             this.betManager.canIncrease()
-        ) {
-            this.betIncreaseBtn
-                ?.setInteractive();
+        );
+    }
 
-            this.betIncreaseBtn
-                ?.setFillStyle(
+    private setButtonEnabled(
+        button: GameObjects.Rectangle | undefined,
+        enabled: boolean
+    ): void {
+        if (!button) {
+            return;
+        }
+
+        if (enabled) {
+            button
+                .setInteractive()
+                .setFillStyle(
                     GameConfig.colors.button
                 );
-        } else {
-            this.betIncreaseBtn
-                ?.disableInteractive();
 
-            this.betIncreaseBtn
-                ?.setFillStyle(
-                    GameConfig.colors.disabledButton
-                );
+            return;
         }
+
+        button
+            .disableInteractive()
+            .setFillStyle(
+                GameConfig.colors.disabledButton
+            );
     }
 
     private showError(
@@ -792,8 +734,6 @@ export class SlotMachine extends Scene {
         this.resultText?.setText(
             message
         );
-
-        console.warn(message);
     }
 
     // =====================================================
