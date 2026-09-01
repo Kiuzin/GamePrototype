@@ -82,6 +82,8 @@ export class SlotMachine extends Scene {
 
         this.createReels();
 
+        this.createReelFrame();
+
         this.createDebugText();
 
         this.createResultText();
@@ -111,6 +113,23 @@ export class SlotMachine extends Scene {
         this.cameras.main.setBackgroundColor(
             GameConfig.colors.background
         );
+
+        const { width, height } =
+            this.scale.gameSize;
+
+        const background =
+            this.add.image(
+                width / 2,
+                height / 2,
+                'slotMachineBackground'
+            );
+
+        const scale = Math.max(
+            width / background.width,
+            height / background.height
+        );
+
+        background.setScale(scale);
     }
 
     private createWinPresentation(): void {
@@ -153,6 +172,23 @@ export class SlotMachine extends Scene {
                 );
             }
         );
+    }
+
+    private createReelFrame(): void {
+        const frame =
+            GameConfig.layout.reelFrame;
+
+        this.add
+            .image(
+                frame.x,
+                frame.y,
+                'slotMachineFrame'
+            )
+            .setDisplaySize(
+                frame.width,
+                frame.height
+            )
+            .setDepth(1);
     }
 
     // =====================================================

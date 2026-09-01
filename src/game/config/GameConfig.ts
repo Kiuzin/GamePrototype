@@ -19,9 +19,9 @@ export const GameConfig = {
     },
 
     reel: {
-        symbolWidth: 100,
-        symbolHeight: 100,
-        symbolGap: 10,
+        symbolWidth: 150,
+        symbolHeight: 150,
+        symbolGap: 20,
 
         // Precisamos de 5 objetos visuais:
         // 1 acima da área visível
@@ -57,53 +57,64 @@ export const GameConfig = {
     layout: {
 
         betDecreaseButton: {
-            x: 350,
-            y: 700,
+            x: 400,
+            y: 1500,
             width: 50,
             height: 50,
         },
 
         betIncreaseButton: {
-            x: 650,
-            y: 700,
+            x: 700,
+            y: 1500,
             width: 50,
             height: 50,
         },
 
         reelPositions: [
-            { x: 200, y: 200 },
-            { x: 350, y: 200 },
-            { x: 500, y: 200 },
+            { x: 300, y: 800 },
+            { x: 550, y: 800 },
+            { x: 775, y: 800 },
         ],
 
+        reelFrame: {
+            // Ajuste horizontal e vertical da moldura.
+            // Diminua y para subir; aumente y para descer.
+            x: 540,
+            y: 960,
+
+            // Ajuste manual do tamanho da moldura.
+            width: 900,
+            height: 900,
+        },
+
         title: {
-            x: 650,
+            x: 440,
             y: 50,
         },
 
         debug: {
-            x: 600,
+            x: 300,
             y: 150,
         },
 
         balance: {
             x: 400,
-            y: 600,
+            y: 1600,
         },
 
         bet: {
             x: 400,
-            y: 625,
+            y: 1550,
         },
 
         result: {
-            x: 600,
-            y: 550,
+            x: 450,
+            y: 1400,
         },
 
         spinButton: {
-            x: 500,
-            y: 700,
+            x: 550,
+            y: 1500,
             width: 200,
             height: 60,
         },
