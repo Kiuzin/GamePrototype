@@ -19,10 +19,9 @@ export const GameConfig = {
     },
 
     reel: {
-        symbolWidth: 150,
-        symbolHeight: 150,
-        symbolGap: 20,
-
+        symbolWidth: 180,
+        symbolHeight: 180,
+        symbolGap: 5,
         // Precisamos de 5 objetos visuais:
         // 1 acima da área visível
         // 3 visíveis
@@ -71,26 +70,26 @@ export const GameConfig = {
         },
 
         reelPositions: [
-            { x: 300, y: 800 },
+            { x: 280, y: 800 },
             { x: 550, y: 800 },
-            { x: 775, y: 800 },
+            { x: 800, y: 800 },
         ],
 
         reelFrame: {
             // Ajuste horizontal e vertical da moldura.
             // Diminua y para subir; aumente y para descer.
             x: 540,
-            y: 960,
+            y: 980,
 
             // Ajuste manual do tamanho da moldura.
-            width: 900,
-            height: 900,
+            width: 1000,
+            height: 1000,
         },
 
         reelMask: {
             // Janela visível de cada rolo.
             width: 200,
-            height: 590,
+            height: 700,
 
             // Deslocamento relativo ao centro do primeiro símbolo.
             // Diminua offsetY para subir; aumente para descer.
