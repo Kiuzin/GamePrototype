@@ -52,6 +52,9 @@ export class Reel {
     private readonly container:
         GameObjects.Container;
 
+    private readonly maskGraphics:
+        GameObjects.Graphics;
+
     private onCompleteCallback?: () => void;
 
     constructor(
@@ -81,6 +84,14 @@ export class Reel {
             );
 
         this.createVisualSymbols();
+
+        this.maskGraphics =
+            this.createVisibleAreaMask();
+
+        this.container.setMask(
+            this.maskGraphics
+                .createGeometryMask()
+        );
 
         this.render();
     }
@@ -352,6 +363,38 @@ export class Reel {
                 rect
             );
         }
+    }
+
+    /**
+     * Recorta os símbolos à janela visível do rolo.
+     * Os objetos acima e abaixo continuam animando,
+     * mas ficam ocultos atrás da moldura.
+     */
+    private createVisibleAreaMask():
+        GameObjects.Graphics {
+        const maskConfig =
+            GameConfig.layout.reelMask;
+
+        const mask =
+            this.scene.make.graphics(
+                {},
+                false
+            );
+
+        mask.fillStyle(0xffffff);
+
+        mask.fillRect(
+            this.x -
+                maskConfig.width / 2 +
+                maskConfig.offsetX,
+            this.y -
+                maskConfig.height / 2 +
+                maskConfig.offsetY,
+            maskConfig.width,
+            maskConfig.height
+        );
+
+        return mask;
     }
 
     // =====================================================

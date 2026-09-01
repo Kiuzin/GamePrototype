@@ -87,6 +87,17 @@ export const GameConfig = {
             height: 900,
         },
 
+        reelMask: {
+            // Janela visível de cada rolo.
+            width: 200,
+            height: 590,
+
+            // Deslocamento relativo ao centro do primeiro símbolo.
+            // Diminua offsetY para subir; aumente para descer.
+            offsetX: 0,
+            offsetY: 160,
+        },
+
         title: {
             x: 440,
             y: 50,
