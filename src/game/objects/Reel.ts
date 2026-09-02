@@ -4,7 +4,13 @@ import {
     Math as PhaserMath,
 } from 'phaser';
 
-import { SymbolConfig } from '../config/SymbolConfig';
+import {
+    SymbolConfig,
+} from '../config/SymbolConfig';
+
+import type {
+    WinAnimation,
+} from '../config/SymbolConfig';
 import { GameConfig } from '../config/GameConfig';
 import { RandomGenerator } from '../logic/RandomGenerator';
 
@@ -223,7 +229,8 @@ export class Reel {
     }
 
     /**
-     * Destaca visualmente uma row.
+     * Destaca visualmente uma row usando a
+     * animação configurada para o símbolo visível.
      */
     public highlightRow(
         row: number
@@ -237,19 +244,69 @@ export class Reel {
             return;
         }
 
+        const symbolId =
+            this.getVisibleSymbolId(row);
+
+        const animation =
+            SymbolConfig.getById(symbolId ?? '')
+                ?.winAnimation;
+
+        if (!animation) {
+            return;
+        }
+
         this.scene.tweens.killTweensOf(
             symbolImage
         );
 
+        this.playWinAnimation(
+            symbolImage,
+            animation
+        );
+    }
+
+    private playWinAnimation(
+        symbolImage: GameObjects.Image,
+        animation: WinAnimation
+    ): void {
         const initialScaleX =
             symbolImage.scaleX;
 
         const initialScaleY =
             symbolImage.scaleY;
 
+        const duration =
+            GameConfig.winPresentation
+                .symbolPulseDuration;
+
+        if (animation === 'bouncing') {
+            this.scene.tweens.add({
+                targets: symbolImage,
+                y: symbolImage.y - 18,
+                duration,
+                ease: 'Sine.easeInOut',
+                yoyo: true,
+                repeat: -1,
+            });
+
+            return;
+        }
+
+        if (animation === 'wiggle') {
+            this.scene.tweens.add({
+                targets: symbolImage,
+                angle: 6,
+                duration,
+                ease: 'Sine.easeInOut',
+                yoyo: true,
+                repeat: -1,
+            });
+
+            return;
+        }
+
         this.scene.tweens.add({
-            targets:
-                symbolImage,
+            targets: symbolImage,
 
             scaleX:
                 initialScaleX *
@@ -261,9 +318,7 @@ export class Reel {
                 GameConfig.winPresentation
                     .symbolPulseScale,
 
-            duration:
-                GameConfig.winPresentation
-                    .symbolPulseDuration,
+            duration,
 
             ease:
                 'Bounce.easeOut',
@@ -314,8 +369,11 @@ export class Reel {
                     this.symbolWidth,
                     this.symbolHeight
                 )
-                .setAlpha(1);
+                .setAlpha(1)
+                .setAngle(0);
         }
+
+        this.render();
     }
 
     /**
@@ -339,6 +397,23 @@ export class Reel {
 
         return this.symbolVisuals[
             row + 1
+        ];
+    }
+
+    private getVisibleSymbolId(
+        row: number
+    ): string | undefined {
+        if (
+            row < 0 ||
+            row >= this.visibleRows
+        ) {
+            return undefined;
+        }
+
+        return this.reelStrip[
+            this.wrapIndex(
+                Math.floor(this.position) + row
+            )
         ];
     }
 
