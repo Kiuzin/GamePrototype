@@ -23,6 +23,12 @@ import {
     WinPresentation,
 } from '../presentation/WinPresentation';
 
+interface SpinHistoryEntry {
+    bet: number;
+    payout: number;
+    winningLines: number;
+}
+
 export class SlotMachine extends Scene {
     private reels: Reel[] = [];
 
@@ -40,6 +46,9 @@ export class SlotMachine extends Scene {
 
     private turboText?:
         GameObjects.Text;
+
+    private historyModal?:
+        GameObjects.Container;
 
     private winPresentation?:
         WinPresentation;
@@ -95,6 +104,13 @@ export class SlotMachine extends Scene {
      */
     private isTurboMode = false;
 
+    /**
+     * Rodadas mais recentes, da mais nova
+     * para a mais antiga.
+     */
+    private readonly spinHistory:
+        SpinHistoryEntry[] = [];
+
     constructor() {
         super('SlotMachine');
     }
@@ -127,6 +143,8 @@ export class SlotMachine extends Scene {
         this.createAutoSpinButton();
 
         this.createTurboButton();
+
+        this.createHistoryButton();
 
         this.updateBalanceUI();
 
@@ -645,6 +663,165 @@ export class SlotMachine extends Scene {
         );
     }
 
+    private createHistoryButton(): void {
+        const button =
+            GameConfig.layout.historyButton;
+
+        const historyButton =
+            this.add.rectangle(
+                button.x,
+                button.y,
+                button.width,
+                button.height,
+                GameConfig.colors.historyButton
+            ).setInteractive();
+
+        this.createLabel(
+            button.x,
+            button.y,
+            'HISTÓRICO',
+            {
+                fontSize: '24px',
+                color: GameConfig.colors.buttonText,
+            }
+        );
+
+        historyButton.on(
+            'pointerdown',
+            () => {
+                this.openHistoryModal();
+            }
+        );
+    }
+
+    private openHistoryModal(): void {
+        this.closeHistoryModal();
+
+        const { width, height } =
+            this.scale.gameSize;
+
+        const modal =
+            this.add.container(0, 0)
+                .setDepth(20);
+
+        const overlay =
+            this.add.rectangle(
+                width / 2,
+                height / 2,
+                width,
+                height,
+                0x000000,
+                0.7
+            ).setInteractive();
+
+        const panel =
+            this.add.rectangle(
+                width / 2,
+                height / 2,
+                900,
+                1080,
+                0x24150e
+            ).setStrokeStyle(
+                4,
+                0xd28b21
+            );
+
+        const title =
+            this.createLabel(
+                width / 2,
+                500,
+                'HISTÓRICO DE JOGADAS',
+                {
+                    fontSize: '36px',
+                    color: GameConfig.colors.text,
+                }
+            );
+
+        const entries =
+            this.createHistoryEntriesText(
+                width / 2 - 370,
+                590
+            );
+
+        const closeButton =
+            this.add.rectangle(
+                width / 2,
+                1440,
+                240,
+                70,
+                GameConfig.colors.button
+            ).setInteractive();
+
+        const closeText =
+            this.createLabel(
+                width / 2,
+                1440,
+                'FECHAR',
+                {
+                    fontSize: '26px',
+                    color: GameConfig.colors.buttonText,
+                }
+            );
+
+        const close = (): void => {
+            this.closeHistoryModal();
+        };
+
+        overlay.on('pointerdown', close);
+        closeButton.on('pointerdown', close);
+
+        modal.add([
+            overlay,
+            panel,
+            title,
+            entries,
+            closeButton,
+            closeText,
+        ]);
+
+        this.historyModal = modal;
+    }
+
+    private createHistoryEntriesText(
+        x: number,
+        y: number
+    ): GameObjects.Text {
+        const content =
+            this.spinHistory.length === 0
+                ? 'NENHUMA JOGADA REALIZADA.'
+                : this.spinHistory.map(
+                    (entry, index) => {
+                        const result =
+                            entry.winningLines > 0
+                                ? `GANHO ${entry.payout.toFixed(2)}`
+                                : 'SEM GANHO';
+
+                        return `${index + 1}. APOSTA ${entry.bet.toFixed(2)} | ${result}`;
+                    }
+                ).join('\n\n');
+
+        return this.add.text(
+            x,
+            y,
+            content,
+            {
+                fontFamily: 'Arial',
+                fontSize: '28px',
+                color: GameConfig.colors.text,
+                lineSpacing: 6,
+                wordWrap: {
+                    width: 740,
+                },
+            }
+        );
+    }
+
+    private closeHistoryModal(): void {
+        this.historyModal?.destroy();
+
+        this.historyModal = undefined;
+    }
+
     // =====================================================
     // SPIN
     // =====================================================
@@ -793,6 +970,8 @@ export class SlotMachine extends Scene {
 
         this.updateBalanceUI();
 
+        this.addSpinToHistory(playResult);
+
         // ==========================================
         // NO WIN
         // ==========================================
@@ -866,6 +1045,24 @@ export class SlotMachine extends Scene {
                 }
             }
         );
+    }
+
+    private addSpinToHistory(
+        playResult: SpinResult
+    ): void {
+        this.spinHistory.unshift({
+            bet: playResult.bet,
+            payout: playResult.payout.totalPayout,
+            winningLines:
+                playResult.winningLines.length,
+        });
+
+        if (
+            this.spinHistory.length >
+            GameConfig.history.maxEntries
+        ) {
+            this.spinHistory.pop();
+        }
     }
 
     // =====================================================

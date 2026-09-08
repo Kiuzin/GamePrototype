@@ -45,6 +45,10 @@ export const GameConfig = {
         reelStartDelay: 100,
     },
 
+    history: {
+        maxEntries: 10,
+    },
+
     winPresentation: {
         lineDuration: 900,
 
@@ -139,7 +143,7 @@ export const GameConfig = {
         balanceLabel: {
             x: 125,
             y: 1560,
-            fontSize: '22px',
+            fontSize: '16px',
             color: '#ffffff',
         },
 
@@ -153,7 +157,7 @@ export const GameConfig = {
         betLabel: {
             x: 880,
             y: 1560,
-            fontSize: '22px',
+            fontSize: '16px',
             color: '#ffffff',
         },
 
@@ -189,6 +193,13 @@ export const GameConfig = {
             width: 220,
             height: 70,
         },
+
+        historyButton: {
+            x: 540,
+            y: 1750,
+            width: 300,
+            height: 70,
+        },
     },
 
     colors: {
@@ -198,6 +209,7 @@ export const GameConfig = {
         activeAutoSpinButton: 0xd28b21,
         turboButton: 0xaaaaaa,
         activeTurboButton: 0xe6b800,
+        historyButton: 0xaaaaaa,
         buttonText: '#000000',
         text: '#ffffff',
         win: '#ffff00',
