@@ -54,10 +54,10 @@ export class SlotMachine extends Scene {
         WinPresentation;
 
     private betDecreaseBtn?:
-        GameObjects.Rectangle;
+        GameObjects.Image;
 
     private betIncreaseBtn?:
-        GameObjects.Rectangle;
+        GameObjects.Image;
 
     private debugText?:
         GameObjects.Text;
@@ -238,43 +238,6 @@ export class SlotMachine extends Scene {
                 ...style,
             }
         ).setOrigin(0.5);
-    }
-
-    private createActionButton(
-        x: number,
-        y: number,
-        width: number,
-        height: number,
-        label: string,
-        fillColor: number,
-        textColor: string,
-        onPointerDown: () => void
-    ): GameObjects.Rectangle {
-        const button = this.add.rectangle(
-            x,
-            y,
-            width,
-            height,
-            fillColor
-        ).setInteractive();
-
-        this.add.text(
-            x,
-            y,
-            label,
-            {
-                fontSize: '30px',
-                color: textColor,
-                fontFamily: 'Arial',
-            }
-        ).setOrigin(0.5);
-
-        button.on(
-            'pointerdown',
-            onPointerDown
-        );
-
-        return button;
     }
 
     // =====================================================
@@ -486,32 +449,42 @@ export class SlotMachine extends Scene {
             GameConfig.layout.betIncreaseButton;
 
         this.betDecreaseBtn =
-            this.createActionButton(
+            this.add.image(
                 decrease.x,
                 decrease.y,
-                decrease.width,
-                decrease.height,
-                '-',
-                GameConfig.colors.button,
-                GameConfig.colors.buttonText,
-                () => {
-                    this.decreaseBet();
-                }
-            );
+                'slotMachineMinusButton'
+            )
+                .setDisplaySize(
+                    decrease.width,
+                    decrease.height
+                )
+                .setInteractive();
+
+        this.betDecreaseBtn.on(
+            'pointerdown',
+            () => {
+                this.decreaseBet();
+            }
+        );
 
         this.betIncreaseBtn =
-            this.createActionButton(
+            this.add.image(
                 increase.x,
                 increase.y,
-                increase.width,
-                increase.height,
-                '+',
-                GameConfig.colors.button,
-                GameConfig.colors.buttonText,
-                () => {
-                    this.increaseBet();
-                }
-            );
+                'slotMachinePlusButton'
+            )
+                .setDisplaySize(
+                    increase.width,
+                    increase.height
+                )
+                .setInteractive();
+
+        this.betIncreaseBtn.on(
+            'pointerdown',
+            () => {
+                this.increaseBet();
+            }
+        );
     }
 
     private increaseBet(): void {
@@ -1139,12 +1112,12 @@ export class SlotMachine extends Scene {
     private disableControls(): void {
         this.setSpinButtonEnabled(false);
 
-        this.setButtonEnabled(
+        this.setImageButtonEnabled(
             this.betDecreaseBtn,
             false
         );
 
-        this.setButtonEnabled(
+        this.setImageButtonEnabled(
             this.betIncreaseBtn,
             false
         );
@@ -1188,40 +1161,15 @@ export class SlotMachine extends Scene {
             return;
         }
 
-        this.setButtonEnabled(
+        this.setImageButtonEnabled(
             this.betDecreaseBtn,
             this.betManager.canDecrease()
         );
 
-        this.setButtonEnabled(
+        this.setImageButtonEnabled(
             this.betIncreaseBtn,
             this.betManager.canIncrease()
         );
-    }
-
-    private setButtonEnabled(
-        button: GameObjects.Rectangle | undefined,
-        enabled: boolean
-    ): void {
-        if (!button) {
-            return;
-        }
-
-        if (enabled) {
-            button
-                .setInteractive()
-                .setFillStyle(
-                    GameConfig.colors.button
-                );
-
-            return;
-        }
-
-        button
-            .disableInteractive()
-            .setFillStyle(
-                GameConfig.colors.disabledButton
-            );
     }
 
     private setSpinButtonEnabled(
@@ -1242,6 +1190,27 @@ export class SlotMachine extends Scene {
         this.spinBtn
             .disableInteractive()
             .setAlpha(0.55);
+    }
+
+    private setImageButtonEnabled(
+        button: GameObjects.Image | undefined,
+        enabled: boolean
+    ): void {
+        if (!button) {
+            return;
+        }
+
+        if (enabled) {
+            button
+                .setInteractive()
+                .setAlpha(1);
+
+            return;
+        }
+
+        button
+            .disableInteractive()
+            .setAlpha(0.45);
     }
 
     private showError(

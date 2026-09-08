@@ -65,6 +65,16 @@ export class Preloader extends Scene {
         );
 
         this.load.image(
+            'slotMachineMinusButton',
+            'CornGame/minus_Button.png'
+        );
+
+        this.load.image(
+            'slotMachinePlusButton',
+            'CornGame/plus_button.png'
+        );
+
+        this.load.image(
             'symbolCrow',
             'CornGame/corvo_.png'
         );
