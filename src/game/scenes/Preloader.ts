@@ -55,6 +55,11 @@ export class Preloader extends Scene {
         );
 
         this.load.image(
+            'slotMachineControlsBackdrop',
+            'CornGame/lower_Background.png'
+        );
+
+        this.load.image(
             'symbolCrow',
             'CornGame/corvo_.png'
         );

@@ -61,17 +61,17 @@ export const GameConfig = {
     layout: {
 
         betDecreaseButton: {
-            x: 400,
-            y: 1700,
-            width: 50,
-            height: 50,
+            x: 335,
+            y: 1585,
+            width: 100,
+            height: 100,
         },
 
         betIncreaseButton: {
-            x: 700,
-            y: 1700,
-            width: 50,
-            height: 50,
+            x: 750,
+            y: 1585,
+            width: 100,
+            height: 100,
         },
 
         reelPositions: [
@@ -103,6 +103,13 @@ export const GameConfig = {
             height: 1100,
         },
 
+        controlsBackdrop: {
+            x: 540,
+            y: 1850,
+            width: 1080,
+            height: 810,
+        },
+
         reelMask: {
             // Janela visível de cada rolo.
             width: 250,
@@ -124,26 +131,44 @@ export const GameConfig = {
             y: 150,
         },
 
-        balance: {
-            x: 550,
-            y: 1600,
+        balanceLabel: {
+            x: 125,
+            y: 1560,
+            fontSize: '22px',
+            color: '#ffffff',
         },
 
-        bet: {
-            x: 550,
-            y: 1550,
+        balanceValue: {
+            x: 150,
+            y: 1600,
+            fontSize: '32px',
+            color: '#00ff00',
+        },
+
+        betLabel: {
+            x: 880,
+            y: 1560,
+            fontSize: '22px',
+            color: '#ffffff',
+        },
+
+        betValue: {
+            x: 920,
+            y: 1600,
+            fontSize: '32px',
+            color: '#ffffff',
         },
 
         result: {
             x: 550,
-            y: 1500,
+            y: 1460,
         },
 
         spinButton: {
-            x: 550,
-            y: 1700,
-            width: 200,
-            height: 60,
+            x: 535,
+            y: 1575,
+            width: 150,
+            height: 150,
         },
     },
 
@@ -152,8 +177,6 @@ export const GameConfig = {
         button: 0xaaaaaa,
         buttonText: '#000000',
         text: '#ffffff',
-        balance: '#00ff00',
-        bet: '#ffffff',
         win: '#ffff00',
         error: '#ff4444',
         disabledButton: 0x555555,

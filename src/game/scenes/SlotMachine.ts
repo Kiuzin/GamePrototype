@@ -44,10 +44,10 @@ export class SlotMachine extends Scene {
     private resultText?:
         GameObjects.Text;
 
-    private balanceText?:
+    private balanceValueText?:
         GameObjects.Text;
 
-    private betText?:
+    private betValueText?:
         GameObjects.Text;
 
     /**
@@ -85,6 +85,8 @@ export class SlotMachine extends Scene {
         this.createReels();
 
         this.createReelFrame();
+
+        this.createControlsBackdrop();
 
         this.createDebugText();
 
@@ -299,6 +301,22 @@ export class SlotMachine extends Scene {
             .setDepth(1);
     }
 
+    private createControlsBackdrop(): void {
+        const backdrop =
+            GameConfig.layout.controlsBackdrop;
+
+        this.add
+            .image(
+                backdrop.x,
+                backdrop.y,
+                'slotMachineControlsBackdrop'
+            )
+            .setDisplaySize(
+                backdrop.width,
+                backdrop.height
+            );
+    }
+
     // =====================================================
     // TEXTOS
     // =====================================================
@@ -333,29 +351,59 @@ export class SlotMachine extends Scene {
     }
 
     private createBalanceText(): void {
-        this.balanceText =
+        const label =
+            GameConfig.layout.balanceLabel;
+
+        const value =
+            GameConfig.layout.balanceValue;
+
+        this.createLabel(
+            label.x,
+            label.y,
+            'BALANCE:',
+            {
+                fontSize: label.fontSize,
+                color: label.color,
+            }
+        );
+
+        this.balanceValueText =
             this.createLabel(
-                GameConfig.layout.balance.x,
-                GameConfig.layout.balance.y,
+                value.x,
+                value.y,
                 '',
                 {
-                    fontSize: '22px',
-                    color:
-                        GameConfig.colors.balance,
+                    fontSize: value.fontSize,
+                    color: value.color,
                 }
             );
     }
 
     private createBetText(): void {
-        this.betText =
+        const label =
+            GameConfig.layout.betLabel;
+
+        const value =
+            GameConfig.layout.betValue;
+
+        this.createLabel(
+            label.x,
+            label.y,
+            'BET:',
+            {
+                fontSize: label.fontSize,
+                color: label.color,
+            }
+        );
+
+        this.betValueText =
             this.createLabel(
-                GameConfig.layout.bet.x,
-                GameConfig.layout.bet.y,
+                value.x,
+                value.y,
                 '',
                 {
-                    fontSize: '22px',
-                    color:
-                        GameConfig.colors.bet,
+                    fontSize: value.fontSize,
+                    color: value.color,
                 }
             );
     }
@@ -667,10 +715,10 @@ export class SlotMachine extends Scene {
     // =====================================================
 
     private updateBalanceUI(): void {
-        this.balanceText?.setText(
-            `BALANCE: ${this.balance.toFixed(
+        this.balanceValueText?.setText(
+            this.balance.toFixed(
                 2
-            )}`
+            )
         );
     }
 
@@ -678,8 +726,8 @@ export class SlotMachine extends Scene {
         const currentBet =
             this.betManager.getCurrentBet();
 
-        this.betText?.setText(
-            `BET: ${currentBet.toFixed(2)}`
+        this.betValueText?.setText(
+            currentBet.toFixed(2)
         );
     }
 
