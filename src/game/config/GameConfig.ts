@@ -49,6 +49,13 @@ export const GameConfig = {
         maxEntries: 10,
     },
 
+    spinButtonAnimation: {
+        idleSpeed: 30,
+        boostSpeed: 1800,
+        boostDuration: 180,
+        returnDuration: 2020,
+    },
+
     winPresentation: {
         lineDuration: 900,
 
@@ -174,10 +181,10 @@ export const GameConfig = {
         },
 
         spinButton: {
-            x: 535,
-            y: 1575,
-            width: 150,
-            height: 150,
+            x: 536,
+            y: 1578,
+            width: 215,
+            height: 215,
         },
 
         autoSpinButton: {

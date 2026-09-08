@@ -33,7 +33,7 @@ export class SlotMachine extends Scene {
     private reels: Reel[] = [];
 
     private spinBtn?:
-        GameObjects.Rectangle;
+        GameObjects.Image;
 
     private autoSpinBtn?:
         GameObjects.Rectangle;
@@ -105,6 +105,13 @@ export class SlotMachine extends Scene {
     private isTurboMode = false;
 
     /**
+     * Velocidade angular do botão Spin,
+     * em graus por segundo.
+     */
+    private spinRotationSpeed =
+        GameConfig.spinButtonAnimation.idleSpeed;
+
+    /**
      * Rodadas mais recentes, da mais nova
      * para a mais antiga.
      */
@@ -153,6 +160,19 @@ export class SlotMachine extends Scene {
         this.updateBetButtons();
 
         this.createWinPresentation();
+    }
+
+    update(
+        _time: number,
+        delta: number
+    ): void {
+        if (!this.spinBtn) {
+            return;
+        }
+
+        this.spinBtn.angle -=
+            this.spinRotationSpeed *
+            delta / 1000;
     }
 
     // =====================================================
@@ -527,18 +547,63 @@ export class SlotMachine extends Scene {
             GameConfig.layout.spinButton;
 
         this.spinBtn =
-            this.createActionButton(
+            this.add.image(
                 button.x,
                 button.y,
-                button.width,
-                button.height,
-                'SPIN',
-                GameConfig.colors.button,
-                GameConfig.colors.buttonText,
-                () => {
-                    this.spin();
-                }
-            );
+                'slotMachineSpinButton'
+            )
+                .setDisplaySize(
+                    button.width,
+                    button.height
+                )
+                .setInteractive();
+
+        this.spinBtn.on(
+            'pointerdown',
+            () => {
+                this.spin();
+            }
+        );
+
+        this.startSpinIdleAnimation();
+    }
+
+    private startSpinIdleAnimation(): void {
+        this.tweens.killTweensOf(this);
+
+        this.spinRotationSpeed =
+            GameConfig.spinButtonAnimation.idleSpeed;
+    }
+
+    private playSpinPressedAnimation(): void {
+        const animation =
+            GameConfig.spinButtonAnimation;
+
+        this.tweens.killTweensOf(this);
+
+        this.tweens.add({
+            targets: this,
+            spinRotationSpeed:
+                animation.boostSpeed,
+            duration: animation.boostDuration,
+            ease: 'Sine.easeIn',
+            onComplete: () => {
+                this.returnToIdleSpinSpeed();
+            },
+        });
+    }
+
+    private returnToIdleSpinSpeed(): void {
+        const animation =
+            GameConfig.spinButtonAnimation;
+
+        this.tweens.add({
+            targets: this,
+            spinRotationSpeed:
+                animation.idleSpeed,
+            duration: animation.returnDuration,
+            ease: 'Sine.easeOut',
+        });
     }
 
     private createAutoSpinButton(): void {
@@ -865,6 +930,8 @@ export class SlotMachine extends Scene {
 
         this.disableControls();
 
+        this.playSpinPressedAnimation();
+
         // -----------------------------------------
         // DESCONTA A APOSTA
         // -----------------------------------------
@@ -1070,10 +1137,7 @@ export class SlotMachine extends Scene {
     // =====================================================
 
     private disableControls(): void {
-        this.setButtonEnabled(
-            this.spinBtn,
-            false
-        );
+        this.setSpinButtonEnabled(false);
 
         this.setButtonEnabled(
             this.betDecreaseBtn,
@@ -1087,8 +1151,7 @@ export class SlotMachine extends Scene {
     }
 
     private enableControls(): void {
-        this.setButtonEnabled(
-            this.spinBtn,
+        this.setSpinButtonEnabled(
             !this.isAutoSpinning
         );
 
@@ -1159,6 +1222,26 @@ export class SlotMachine extends Scene {
             .setFillStyle(
                 GameConfig.colors.disabledButton
             );
+    }
+
+    private setSpinButtonEnabled(
+        enabled: boolean
+    ): void {
+        if (!this.spinBtn) {
+            return;
+        }
+
+        if (enabled) {
+            this.spinBtn
+                .setInteractive()
+                .setAlpha(1);
+
+            return;
+        }
+
+        this.spinBtn
+            .disableInteractive()
+            .setAlpha(0.55);
     }
 
     private showError(

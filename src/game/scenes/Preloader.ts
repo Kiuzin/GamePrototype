@@ -60,6 +60,11 @@ export class Preloader extends Scene {
         );
 
         this.load.image(
+            'slotMachineSpinButton',
+            'CornGame/Spin_Button.png'
+        );
+
+        this.load.image(
             'symbolCrow',
             'CornGame/corvo_.png'
         );
