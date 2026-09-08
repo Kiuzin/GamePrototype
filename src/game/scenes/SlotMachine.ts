@@ -29,6 +29,18 @@ export class SlotMachine extends Scene {
     private spinBtn?:
         GameObjects.Rectangle;
 
+    private autoSpinBtn?:
+        GameObjects.Rectangle;
+
+    private autoSpinText?:
+        GameObjects.Text;
+
+    private turboBtn?:
+        GameObjects.Rectangle;
+
+    private turboText?:
+        GameObjects.Text;
+
     private winPresentation?:
         WinPresentation;
 
@@ -71,6 +83,18 @@ export class SlotMachine extends Scene {
      */
     private isSpinning = false;
 
+    /**
+     * Mantém novas rodadas sendo iniciadas
+     * ao final da rodada atual.
+     */
+    private isAutoSpinning = false;
+
+    /**
+     * Reduz a duração e o atraso de início
+     * dos rodilhos nas próximas rodadas.
+     */
+    private isTurboMode = false;
+
     constructor() {
         super('SlotMachine');
     }
@@ -99,6 +123,10 @@ export class SlotMachine extends Scene {
         this.createBetControls();
 
         this.createSpinButton();
+
+        this.createAutoSpinButton();
+
+        this.createTurboButton();
 
         this.updateBalanceUI();
 
@@ -495,6 +523,128 @@ export class SlotMachine extends Scene {
             );
     }
 
+    private createAutoSpinButton(): void {
+        const button =
+            GameConfig.layout.autoSpinButton;
+
+        this.autoSpinBtn =
+            this.add.rectangle(
+                button.x,
+                button.y,
+                button.width,
+                button.height,
+                GameConfig.colors.autoSpinButton
+            ).setInteractive();
+
+        this.autoSpinText =
+            this.createLabel(
+                button.x,
+                button.y,
+                'AUTO SPIN',
+                {
+                    fontSize: '28px',
+                    color: GameConfig.colors.buttonText,
+                }
+            );
+
+        this.autoSpinBtn.on(
+            'pointerdown',
+            () => {
+                this.toggleAutoSpin();
+            }
+        );
+    }
+
+    private toggleAutoSpin(): void {
+        this.isAutoSpinning =
+            !this.isAutoSpinning;
+
+        this.updateAutoSpinButton();
+
+        if (
+            !this.isAutoSpinning &&
+            !this.isSpinning
+        ) {
+            this.enableControls();
+
+            return;
+        }
+
+        if (
+            this.isAutoSpinning &&
+            !this.isSpinning
+        ) {
+            this.spin();
+        }
+    }
+
+    private updateAutoSpinButton(): void {
+        this.autoSpinBtn?.setFillStyle(
+            this.isAutoSpinning
+                ? GameConfig.colors.activeAutoSpinButton
+                : GameConfig.colors.autoSpinButton
+        );
+
+        this.autoSpinText?.setText(
+            this.isAutoSpinning
+                ? 'STOP AUTO'
+                : 'AUTO SPIN'
+        );
+    }
+
+    private createTurboButton(): void {
+        const button =
+            GameConfig.layout.turboButton;
+
+        this.turboBtn =
+            this.add.rectangle(
+                button.x,
+                button.y,
+                button.width,
+                button.height,
+                GameConfig.colors.turboButton
+            ).setInteractive();
+
+        this.turboText =
+            this.createLabel(
+                button.x,
+                button.y,
+                'TURBO MODE',
+                {
+                    fontSize: '24px',
+                    color: GameConfig.colors.buttonText,
+                }
+            );
+
+        this.turboBtn.on(
+            'pointerdown',
+            () => {
+                this.toggleTurboMode();
+            }
+        );
+    }
+
+    private toggleTurboMode(): void {
+        this.isTurboMode =
+            !this.isTurboMode;
+
+        this.updateTurboButton();
+    }
+
+    private updateTurboButton(): void {
+        this.turboBtn?.setFillStyle(
+            this.isTurboMode
+                ? GameConfig.colors.activeTurboButton
+                : GameConfig.colors.turboButton
+        );
+
+        this.turboText?.setText(
+            this.isTurboMode
+                ? 'TURBO ON'
+                : 'TURBO MODE'
+        );
+    }
+
     // =====================================================
     // SPIN
     // =====================================================
@@ -517,6 +667,12 @@ export class SlotMachine extends Scene {
             this.balance <
             currentBet
         ) {
+            if (this.isAutoSpinning) {
+                this.isAutoSpinning = false;
+
+                this.updateAutoSpinButton();
+            }
+
             this.showError(
                 'INSUFFICIENT BALANCE'
             );
@@ -566,11 +722,17 @@ export class SlotMachine extends Scene {
 
         let stoppedReels = 0;
 
+        const reelStartDelay =
+            this.getReelStartDelay();
+
+        const reelSpinDuration =
+            this.getReelSpinDuration();
+
         this.reels.forEach(
             (reel, index) => {
                 this.time.delayedCall(
                     index *
-                        GameConfig.reel.reelStartDelay,
+                        reelStartDelay,
 
                     () => {
                         reel.setOnComplete(
@@ -589,12 +751,25 @@ export class SlotMachine extends Scene {
                         );
 
                         reel.startSpin(
-                            playResult.grid[index]
+                            playResult.grid[index],
+                            reelSpinDuration
                         );
                     }
                 );
             }
         );
+    }
+
+    private getReelSpinDuration(): number {
+        return this.isTurboMode
+            ? GameConfig.turbo.spinDuration
+            : GameConfig.reel.spinDuration;
+    }
+
+    private getReelStartDelay(): number {
+        return this.isTurboMode
+            ? GameConfig.turbo.reelStartDelay
+            : GameConfig.reel.reelStartDelay;
     }
 
     // =====================================================
@@ -678,6 +853,19 @@ export class SlotMachine extends Scene {
         this.isSpinning = false;
 
         this.enableControls();
+
+        if (!this.isAutoSpinning) {
+            return;
+        }
+
+        this.time.delayedCall(
+            250,
+            () => {
+                if (this.isAutoSpinning) {
+                    this.spin();
+                }
+            }
+        );
     }
 
     // =====================================================
@@ -704,7 +892,7 @@ export class SlotMachine extends Scene {
     private enableControls(): void {
         this.setButtonEnabled(
             this.spinBtn,
-            true
+            !this.isAutoSpinning
         );
 
         this.updateBetButtons();

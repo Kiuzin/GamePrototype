@@ -40,6 +40,11 @@ export const GameConfig = {
         reelStartDelay: 300,
     },
 
+    turbo: {
+        spinDuration: 700,
+        reelStartDelay: 100,
+    },
+
     winPresentation: {
         lineDuration: 900,
 
@@ -170,11 +175,29 @@ export const GameConfig = {
             width: 150,
             height: 150,
         },
+
+        autoSpinButton: {
+            x: 215,
+            y: 1750,
+            width: 220,
+            height: 70,
+        },
+
+        turboButton: {
+            x: 865,
+            y: 1750,
+            width: 220,
+            height: 70,
+        },
     },
 
     colors: {
         background: 0x222222,
         button: 0xaaaaaa,
+        autoSpinButton: 0xaaaaaa,
+        activeAutoSpinButton: 0xd28b21,
+        turboButton: 0xaaaaaa,
+        activeTurboButton: 0xe6b800,
         buttonText: '#000000',
         text: '#ffffff',
         win: '#ffff00',

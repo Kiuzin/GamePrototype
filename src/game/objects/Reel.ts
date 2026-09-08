@@ -112,7 +112,9 @@ export class Reel {
     // =====================================================
 
     public startSpin(
-        finalColumn: string[]
+        finalColumn: string[],
+        duration: number =
+            GameConfig.reel.spinDuration
     ): void {
         if (this.isSpinning) {
             return;
@@ -172,7 +174,7 @@ export class Reel {
                 this.targetPosition,
 
             duration:
-                GameConfig.reel.spinDuration,
+                duration,
 
             ease:
                 'Cubic.easeOut',
