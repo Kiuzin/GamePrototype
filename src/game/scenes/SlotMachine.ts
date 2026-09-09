@@ -36,16 +36,10 @@ export class SlotMachine extends Scene {
         GameObjects.Image;
 
     private autoSpinBtn?:
-        GameObjects.Rectangle;
-
-    private autoSpinText?:
-        GameObjects.Text;
+        GameObjects.Image;
 
     private turboBtn?:
-        GameObjects.Rectangle;
-
-    private turboText?:
-        GameObjects.Text;
+        GameObjects.Image;
 
     private historyModal?:
         GameObjects.Container;
@@ -134,6 +128,8 @@ export class SlotMachine extends Scene {
         this.createReelFrame();
 
         this.createControlsBackdrop();
+
+        this.createControlsDetails();
 
         this.createDebugText();
 
@@ -344,6 +340,38 @@ export class SlotMachine extends Scene {
                 backdrop.width,
                 backdrop.height
             );
+    }
+
+    private createControlsDetails(): void {
+        const details =
+            GameConfig.layout.controlsDetails;
+
+        const oppositeDetails =
+            GameConfig.layout
+                .controlsDetailsOpposite;
+
+        this.add
+            .image(
+                details.x,
+                details.y,
+                'slotMachineControlsDetails'
+            )
+            .setDisplaySize(
+                details.width,
+                details.height
+            );
+
+        this.add
+            .image(
+                oppositeDetails.x,
+                oppositeDetails.y,
+                'slotMachineControlsDetails'
+            )
+            .setDisplaySize(
+                oppositeDetails.width,
+                oppositeDetails.height
+            )
+            .setFlipX(true);
     }
 
     // =====================================================
@@ -584,24 +612,16 @@ export class SlotMachine extends Scene {
             GameConfig.layout.autoSpinButton;
 
         this.autoSpinBtn =
-            this.add.rectangle(
+            this.add.image(
                 button.x,
                 button.y,
-                button.width,
-                button.height,
-                GameConfig.colors.autoSpinButton
-            ).setInteractive();
-
-        this.autoSpinText =
-            this.createLabel(
-                button.x,
-                button.y,
-                'AUTO SPIN',
-                {
-                    fontSize: '28px',
-                    color: GameConfig.colors.buttonText,
-                }
-            );
+                'slotMachineAutoSpinOnButton'
+            )
+                .setDisplaySize(
+                    button.width,
+                    button.height
+                )
+                .setInteractive();
 
         this.autoSpinBtn.on(
             'pointerdown',
@@ -635,16 +655,14 @@ export class SlotMachine extends Scene {
     }
 
     private updateAutoSpinButton(): void {
-        this.autoSpinBtn?.setFillStyle(
-            this.isAutoSpinning
-                ? GameConfig.colors.activeAutoSpinButton
-                : GameConfig.colors.autoSpinButton
-        );
+        if (!this.autoSpinBtn) {
+            return;
+        }
 
-        this.autoSpinText?.setText(
+        this.autoSpinBtn.setTexture(
             this.isAutoSpinning
-                ? 'STOP AUTO'
-                : 'AUTO SPIN'
+                ? 'slotMachineAutoSpinOffButton'
+                : 'slotMachineAutoSpinOnButton'
         );
     }
 
@@ -653,24 +671,16 @@ export class SlotMachine extends Scene {
             GameConfig.layout.turboButton;
 
         this.turboBtn =
-            this.add.rectangle(
+            this.add.image(
                 button.x,
                 button.y,
-                button.width,
-                button.height,
-                GameConfig.colors.turboButton
-            ).setInteractive();
-
-        this.turboText =
-            this.createLabel(
-                button.x,
-                button.y,
-                'TURBO MODE',
-                {
-                    fontSize: '24px',
-                    color: GameConfig.colors.buttonText,
-                }
-            );
+                'slotMachineTurboOnButton'
+            )
+                .setDisplaySize(
+                    button.width,
+                    button.height
+                )
+                .setInteractive();
 
         this.turboBtn.on(
             'pointerdown',
@@ -688,16 +698,10 @@ export class SlotMachine extends Scene {
     }
 
     private updateTurboButton(): void {
-        this.turboBtn?.setFillStyle(
+        this.turboBtn?.setTexture(
             this.isTurboMode
-                ? GameConfig.colors.activeTurboButton
-                : GameConfig.colors.turboButton
-        );
-
-        this.turboText?.setText(
-            this.isTurboMode
-                ? 'TURBO ON'
-                : 'TURBO MODE'
+                ? 'slotMachineTurboOffButton'
+                : 'slotMachineTurboOnButton'
         );
     }
 
@@ -706,23 +710,16 @@ export class SlotMachine extends Scene {
             GameConfig.layout.historyButton;
 
         const historyButton =
-            this.add.rectangle(
+            this.add.image(
                 button.x,
                 button.y,
-                button.width,
-                button.height,
-                GameConfig.colors.historyButton
-            ).setInteractive();
-
-        this.createLabel(
-            button.x,
-            button.y,
-            'HISTÓRICO',
-            {
-                fontSize: '24px',
-                color: GameConfig.colors.buttonText,
-            }
-        );
+                'slotMachineHistoryButton'
+            )
+                .setDisplaySize(
+                    button.width,
+                    button.height
+                )
+                .setInteractive();
 
         historyButton.on(
             'pointerdown',

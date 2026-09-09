@@ -77,17 +77,17 @@ export const GameConfig = {
     layout: {
 
         betDecreaseButton: {
-            x: 335,
-            y: 1585,
-            width: 125,
-            height: 125,
+            x: 370,
+            y: 1600,
+            width: 140,
+            height: 140,
         },
 
         betIncreaseButton: {
-            x: 750,
-            y: 1585,
-            width: 125,
-            height: 125,
+            x: 700,
+            y: 1600,
+            width: 140,
+            height: 140,
         },
 
         reelPositions: [
@@ -126,6 +126,20 @@ export const GameConfig = {
             height: 810,
         },
 
+        controlsDetails: {
+            x: 175,
+            y: 1590,
+            width: 225,
+            height: 125,
+        },
+
+        controlsDetailsOpposite: {
+            x: 905,
+            y: 1590,
+            width: 225,
+            height: 125,
+        },
+
         reelMask: {
             // Janela visível de cada rolo.
             width: 250,
@@ -148,30 +162,30 @@ export const GameConfig = {
         },
 
         balanceLabel: {
-            x: 125,
+            x: 145,
             y: 1560,
-            fontSize: '16px',
+            fontSize: '24px',
             color: '#ffffff',
         },
 
         balanceValue: {
-            x: 150,
+            x: 175,
             y: 1600,
-            fontSize: '32px',
+            fontSize: '38px',
             color: '#00ff00',
         },
 
         betLabel: {
-            x: 880,
+            x: 850,
             y: 1560,
-            fontSize: '16px',
+            fontSize: '24px',
             color: '#ffffff',
         },
 
         betValue: {
-            x: 920,
+            x: 910,
             y: 1600,
-            fontSize: '32px',
+            fontSize: '38px',
             color: '#ffffff',
         },
 
@@ -183,29 +197,29 @@ export const GameConfig = {
         spinButton: {
             x: 536,
             y: 1578,
-            width: 215,
-            height: 215,
+            width: 175,
+            height: 175,
         },
 
         autoSpinButton: {
             x: 215,
-            y: 1750,
-            width: 220,
-            height: 70,
+            y: 1775,
+            width: 275,
+            height: 135,
         },
 
         turboButton: {
-            x: 865,
-            y: 1750,
-            width: 220,
-            height: 70,
+            x: 875,
+            y: 1775,
+            width: 285,
+            height: 150,
         },
 
         historyButton: {
             x: 540,
-            y: 1750,
-            width: 300,
-            height: 70,
+            y: 1775,
+            width: 350,
+            height: 100,
         },
     },
 

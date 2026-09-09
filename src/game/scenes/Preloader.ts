@@ -56,7 +56,12 @@ export class Preloader extends Scene {
 
         this.load.image(
             'slotMachineControlsBackdrop',
-            'CornGame/lower_Background.png'
+            'CornGame/lower_Background2.png'
+        );
+
+        this.load.image(
+            'slotMachineControlsDetails',
+            'CornGame/background_details.png'
         );
 
         this.load.image(
@@ -72,6 +77,31 @@ export class Preloader extends Scene {
         this.load.image(
             'slotMachinePlusButton',
             'CornGame/plus_button.png'
+        );
+
+        this.load.image(
+            'slotMachineAutoSpinOnButton',
+            'CornGame/auto-on_button.png'
+        );
+
+        this.load.image(
+            'slotMachineAutoSpinOffButton',
+            'CornGame/auto-off_button.png'
+        );
+
+        this.load.image(
+            'slotMachineTurboOnButton',
+            'CornGame/turbo-on_button.png'
+        );
+
+        this.load.image(
+            'slotMachineTurboOffButton',
+            'CornGame/turbo-off_button.png'
+        );
+
+        this.load.image(
+            'slotMachineHistoryButton',
+            'CornGame/history_button.png'
         );
 
         this.load.image(
