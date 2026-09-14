@@ -10,6 +10,6 @@ export class Boot extends Scene {
     }
 
     public create(): void {
-        this.scene.start('Preloader');
+        this.scene.start('MainMenu');
     }
 }

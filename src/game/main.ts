@@ -2,7 +2,6 @@ import { Boot } from './scenes/Boot';
 import { MainMenu } from './scenes/MainMenu';
 import { SlotMachine } from './scenes/SlotMachine';
 import { CANVAS, Game, Scale } from 'phaser';
-import { Preloader } from './scenes/Preloader';
 import { GameConfig } from './config/GameConfig';
 
 //  Find out more information about the Game Config at:
@@ -19,7 +18,6 @@ const config: Phaser.Types.Core.GameConfig = {
     },
     scene: [
         Boot,
-        Preloader,
         MainMenu,
         SlotMachine,
     ],

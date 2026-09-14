@@ -50,12 +50,7 @@ body {
     justify-content: center;
     border-radius: 28px;
     overflow: hidden;
-    /* box-shadow:
-        0 28px 80px var(--panel-shadow),
-        0 0 0 8px rgba(255, 255, 255, 0.025),
-        inset 0 0 0 1px var(--panel-border); */
     background: #111827;
-    /* border: 1px solid var(--canvas-border); */
 }
 
 #game-container canvas {
