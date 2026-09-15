@@ -66,7 +66,7 @@ const symbols: readonly SlotSymbol[] = [
         winAnimation: 'bouncing',
 
         payout: {
-            3: 20,
+            3: 2,
         },
     },
 
@@ -78,7 +78,7 @@ const symbols: readonly SlotSymbol[] = [
         winAnimation: 'scaling',
 
         payout: {
-            3: 50,
+            3: 5,
         },
     },
 
@@ -90,7 +90,7 @@ const symbols: readonly SlotSymbol[] = [
         winAnimation: 'wiggle',
 
         payout: {
-            3: 50,
+            3: 25,
         },
     },
 
@@ -102,7 +102,7 @@ const symbols: readonly SlotSymbol[] = [
         winAnimation: 'scaling',
 
         payout: {
-            3: 100,
+            3: 50,
         },
     },
 ];

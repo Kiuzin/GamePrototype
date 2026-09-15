@@ -13,21 +13,14 @@ import type {
     SpinResult,
 } from '../logic/SlotCore';
 
-import {
-    BetManager,
-} from '../logic/BetManager';
+import { SlotSession } from '../logic/SlotSession';
 
 import { Reel } from '../objects/Reel';
 
 import {
     WinPresentation,
 } from '../presentation/WinPresentation';
-
-interface SpinHistoryEntry {
-    bet: number;
-    payout: number;
-    winningLines: number;
-}
+import { SpinHistoryModal } from '../presentation/SpinHistoryModal';
 
 export class SlotMachine extends Scene {
     private reels: Reel[] = [];
@@ -41,8 +34,9 @@ export class SlotMachine extends Scene {
     private turboBtn?:
         GameObjects.Image;
 
-    private historyModal?:
-        GameObjects.Container;
+    private historyModal?: SpinHistoryModal;
+
+    private historyOverlay?: GameObjects.Container;
 
     private winPresentation?:
         WinPresentation;
@@ -68,17 +62,11 @@ export class SlotMachine extends Scene {
     /**
      * Saldo atual do jogador.
      */
-    private balance =
-        GameConfig.bet.initialBalance;
+    private readonly session = new SlotSession();
 
     /**
      * Controlador dos níveis de aposta.
      */
-    private readonly betManager =
-        new BetManager(
-            GameConfig.bet.values,
-            GameConfig.bet.defaultBet
-        );
 
     /**
      * Impede alterações enquanto
@@ -109,14 +97,13 @@ export class SlotMachine extends Scene {
      * Rodadas mais recentes, da mais nova
      * para a mais antiga.
      */
-    private readonly spinHistory:
-        SpinHistoryEntry[] = [];
 
     constructor() {
         super('SlotMachine');
     }
 
     create(): void {
+        this.historyModal = new SpinHistoryModal(this);
         this.createBackground();
 
         this.createTitle();
@@ -520,7 +507,7 @@ export class SlotMachine extends Scene {
             return;
         }
 
-        this.betManager.increase();
+        this.session.betManager.increase();
 
         this.updateBetUI();
 
@@ -532,7 +519,7 @@ export class SlotMachine extends Scene {
             return;
         }
 
-        this.betManager.decrease();
+        this.session.betManager.decrease();
 
         this.updateBetUI();
 
@@ -730,6 +717,7 @@ export class SlotMachine extends Scene {
     }
 
     private openHistoryModal(): void {
+        this.historyModal?.close();
         this.closeHistoryModal();
 
         const { width, height } =
@@ -814,7 +802,7 @@ export class SlotMachine extends Scene {
             closeText,
         ]);
 
-        this.historyModal = modal;
+        this.historyOverlay = modal;
     }
 
     private createHistoryEntriesText(
@@ -822,9 +810,9 @@ export class SlotMachine extends Scene {
         y: number
     ): GameObjects.Text {
         const content =
-            this.spinHistory.length === 0
+            this.session.getHistory().length === 0
                 ? 'NENHUMA JOGADA REALIZADA.'
-                : this.spinHistory.map(
+                : this.session.getHistory().map(
                     (entry, index) => {
                         const result =
                             entry.winningLines > 0
@@ -852,9 +840,9 @@ export class SlotMachine extends Scene {
     }
 
     private closeHistoryModal(): void {
-        this.historyModal?.destroy();
+        this.historyOverlay?.destroy();
 
-        this.historyModal = undefined;
+        this.historyOverlay = undefined;
     }
 
     // =====================================================
@@ -869,15 +857,14 @@ export class SlotMachine extends Scene {
         this.winPresentation?.stop();
 
         const currentBet =
-            this.betManager.getCurrentBet();
+            this.session.betManager.getCurrentBet();
 
         // -----------------------------------------
         // VALIDA SALDO
         // -----------------------------------------
 
         if (
-            this.balance <
-            currentBet
+            !this.session.canAffordCurrentBet()
         ) {
             if (this.isAutoSpinning) {
                 this.isAutoSpinning = false;
@@ -906,8 +893,7 @@ export class SlotMachine extends Scene {
         // DESCONTA A APOSTA
         // -----------------------------------------
 
-        this.balance -=
-            currentBet;
+        this.session.placeBet();
 
         this.updateBalanceUI();
 
@@ -1002,8 +988,7 @@ export class SlotMachine extends Scene {
         // CREDITA PRÊMIO
         // ==========================================
 
-        this.balance +=
-            payout.totalPayout;
+        this.session.creditPayout(payout.totalPayout);
 
         this.updateBalanceUI();
 
@@ -1087,19 +1072,13 @@ export class SlotMachine extends Scene {
     private addSpinToHistory(
         playResult: SpinResult
     ): void {
-        this.spinHistory.unshift({
+        this.session.addHistoryEntry({
             bet: playResult.bet,
             payout: playResult.payout.totalPayout,
             winningLines:
                 playResult.winningLines.length,
         });
 
-        if (
-            this.spinHistory.length >
-            GameConfig.history.maxEntries
-        ) {
-            this.spinHistory.pop();
-        }
     }
 
     // =====================================================
@@ -1134,7 +1113,7 @@ export class SlotMachine extends Scene {
 
     private updateBalanceUI(): void {
         this.balanceValueText?.setText(
-            this.balance.toFixed(
+            this.session.getBalance().toFixed(
                 2
             )
         );
@@ -1142,7 +1121,7 @@ export class SlotMachine extends Scene {
 
     private updateBetUI(): void {
         const currentBet =
-            this.betManager.getCurrentBet();
+            this.session.betManager.getCurrentBet();
 
         this.betValueText?.setText(
             currentBet.toFixed(2)
@@ -1160,12 +1139,12 @@ export class SlotMachine extends Scene {
 
         this.setImageButtonEnabled(
             this.betDecreaseBtn,
-            this.betManager.canDecrease()
+            this.session.betManager.canDecrease()
         );
 
         this.setImageButtonEnabled(
             this.betIncreaseBtn,
-            this.betManager.canIncrease()
+            this.session.betManager.canIncrease()
         );
     }
 

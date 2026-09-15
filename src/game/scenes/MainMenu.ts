@@ -75,10 +75,10 @@ export class MainMenu extends Scene {
         this.add.text(
             centerX,
             centerY - 170,
-            'SLOT MACHINE',
+            'Corn Game',
             {
                 fontFamily: 'Arial Black, Arial',
-                fontSize: '58px',
+                fontSize: '62px',
                 color: '#ffffff',
                 stroke: '#111827',
                 strokeThickness: 10,
