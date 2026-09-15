@@ -51,6 +51,13 @@ export class Reel {
 
     private reelStrip: string[];
 
+    /**
+     * Strip visual temporário usado por funcionalidades. Ele não altera
+     * o strip físico e garante que, durante o giro, nenhum símbolo fora
+     * do conjunto permitido seja exibido.
+     */
+    private featureSpinStrip?: string[];
+
     private position = 0;
 
     private targetPosition: number | null = null;
@@ -59,6 +66,16 @@ export class Reel {
 
     private readonly symbolVisuals:
         ReelSymbolVisual[] = [];
+
+    /**
+     * Camada independente para símbolos travados por funcionalidades.
+     * Ela fica sobre o rolo em movimento para que a posição permaneça
+     * visualmente fixa durante um re-spin.
+     */
+    private readonly lockedSymbolVisuals:
+        ReelSymbolVisual[] = [];
+
+    private lockedRows: Array<string | null> = [];
 
     private readonly container:
         GameObjects.Container;
@@ -96,6 +113,8 @@ export class Reel {
 
         this.createVisualSymbols();
 
+        this.createLockedSymbolVisuals();
+
         this.maskGraphics =
             this.createVisibleAreaMask();
 
@@ -114,7 +133,8 @@ export class Reel {
     public startSpin(
         finalColumn: string[],
         duration: number =
-            GameConfig.reel.spinDuration
+            GameConfig.reel.spinDuration,
+        featureSpinSymbols?: readonly string[]
     ): void {
         if (this.isSpinning) {
             return;
@@ -167,6 +187,21 @@ export class Reel {
             this.position +
             totalDistance;
 
+        this.featureSpinStrip =
+            featureSpinSymbols &&
+            featureSpinSymbols.length > 0
+                ? this.createFeatureSpinStrip(
+                    featureSpinSymbols,
+                    targetIndex,
+                    finalColumn
+                )
+                : undefined;
+
+        // Troca o conteúdo visual no mesmo frame em que o giro começa.
+        // Isso evita que o strip regular fique visível entre rodadas
+        // da funcionalidade especial.
+        this.render();
+
         this.scene.tweens.add({
             targets: this,
 
@@ -187,9 +222,11 @@ export class Reel {
                 this.position =
                     this.targetPosition!;
 
-                this.render();
-
                 this.isSpinning = false;
+
+                this.featureSpinStrip = undefined;
+
+                this.render();
 
                 this.onSpinComplete();
             },
@@ -201,6 +238,34 @@ export class Reel {
     ): void {
         this.onCompleteCallback =
             callback;
+    }
+
+    /**
+     * Mantém símbolos em suas posições visíveis enquanto o rolo volta
+     * a girar. Valores nulos representam posições livres.
+     */
+    public setLockedRows(
+        lockedRows: Array<string | null>
+    ): void {
+        if (
+            lockedRows.length !==
+            this.visibleRows
+        ) {
+            throw new Error(
+                'As linhas travadas devem corresponder às linhas visíveis.'
+            );
+        }
+
+        this.lockedRows =
+            [...lockedRows];
+
+        this.renderLockedSymbols();
+    }
+
+    public clearLockedRows(): void {
+        this.lockedRows = [];
+
+        this.renderLockedSymbols();
     }
 
     // =====================================================
@@ -470,6 +535,80 @@ export class Reel {
             });
         }
     }
+
+    private createLockedSymbolVisuals(): void {
+        for (
+            let row = 0;
+            row < this.visibleRows;
+            row++
+        ) {
+            const background =
+                this.scene.add.rectangle(
+                    0,
+                    row * this.symbolStep,
+                    this.symbolWidth,
+                    this.symbolHeight,
+                    0xffffff
+                )
+                    .setStrokeStyle(
+                        5,
+                        0xffd54a
+                    )
+                    .setVisible(false);
+
+            const image =
+                this.scene.add.image(
+                    0,
+                    row * this.symbolStep,
+                    'symbolCrow'
+                )
+                    .setDisplaySize(
+                        this.symbolWidth,
+                        this.symbolHeight
+                    )
+                    .setVisible(false);
+
+            this.container.add([
+                background,
+                image,
+            ]);
+
+            this.lockedSymbolVisuals.push({
+                background,
+                image,
+            });
+        }
+    }
+
+    private createFeatureSpinStrip(
+        featureSpinSymbols: readonly string[],
+        targetIndex: number,
+        finalColumn: string[]
+    ): string[] {
+        const spinStrip = Array.from(
+            { length: this.stripLength },
+            () => {
+                const index = PhaserMath.Between(
+                    0,
+                    featureSpinSymbols.length - 1
+                );
+
+                return featureSpinSymbols[index];
+            }
+        );
+
+        finalColumn.forEach(
+            (symbolId, row) => {
+                spinStrip[
+                    this.wrapIndex(
+                        targetIndex + row
+                    )
+                ] = symbolId;
+            }
+        );
+
+        return spinStrip;
+    }
     /**
      * Recorta os símbolos à janela visível do rolo.
      * Os objetos acima e abaixo continuam animando,
@@ -593,6 +732,24 @@ export class Reel {
             const desiredSymbol =
                 finalColumn[row];
 
+            // O vazio é um símbolo técnico de funcionalidades especiais.
+            // Ele não pertence ao strip regular e pode ocupar a janela
+            // de resultado sem precisar de um símbolo de origem.
+            if (
+                SymbolConfig.isBlank(
+                    desiredSymbol
+                )
+            ) {
+                strip[targetIndex] =
+                    desiredSymbol;
+
+                lockedPositions.add(
+                    targetIndex
+                );
+
+                continue;
+            }
+
             if (
                 strip[targetIndex] ===
                 desiredSymbol
@@ -659,7 +816,17 @@ export class Reel {
             if (
                 sourceIndex === -1
             ) {
-                return false;
+                // Funcionalidades especiais podem ter alterado a
+                // composição temporária do strip. Neste caso, prioriza-se
+                // a fidelidade do resultado contratado pela lógica.
+                strip[targetIndex] =
+                    desiredSymbol;
+
+                lockedPositions.add(
+                    targetIndex
+                );
+
+                continue;
             }
 
             [
@@ -730,8 +897,12 @@ export class Reel {
                         1
                 );
 
+            const activeStrip =
+                this.featureSpinStrip ??
+                this.reelStrip;
+
             const symbolId =
-                this.reelStrip[
+                activeStrip[
                     stripIndex
                 ];
 
@@ -794,6 +965,58 @@ export class Reel {
 
             symbolVisual.background.setVisible(
                 true
+            );
+        }
+
+        this.renderLockedSymbols();
+    }
+
+    private renderLockedSymbols(): void {
+        for (
+            let row = 0;
+            row < this.visibleRows;
+            row++
+        ) {
+            const symbolVisual =
+                this.lockedSymbolVisuals[row];
+
+            const symbolId =
+                this.lockedRows[row];
+
+            const symbol = SymbolConfig.getById(
+                symbolId ?? ''
+            );
+
+            if (!symbol) {
+                symbolVisual?.background.setVisible(
+                    false
+                );
+
+                symbolVisual?.image.setVisible(
+                    false
+                );
+
+                continue;
+            }
+
+            symbolVisual.background
+                .setFillStyle(symbol.color)
+                .setVisible(true);
+
+            if (symbol.textureKey) {
+                symbolVisual.image
+                    .setTexture(symbol.textureKey)
+                    .setDisplaySize(
+                        this.symbolWidth,
+                        this.symbolHeight
+                    )
+                    .setVisible(true);
+
+                continue;
+            }
+
+            symbolVisual.image.setVisible(
+                false
             );
         }
     }

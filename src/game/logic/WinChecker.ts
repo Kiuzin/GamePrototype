@@ -233,6 +233,18 @@ export class WinChecker {
                     symbol !== wildId
             );
 
+        // Posições vazias podem aparecer em funcionalidades especiais,
+        // mas nunca representam um símbolo pagador, nem mesmo quando
+        // combinadas com Wilds.
+        if (
+            regularSymbols.some(
+                symbol =>
+                    SymbolConfig.isBlank(symbol)
+            )
+        ) {
+            return null;
+        }
+
         // Segurança
         if (
             regularSymbols.length === 0

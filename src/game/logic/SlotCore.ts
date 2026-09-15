@@ -42,6 +42,27 @@ export class SlotCore {
     public static play(
         bet: number
     ): SpinResult {
+        const grid =
+            RandomGenerator.generateOutcome(
+                GameConfig.reels,
+                GameConfig.rows
+            );
+
+        return this.resolve(
+            bet,
+            grid
+        );
+    }
+
+    /**
+     * Resolve uma grade já definida. Funcionalidades especiais usam este
+     * ponto de entrada para manter a mesma validação de linhas e pagamentos
+     * aplicada às rodadas regulares.
+     */
+    public static resolve(
+        bet: number,
+        grid: string[][]
+    ): SpinResult {
         if (
             !Number.isFinite(bet) ||
             bet <= 0
@@ -50,12 +71,6 @@ export class SlotCore {
                 'SlotCore.play requires a positive bet.'
             );
         }
-
-        const grid =
-            RandomGenerator.generateOutcome(
-                GameConfig.reels,
-                GameConfig.rows
-            );
 
         const winningLines =
             WinChecker.checkWinningLines(

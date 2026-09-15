@@ -21,6 +21,13 @@ export interface SlotSymbol {
 
 const WILD_ID = 'Wild';
 
+/**
+ * Símbolo técnico utilizado por funcionalidades que precisam de uma
+ * posição vazia. Ele não faz parte dos símbolos regulares do jogo e,
+ * portanto, não pode ser sorteado em uma rodada comum nem gerar prêmio.
+ */
+const BLANK_ID = 'Blank';
+
 const symbols: readonly SlotSymbol[] = [
     {
         id: 'Crow',
@@ -110,10 +117,16 @@ const symbols: readonly SlotSymbol[] = [
 export const SymbolConfig = {
     WILD_ID,
 
+    BLANK_ID,
+
     SYMBOLS: symbols,
 
     isWild(id: string): boolean {
         return id === WILD_ID;
+    },
+
+    isBlank(id: string): boolean {
+        return id === BLANK_ID;
     },
 
     getById(id: string): SlotSymbol | undefined {
