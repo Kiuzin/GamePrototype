@@ -32,6 +32,9 @@ import {
 } from '../presentation/WinPresentation';
 import { SpinHistoryModal } from '../presentation/SpinHistoryModal';
 import { LuckyCornFeedback } from '../presentation/LuckyCornFeedback';
+import { HorseRacePresentation } from '../presentation/HorseRacePresentation';
+import { HorseRaceFeature } from '../logic/HorseRaceFeature';
+import type { HorseRaceResult } from '../logic/HorseRaceFeature';
 
 export class SlotMachine extends Scene {
     private reels: Reel[] = [];
@@ -54,6 +57,8 @@ export class SlotMachine extends Scene {
 
     private luckyCornFeedback?:
         LuckyCornFeedback;
+
+    private horseRacePresentation?: HorseRacePresentation;
 
     private betDecreaseBtn?:
         GameObjects.Image;
@@ -86,6 +91,9 @@ export class SlotMachine extends Scene {
             reels: GameConfig.reels,
             rows: GameConfig.rows,
         });
+
+    private readonly horseRaceFeature =
+        new HorseRaceFeature();
 
     /**
      * Controlador dos níveis de aposta.
@@ -168,6 +176,7 @@ export class SlotMachine extends Scene {
         this.createWinPresentation();
 
         this.createLuckyCornFeedback();
+        this.horseRacePresentation = new HorseRacePresentation(this);
     }
 
     update(
@@ -887,6 +896,7 @@ export class SlotMachine extends Scene {
         this.winPresentation?.stop();
 
         this.luckyCornFeedback?.clear();
+        this.horseRacePresentation?.clear();
 
         this.clearReelLocks();
 
@@ -940,6 +950,14 @@ export class SlotMachine extends Scene {
 
         const playResult =
             SlotCore.play(currentBet);
+
+        // A corrida é um bônus de continuação: só pode ser sorteada
+        // quando a rodada base já gerou algum ganho.
+        const horseRaceActivation =
+            luckyCornActivation ||
+            playResult.payout.totalPayout <= 0
+                ? false
+                : this.horseRaceFeature.tryStart();
 
         // -----------------------------------------
         // DEBUG
@@ -1002,6 +1020,11 @@ export class SlotMachine extends Scene {
                                         return;
                                     }
 
+                                    if (horseRaceActivation) {
+                                        this.startHorseRace(currentBet, playResult);
+                                        return;
+                                    }
+
                                     this.finishSpin(
                                         playResult
                                     );
@@ -1029,6 +1052,29 @@ export class SlotMachine extends Scene {
         return this.isTurboMode
             ? GameConfig.turbo.reelStartDelay
             : GameConfig.reel.reelStartDelay;
+    }
+
+    // =====================================================
+    // CORRIDA DE TRATORES
+    // =====================================================
+
+    private startHorseRace(currentBet: number, baseResult: SpinResult): void {
+        const presentation = this.horseRacePresentation;
+        if (!presentation) { this.horseRaceFeature.finish(); this.finishSpin(baseResult); return; }
+        presentation.showSelection(this.horseRaceFeature.getRunners(), selectedRunnerId => {
+            const result = this.horseRaceFeature.run(selectedRunnerId);
+            presentation.playRace(result, FeatureConfig.horseRace.segmentDuration, () => {
+                this.completeHorseRace(currentBet, baseResult, result);
+            });
+        });
+    }
+
+    private completeHorseRace(currentBet: number, baseResult: SpinResult, result: HorseRaceResult): void {
+        const payout = this.horseRaceFeature.getPayout(currentBet, result.selectedRank);
+        this.horseRaceFeature.finish();
+        const finish = (): void => this.finishSpin(baseResult, payout);
+        if (!this.horseRacePresentation) { finish(); return; }
+        this.horseRacePresentation.showResult(result, payout, FeatureConfig.horseRace.resultDuration, finish);
     }
 
     // =====================================================
@@ -1238,7 +1284,8 @@ export class SlotMachine extends Scene {
     // =====================================================
 
     private finishSpin(
-        playResult: SpinResult
+        playResult: SpinResult,
+        bonusPayout = 0
     ): void {
         const {
             winningLines,
@@ -1249,11 +1296,11 @@ export class SlotMachine extends Scene {
         // CREDITA PRÊMIO
         // ==========================================
 
-        this.session.creditPayout(payout.totalPayout);
+        this.session.creditPayout(payout.totalPayout + bonusPayout);
 
         this.updateBalanceUI();
 
-        this.addSpinToHistory(playResult);
+        this.addSpinToHistory(playResult, bonusPayout);
 
         // ==========================================
         // NO WIN
@@ -1331,11 +1378,12 @@ export class SlotMachine extends Scene {
     }
 
     private addSpinToHistory(
-        playResult: SpinResult
+        playResult: SpinResult,
+        bonusPayout = 0
     ): void {
         this.session.addHistoryEntry({
             bet: playResult.bet,
-            payout: playResult.payout.totalPayout,
+            payout: playResult.payout.totalPayout + bonusPayout,
             winningLines:
                 playResult.winningLines.length,
         });
