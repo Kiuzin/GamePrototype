@@ -34,4 +34,10 @@ export const BonusLayoutConfig = {
             continueButton: { y: 1690, width: 390, height: 105, fontSize: '31px' },
         },
     },
+    treasureChest: {
+        depth: 520,
+        header: { y: 140, height: 225, titleY: 105, titleFontSize: '45px', subtitleY: 165, subtitleFontSize: '23px', progressY: 245, progressFontSize: '27px' },
+        grid: { columns: [285, 795], firstY: 530, rowGap: 270, cardWidth: 405, cardHeight: 220, chestOffsetY: -28, chestScale: 1.2, labelOffsetY: 75, labelFontSize: '25px' },
+        final: { totalY: 1600, totalFontSize: '54px', detailY: 1515, detailFontSize: '26px', continueButton: { y: 1700, width: 390, height: 105, fontSize: '31px' } },
+    },
 } as const;

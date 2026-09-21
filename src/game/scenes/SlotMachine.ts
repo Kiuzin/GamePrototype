@@ -35,6 +35,9 @@ import { LuckyCornFeedback } from '../presentation/LuckyCornFeedback';
 import { HorseRacePresentation } from '../presentation/HorseRacePresentation';
 import { HorseRaceFeature } from '../logic/HorseRaceFeature';
 import type { HorseRaceResult } from '../logic/HorseRaceFeature';
+import { TreasureChestFeature } from '../logic/TreasureChestFeature';
+import type { TreasureChestRound } from '../logic/TreasureChestFeature';
+import { TreasureChestPresentation } from '../presentation/TreasureChestPresentation';
 
 export class SlotMachine extends Scene {
     private reels: Reel[] = [];
@@ -57,6 +60,8 @@ export class SlotMachine extends Scene {
         LuckyCornFeedback;
 
     private horseRacePresentation?: HorseRacePresentation;
+
+    private treasureChestPresentation?: TreasureChestPresentation;
 
     private betDecreaseBtn?:
         GameObjects.Image;
@@ -92,6 +97,9 @@ export class SlotMachine extends Scene {
 
     private readonly horseRaceFeature =
         new HorseRaceFeature();
+
+    private readonly treasureChestFeature =
+        new TreasureChestFeature();
 
     /**
      * Controlador dos níveis de aposta.
@@ -175,6 +183,7 @@ export class SlotMachine extends Scene {
 
         this.createLuckyCornFeedback();
         this.horseRacePresentation = new HorseRacePresentation(this);
+        this.treasureChestPresentation = new TreasureChestPresentation(this);
     }
 
     update(
@@ -772,6 +781,7 @@ export class SlotMachine extends Scene {
 
         this.luckyCornFeedback?.clear();
         this.horseRacePresentation?.clear();
+        this.treasureChestPresentation?.clear();
 
         this.clearReelLocks();
 
@@ -833,6 +843,15 @@ export class SlotMachine extends Scene {
             playResult.payout.totalPayout <= 0
                 ? false
                 : this.horseRaceFeature.tryStart();
+
+        // Apenas um bônus de continuação pode ocorrer por rodada. A corrida
+        // possui prioridade quando ambas as funcionalidades estiverem ativas.
+        const treasureChestActivation =
+            luckyCornActivation ||
+            horseRaceActivation ||
+            playResult.payout.totalPayout <= 0
+                ? false
+                : this.treasureChestFeature.tryStart();
 
         // -----------------------------------------
         // DEBUG
@@ -909,6 +928,20 @@ export class SlotMachine extends Scene {
                                         return;
                                     }
 
+                                    if (treasureChestActivation) {
+                                        this.finishSpin(
+                                            playResult,
+                                            0,
+                                            () => {
+                                                this.startTreasureChest(
+                                                    playResult.payout
+                                                        .totalPayout
+                                                );
+                                            }
+                                        );
+                                        return;
+                                    }
+
                                     this.finishSpin(
                                         playResult
                                     );
@@ -974,6 +1007,65 @@ export class SlotMachine extends Scene {
         }
 
         this.horseRacePresentation.showResult(result, payout, finish);
+    }
+
+    // =====================================================
+    // BAÚS DO TESOURO
+    // =====================================================
+
+    private startTreasureChest(basePayout: number): void {
+        const presentation = this.treasureChestPresentation;
+        if (!presentation) {
+            this.treasureChestFeature.finish();
+            this.finishSpinInteraction();
+            return;
+        }
+
+        this.showTreasureChestRound(
+            basePayout,
+            this.treasureChestFeature.start()
+        );
+    }
+
+    private showTreasureChestRound(basePayout: number, round: TreasureChestRound): void {
+        const presentation = this.treasureChestPresentation;
+        if (!presentation) {
+            this.treasureChestFeature.finish();
+            this.finishSpinInteraction();
+            return;
+        }
+
+        presentation.show(
+            round,
+            basePayout,
+            chestId => {
+                const updatedRound = this.treasureChestFeature.select(chestId);
+                if (updatedRound.isFinished) {
+                    this.completeTreasureChest(basePayout, updatedRound);
+                    return;
+                }
+
+                this.showTreasureChestRound(basePayout, updatedRound);
+            }
+        );
+    }
+
+    private completeTreasureChest(basePayout: number, round: TreasureChestRound): void {
+        const extraPayout = this.treasureChestFeature.getExtraPayout(basePayout);
+        const finish = (): void => {
+            this.treasureChestFeature.finish();
+            this.session.creditPayout(extraPayout);
+            this.session.addPayoutToLatestHistory(extraPayout);
+            this.updateBalanceUI();
+            this.finishSpinInteraction();
+        };
+
+        if (!this.treasureChestPresentation) {
+            finish();
+            return;
+        }
+
+        this.treasureChestPresentation.showFinal(round, basePayout, finish);
     }
 
     // =====================================================

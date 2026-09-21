@@ -28,4 +28,12 @@ export const BonusThemeConfig = {
         colors: { highlight: '#ffe06b', primaryText: '#ffffff', secondaryText: '#d7edcf', darkText: '#102d20' },
         tractor: { bodyY: 3, bodyWidth: 108, bodyHeight: 70, strokeWidth: 3, emoji: '🚜', emojiFontSize: '68px' },
     },
+    treasureChest: {
+        overlay: { color: 0x07140e, alpha: 0.98 },
+        headerColor: 0x173b29,
+        card: { color: 0x204c35, selectedColor: 0x315f43, strokeColor: 0xffd54a, strokeWidth: 4, revealedStrokeColor: 0xffffff },
+        chest: { emoji: '🧰', emojiFontSize: '72px' },
+        colors: { highlight: '#ffe06b', primaryText: '#ffffff', secondaryText: '#cce6cb', reward: '#8ff0a4', ending: '#ff9b75' },
+        final: { buttonColor: 0xd28b21, buttonStrokeColor: 0xffe06b, buttonStrokeWidth: 3 },
+    },
 } as const;

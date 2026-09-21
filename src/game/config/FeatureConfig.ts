@@ -20,8 +20,8 @@ export const FeatureConfig = {
         maxRespins: 20,
     },
     horseRace: {
-        enabled: true,
-        activationChance: 100.04,
+        enabled: false,
+        activationChance: 0.04,
         segmentCount: 12,
         segmentDuration: 650,
         minimumSpeed: 45,
@@ -34,5 +34,14 @@ export const FeatureConfig = {
             { id: 'redTractor', name: 'TRATOR VERMELHO', color: 0xd65a5a },
             { id: 'yellowTractor', name: 'TRATOR AMARELO', color: 0xe0b844 },
         ],
+    },
+    treasureChest: {
+        enabled: true,
+        activationChance: 100.1,
+        chestCount: 8,
+        endingChestCount: 2,
+        rewardMultipliers: [0.5, 1, 1.5, 1.75, 2, 2.25],
+        revealDelay: 700,
+        payoutCountDuration: 1800,
     },
 } as const;
