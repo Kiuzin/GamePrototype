@@ -17,4 +17,9 @@ export const GameLayout = {
     autoSpinButton: { x: 215, y: 1775, width: 275, height: 135 },
     turboButton: { x: 875, y: 1775, width: 285, height: 150 },
     historyButton: { x: 540, y: 1775, width: 350, height: 100 },
+    historyModal: {
+        depth: 20, panel: { width: 900, height: 1080 }, titleY: 500,
+        content: { offsetX: -370, y: 590, width: 740 },
+        closeButton: { y: 1440, width: 240, height: 70 },
+    },
 } as const;

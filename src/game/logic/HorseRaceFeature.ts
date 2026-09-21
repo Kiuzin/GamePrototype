@@ -3,11 +3,11 @@ import { FeatureConfig } from '../config/FeatureConfig';
 export type HorseRaceRunner =
     typeof FeatureConfig.horseRace.runners[number];
 
-export interface HorseRaceResultRunner extends HorseRaceRunner {
+export type HorseRaceResultRunner = HorseRaceRunner & {
     speeds: number[];
     totalSpeed: number;
     rank: number;
-}
+};
 
 export interface HorseRaceResult {
     runners: HorseRaceResultRunner[];

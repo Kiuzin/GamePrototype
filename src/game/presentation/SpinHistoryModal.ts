@@ -1,5 +1,5 @@
 import { GameObjects, Scene } from 'phaser';
-import { GameTheme } from '../config/GameTheme';
+import { GameConfig } from '../config/GameConfig';
 import type { SpinHistoryEntry } from '../logic/SlotSession';
 
 export class SpinHistoryModal {
@@ -10,13 +10,15 @@ export class SpinHistoryModal {
     public open(entries: readonly SpinHistoryEntry[]): void {
         this.close();
         const { width, height } = this.scene.scale.gameSize;
-        const modal = this.scene.add.container(0, 0).setDepth(20);
-        const overlay = this.scene.add.rectangle(width / 2, height / 2, width, height, 0x000000, 0.7).setInteractive();
-        const panel = this.scene.add.rectangle(width / 2, height / 2, 900, 1080, 0x24150e).setStrokeStyle(4, 0xd28b21);
-        const title = this.createLabel(width / 2, 500, 'HISTÓRICO DE JOGADAS', { fontSize: '36px', color: GameTheme.colors.text });
-        const content = this.createEntriesText(width / 2 - 370, 590, entries);
-        const closeButton = this.scene.add.rectangle(width / 2, 1440, 240, 70, GameTheme.colors.button).setInteractive();
-        const closeText = this.createLabel(width / 2, 1440, 'FECHAR', { fontSize: '26px', color: GameTheme.colors.buttonText });
+        const layout = GameConfig.layout.historyModal;
+        const theme = GameConfig.historyModal;
+        const modal = this.scene.add.container(0, 0).setDepth(layout.depth);
+        const overlay = this.scene.add.rectangle(width / 2, height / 2, width, height, theme.overlayColor, theme.overlayAlpha).setInteractive();
+        const panel = this.scene.add.rectangle(width / 2, height / 2, layout.panel.width, layout.panel.height, theme.panelColor).setStrokeStyle(theme.panelStrokeWidth, theme.panelStrokeColor);
+        const title = this.createLabel(width / 2, layout.titleY, 'HISTÓRICO DE JOGADAS', { fontSize: '36px', color: GameConfig.colors.text });
+        const content = this.createEntriesText(width / 2 + layout.content.offsetX, layout.content.y, entries);
+        const closeButton = this.scene.add.rectangle(width / 2, layout.closeButton.y, layout.closeButton.width, layout.closeButton.height, GameConfig.colors.button).setInteractive();
+        const closeText = this.createLabel(width / 2, layout.closeButton.y, 'FECHAR', { fontSize: '26px', color: GameConfig.colors.buttonText });
         const close = (): void => this.close();
 
         overlay.on('pointerdown', close);
@@ -39,8 +41,8 @@ export class SpinHistoryModal {
             }).join('\n\n');
 
         return this.scene.add.text(x, y, text, {
-            fontFamily: 'Arial', fontSize: '28px', color: GameTheme.colors.text,
-            lineSpacing: 6, wordWrap: { width: 740 },
+            fontFamily: 'Arial', fontSize: '28px', color: GameConfig.colors.text,
+            lineSpacing: 6, wordWrap: { width: GameConfig.layout.historyModal.content.width },
         });
     }
 

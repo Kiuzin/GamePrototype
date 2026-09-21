@@ -50,8 +50,6 @@ export class SlotMachine extends Scene {
 
     private historyModal?: SpinHistoryModal;
 
-    private historyOverlay?: GameObjects.Container;
-
     private winPresentation?:
         WinPresentation;
 
@@ -756,132 +754,9 @@ export class SlotMachine extends Scene {
     }
 
     private openHistoryModal(): void {
-        this.historyModal?.close();
-        this.closeHistoryModal();
-
-        const { width, height } =
-            this.scale.gameSize;
-
-        const modal =
-            this.add.container(0, 0)
-                .setDepth(20);
-
-        const overlay =
-            this.add.rectangle(
-                width / 2,
-                height / 2,
-                width,
-                height,
-                0x000000,
-                0.7
-            ).setInteractive();
-
-        const panel =
-            this.add.rectangle(
-                width / 2,
-                height / 2,
-                900,
-                1080,
-                0x24150e
-            ).setStrokeStyle(
-                4,
-                0xd28b21
-            );
-
-        const title =
-            this.createLabel(
-                width / 2,
-                500,
-                'HISTÓRICO DE JOGADAS',
-                {
-                    fontSize: '36px',
-                    color: GameConfig.colors.text,
-                }
-            );
-
-        const entries =
-            this.createHistoryEntriesText(
-                width / 2 - 370,
-                590
-            );
-
-        const closeButton =
-            this.add.rectangle(
-                width / 2,
-                1440,
-                240,
-                70,
-                GameConfig.colors.button
-            ).setInteractive();
-
-        const closeText =
-            this.createLabel(
-                width / 2,
-                1440,
-                'FECHAR',
-                {
-                    fontSize: '26px',
-                    color: GameConfig.colors.buttonText,
-                }
-            );
-
-        const close = (): void => {
-            this.closeHistoryModal();
-        };
-
-        overlay.on('pointerdown', close);
-        closeButton.on('pointerdown', close);
-
-        modal.add([
-            overlay,
-            panel,
-            title,
-            entries,
-            closeButton,
-            closeText,
-        ]);
-
-        this.historyOverlay = modal;
-    }
-
-    private createHistoryEntriesText(
-        x: number,
-        y: number
-    ): GameObjects.Text {
-        const content =
-            this.session.getHistory().length === 0
-                ? 'NENHUMA JOGADA REALIZADA.'
-                : this.session.getHistory().map(
-                    (entry, index) => {
-                        const result =
-                            entry.winningLines > 0
-                                ? `GANHO ${entry.payout.toFixed(2)}`
-                                : 'SEM GANHO';
-
-                        return `${index + 1}. APOSTA ${entry.bet.toFixed(2)} | ${result}`;
-                    }
-                ).join('\n\n');
-
-        return this.add.text(
-            x,
-            y,
-            content,
-            {
-                fontFamily: 'Arial',
-                fontSize: '28px',
-                color: GameConfig.colors.text,
-                lineSpacing: 6,
-                wordWrap: {
-                    width: 740,
-                },
-            }
+        this.historyModal?.open(
+            this.session.getHistory()
         );
-    }
-
-    private closeHistoryModal(): void {
-        this.historyOverlay?.destroy();
-
-        this.historyOverlay = undefined;
     }
 
     // =====================================================

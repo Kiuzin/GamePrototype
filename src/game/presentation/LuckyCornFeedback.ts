@@ -5,6 +5,7 @@ import {
     Tweens,
 } from 'phaser';
 import { BonusLayoutConfig } from '../config/BonusLayoutConfig';
+import { BonusThemeConfig } from '../config/BonusThemeConfig';
 
 /**
  * Apresentação visual transitória do Milho da Sorte.
@@ -28,7 +29,7 @@ export class LuckyCornFeedback {
         this.showMessage(
             'O MILHO DA SORTE ESTÁ CHEGANDO!',
             'Os rolos ganharam um giro extra...',
-            '#ffe06b'
+            BonusThemeConfig.luckyCorn.colors.suspense
         );
     }
 
@@ -40,7 +41,7 @@ export class LuckyCornFeedback {
         this.showTimedMessage(
             'MILHO DA SORTE!',
             `Símbolo da sorte: ${selectedSymbolId.toUpperCase()}`,
-            '#ffd54a',
+            BonusThemeConfig.luckyCorn.colors.feature,
             duration,
             onComplete
         );
@@ -55,13 +56,13 @@ export class LuckyCornFeedback {
         const valueText = this.showMessage(
             'JACKPOT!',
             '0.00',
-            '#ffd54a'
+            BonusThemeConfig.luckyCorn.colors.feature
         );
 
         valueText.setStyle({
             fontSize: BonusLayoutConfig.luckyCorn.jackpotValueFontSize,
             fontStyle: 'bold',
-            color: '#ffe06b',
+            color: BonusThemeConfig.luckyCorn.colors.jackpot,
         });
 
         this.payoutCounter =
@@ -71,8 +72,9 @@ export class LuckyCornFeedback {
                 duration,
                 ease: 'Quad.easeOut',
                 onUpdate: tween => {
+                    const currentValue = tween.getValue() ?? 0;
                     valueText.setText(
-                        tween.getValue().toFixed(2)
+                        currentValue.toFixed(2)
                     );
                 },
                 onComplete: () => {
@@ -152,17 +154,18 @@ export class LuckyCornFeedback {
 
         const { width } = this.scene.scale.gameSize;
         const layout = BonusLayoutConfig.luckyCorn;
+        const theme = BonusThemeConfig.luckyCorn;
 
         const panel = this.scene.add.rectangle(
             width / 2,
             layout.panel.y,
             layout.panel.width,
             layout.panel.height,
-            0x2d1609,
-            0.96
+            theme.panel.color,
+            theme.panel.alpha
         ).setStrokeStyle(
-            5,
-            0xffd54a
+            theme.panel.strokeWidth,
+            theme.panel.strokeColor
         );
 
         const titleText = this.scene.add.text(
@@ -170,7 +173,7 @@ export class LuckyCornFeedback {
             layout.title.y,
             title,
             {
-                fontFamily: 'Arial',
+                fontFamily: BonusThemeConfig.fontFamily,
                 fontSize: layout.title.fontSize,
                 color,
                 fontStyle: 'bold',
@@ -182,9 +185,9 @@ export class LuckyCornFeedback {
             layout.detail.y,
             detail,
             {
-                fontFamily: 'Arial',
+                fontFamily: BonusThemeConfig.fontFamily,
                 fontSize: layout.detail.fontSize,
-                color: '#ffffff',
+                color: theme.colors.detail,
             }
         ).setOrigin(0.5);
 
@@ -199,14 +202,14 @@ export class LuckyCornFeedback {
         )
             .setDepth(layout.depth)
             .setAlpha(0)
-            .setScale(0.9);
+            .setScale(theme.entrance.initialScale);
 
         this.scene.tweens.add({
             targets: this.announcement,
             alpha: 1,
             scale: 1,
-            duration: 220,
-            ease: 'Back.easeOut',
+            duration: theme.entrance.duration,
+            ease: theme.entrance.ease,
         });
 
         return detailText;
