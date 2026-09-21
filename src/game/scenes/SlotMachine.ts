@@ -1021,7 +1021,16 @@ export class SlotMachine extends Scene {
                                     }
 
                                     if (horseRaceActivation) {
-                                        this.startHorseRace(currentBet, playResult);
+                                        this.finishSpin(
+                                            playResult,
+                                            0,
+                                            () => {
+                                                this.startHorseRace(
+                                                    playResult.payout
+                                                        .totalPayout
+                                                );
+                                            }
+                                        );
                                         return;
                                     }
 
@@ -1058,23 +1067,38 @@ export class SlotMachine extends Scene {
     // CORRIDA DE TRATORES
     // =====================================================
 
-    private startHorseRace(currentBet: number, baseResult: SpinResult): void {
+    private startHorseRace(basePayout: number): void {
         const presentation = this.horseRacePresentation;
-        if (!presentation) { this.horseRaceFeature.finish(); this.finishSpin(baseResult); return; }
+        if (!presentation) {
+            this.horseRaceFeature.finish();
+            this.finishSpinInteraction();
+            return;
+        }
+
         presentation.showSelection(this.horseRaceFeature.getRunners(), selectedRunnerId => {
             const result = this.horseRaceFeature.run(selectedRunnerId);
             presentation.playRace(result, FeatureConfig.horseRace.segmentDuration, () => {
-                this.completeHorseRace(currentBet, baseResult, result);
+                this.completeHorseRace(basePayout, result);
             });
         });
     }
 
-    private completeHorseRace(currentBet: number, baseResult: SpinResult, result: HorseRaceResult): void {
-        const payout = this.horseRaceFeature.getPayout(currentBet, result.selectedRank);
+    private completeHorseRace(basePayout: number, result: HorseRaceResult): void {
+        const payout = this.horseRaceFeature.getPayout(basePayout, result.selectedRank);
         this.horseRaceFeature.finish();
-        const finish = (): void => this.finishSpin(baseResult, payout);
-        if (!this.horseRacePresentation) { finish(); return; }
-        this.horseRacePresentation.showResult(result, payout, FeatureConfig.horseRace.resultDuration, finish);
+        const finish = (): void => {
+            this.session.creditPayout(payout);
+            this.session.addPayoutToLatestHistory(payout);
+            this.updateBalanceUI();
+            this.finishSpinInteraction();
+        };
+
+        if (!this.horseRacePresentation) {
+            finish();
+            return;
+        }
+
+        this.horseRacePresentation.showResult(result, payout, finish);
     }
 
     // =====================================================
@@ -1285,7 +1309,8 @@ export class SlotMachine extends Scene {
 
     private finishSpin(
         playResult: SpinResult,
-        bonusPayout = 0
+        bonusPayout = 0,
+        onComplete?: () => void
     ): void {
         const {
             winningLines,
@@ -1313,7 +1338,7 @@ export class SlotMachine extends Scene {
                 'NO WIN'
             );
 
-            this.finishSpinInteraction();
+            this.completeSpin(onComplete);
 
             return;
         }
@@ -1352,7 +1377,7 @@ export class SlotMachine extends Scene {
                             )}`
                         );
 
-                        this.finishSpinInteraction();
+                        this.completeSpin(onComplete);
                     },
             }
         );
@@ -1375,6 +1400,15 @@ export class SlotMachine extends Scene {
                 }
             }
         );
+    }
+
+    private completeSpin(onComplete?: () => void): void {
+        if (onComplete) {
+            onComplete();
+            return;
+        }
+
+        this.finishSpinInteraction();
     }
 
     private addSpinToHistory(

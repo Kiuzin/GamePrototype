@@ -4,6 +4,7 @@ import {
     Time,
     Tweens,
 } from 'phaser';
+import { BonusLayoutConfig } from '../config/BonusLayoutConfig';
 
 /**
  * Apresentação visual transitória do Milho da Sorte.
@@ -58,7 +59,7 @@ export class LuckyCornFeedback {
         );
 
         valueText.setStyle({
-            fontSize: '68px',
+            fontSize: BonusLayoutConfig.luckyCorn.jackpotValueFontSize,
             fontStyle: 'bold',
             color: '#ffe06b',
         });
@@ -150,12 +151,13 @@ export class LuckyCornFeedback {
         this.clear();
 
         const { width } = this.scene.scale.gameSize;
+        const layout = BonusLayoutConfig.luckyCorn;
 
         const panel = this.scene.add.rectangle(
             width / 2,
-            1010,
-            860,
-            215,
+            layout.panel.y,
+            layout.panel.width,
+            layout.panel.height,
             0x2d1609,
             0.96
         ).setStrokeStyle(
@@ -165,11 +167,11 @@ export class LuckyCornFeedback {
 
         const titleText = this.scene.add.text(
             width / 2,
-            965,
+            layout.title.y,
             title,
             {
                 fontFamily: 'Arial',
-                fontSize: '42px',
+                fontSize: layout.title.fontSize,
                 color,
                 fontStyle: 'bold',
             }
@@ -177,11 +179,11 @@ export class LuckyCornFeedback {
 
         const detailText = this.scene.add.text(
             width / 2,
-            1050,
+            layout.detail.y,
             detail,
             {
                 fontFamily: 'Arial',
-                fontSize: '27px',
+                fontSize: layout.detail.fontSize,
                 color: '#ffffff',
             }
         ).setOrigin(0.5);
@@ -195,7 +197,7 @@ export class LuckyCornFeedback {
                 detailText,
             ]
         )
-            .setDepth(200)
+            .setDepth(layout.depth)
             .setAlpha(0)
             .setScale(0.9);
 

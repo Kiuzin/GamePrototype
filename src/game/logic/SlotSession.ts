@@ -46,6 +46,16 @@ export class SlotSession {
         this.history.length = Math.min(this.history.length, GameSettings.history.maxEntries);
     }
 
+    public addPayoutToLatestHistory(payout: number): void {
+        const latestEntry = this.history[0];
+
+        if (!latestEntry) {
+            return;
+        }
+
+        latestEntry.payout += payout;
+    }
+
     public getHistory(): readonly SpinHistoryEntry[] {
         return this.history;
     }

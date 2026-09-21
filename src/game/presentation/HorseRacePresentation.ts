@@ -1,18 +1,12 @@
-import { GameObjects, Scene, Time } from 'phaser';
+import { GameObjects, Scene } from 'phaser';
+import { BonusLayoutConfig } from '../config/BonusLayoutConfig';
 import type { HorseRaceResult, HorseRaceRunner } from '../logic/HorseRaceFeature';
 
-/** Tela modal e animação da Corrida de Colheitadeiras. */
+/** Interface visual da Corrida de Tratores, isolada das regras de prêmio. */
 export class HorseRacePresentation {
-
-    horsespace = 160;
-
     private container?: GameObjects.Container;
 
     private readonly tractors: GameObjects.Container[] = [];
-
-    private pendingTimer?: Time.TimerEvent;
-
-    
 
     private selectionLocked = false;
 
@@ -21,126 +15,129 @@ export class HorseRacePresentation {
     public showSelection(runners: readonly HorseRaceRunner[], onSelect: (id: string) => void): void {
         this.clear();
         const { width, height } = this.scene.scale.gameSize;
+        const layout = BonusLayoutConfig.horseRace.selection;
         const items: GameObjects.GameObject[] = [
-            this.scene.add.rectangle(width / 2, height / 2, width, height, 0x08150f, 0.96),
-            this.scene.add.text(width / 2, 220, 'CORRIDA DE COLHEITADEIRAS', { fontFamily: 'Arial', fontSize: '46px', color: '#ffe06b', fontStyle: 'bold' }).setOrigin(0.5),
-            this.scene.add.text(width / 2, 285, 'ESCOLHA SEU CORREDOR', { fontFamily: 'Arial', fontSize: '26px', color: '#ffffff' }).setOrigin(0.5),
+            this.scene.add.rectangle(width / 2, height / 2, width, height, 0x07140e, 0.98),
+            this.scene.add.rectangle(width / 2, layout.header.y, width, layout.header.height, 0x153b28),
+            this.scene.add.text(width / 2, layout.header.eyebrowY, 'GRANDE PRÊMIO DA COLHEITA', { fontFamily: 'Arial', fontSize: '25px', color: '#ffe06b', letterSpacing: 4 }).setOrigin(0.5),
+            this.scene.add.text(width / 2, layout.header.titleY, 'CORRIDA DE TRATORES', { fontFamily: 'Arial', fontSize: '48px', color: '#ffffff', fontStyle: 'bold' }).setOrigin(0.5),
+            this.scene.add.text(width / 2, layout.header.subtitleY, 'ESCOLHA O SEU CORREDOR', { fontFamily: 'Arial', fontSize: '24px', color: '#b9d8bf' }).setOrigin(0.5),
         ];
-        runners.forEach((runner, index) => {
-            const y = 470 + index * this.horsespace;
-            const button = this.scene.add.rectangle(width / 2, y, 780, 160, runner.color).setStrokeStyle(4, 0xffffff).setInteractive();
-            const label = this.scene.add.text(width / 2, y, `🚜  ${runner.name}`, { fontFamily: 'Arial', fontSize: '32px', color: '#ffffff', fontStyle: 'bold' }).setOrigin(0.5);
-            button.on('pointerdown', () => {
-                if (this.selectionLocked) {
-                    return;
-                }
 
+        runners.forEach((runner, index) => {
+            const x = layout.cards.columns[index % 2];
+            const y = layout.cards.firstY + Math.floor(index / 2) * layout.cards.rowGap;
+            const card = this.scene.add.rectangle(x, y, layout.cards.width, layout.cards.height, 0x173b29).setStrokeStyle(4, runner.color).setInteractive();
+            const tractor = this.createTractor(x, y + layout.cards.tractorOffsetY, runner.color, 1.35);
+            const label = this.scene.add.text(x, y + layout.cards.labelOffsetY, runner.name, { fontFamily: 'Arial', fontSize: '24px', color: '#ffffff', fontStyle: 'bold', align: 'center', wordWrap: { width: 370 } }).setOrigin(0.5);
+            card.on('pointerdown', () => {
+                if (this.selectionLocked) return;
                 this.selectionLocked = true;
                 onSelect(runner.id);
             });
-            items.push(button, label);
+            items.push(card, tractor, label);
         });
-        this.container = this.scene.add.container(0, 0, items).setDepth(500);
+
+        this.container = this.scene.add.container(0, 0, items).setDepth(BonusLayoutConfig.horseRace.depth);
     }
 
     public playRace(result: HorseRaceResult, segmentDuration: number, onComplete: () => void): void {
         this.clear();
         const { width, height } = this.scene.scale.gameSize;
-        const startX = 120;
-        const trackWidth = width - 240;
+        const layout = BonusLayoutConfig.horseRace.race;
+        const startX = layout.track.startX;
+        const finishX = width - layout.track.finishRight;
+        const trackWidth = finishX - startX;
+        const segmentText = this.scene.add.text(width / 2, layout.header.segmentY, `TRECHO 1 / ${result.segmentCount}`, { fontFamily: 'Arial', fontSize: '24px', color: '#d7edcf', letterSpacing: 2 }).setOrigin(0.5);
         const items: GameObjects.GameObject[] = [
-            this.scene.add.rectangle(width / 2, height / 2, width, height, 0x163c29),
-            this.scene.add.text(width / 2, 130, 'CORRIDA DE COLHEITADEIRAS', { fontFamily: 'Arial', fontSize: '42px', color: '#ffe06b', fontStyle: 'bold' }).setOrigin(0.5),
+            this.scene.add.rectangle(width / 2, height / 2, width, height, 0x184c31),
+            this.scene.add.rectangle(width / 2, layout.header.y, width, layout.header.height, 0x102d20),
+            this.scene.add.text(width / 2, layout.header.titleY, 'CORRIDA DE TRATORES', { fontFamily: 'Arial', fontSize: '39px', color: '#ffe06b', fontStyle: 'bold' }).setOrigin(0.5),
+            segmentText,
         ];
-        let completed = 0;
-        const winnerTotal = result.runners[0].totalSpeed;
-        result.runners.forEach((runner, index) => {
-            const y = 390 + index * this.horsespace;
-            items.push(this.scene.add.line(width / 2, y, startX, 0, width - 120, 0, 0xffffff, 0.5).setLineWidth(3));
-            const tractor = this.scene.add.container(startX, y, [
-                this.scene.add.rectangle(0, 0, 145, 78, runner.color).setStrokeStyle(3, 0xffffff),
-                this.scene.add.text(0, 0, '🚜', { fontSize: '50px' }).setOrigin(0.5),
-            ]);
 
+        for (let segment = 1; segment < result.segmentCount; segment++) {
+            const x = startX + trackWidth * segment / result.segmentCount;
+            items.push(this.scene.add.line(x, 0, 0, 270, 0, height - 120, 0xffffff, 0.15).setLineWidth(2));
+        }
+
+        let completed = 0;
+        result.runners.forEach((runner, index) => {
+            const y = layout.track.firstLaneY + index * layout.track.laneHeight;
+            items.push(
+                this.scene.add.rectangle(width / 2, y, trackWidth + layout.track.laneExtraWidth, layout.track.laneHeight - layout.track.laneInset, index % 2 === 0 ? 0x265e3d : 0x215536, 0.95),
+                this.scene.add.text(layout.track.laneLabelX, y, `${index + 1}`, { fontFamily: 'Arial', fontSize: '23px', color: '#d7edcf', fontStyle: 'bold' }).setOrigin(0.5),
+                this.scene.add.line(finishX, y, 0, -50, 0, 70, 0xffffff, 0.9).setLineWidth(6)
+            );
+            const tractor = this.createTractor(startX, y, runner.color, 0.78);
             this.tractors.push(tractor);
             items.push(tractor);
-            let distance = 0;
-            const tweens = runner.speeds.map(speed => {
-                distance += speed;
-                return { x: startX + trackWidth * distance / winnerTotal, duration: segmentDuration, ease: 'Sine.easeInOut' };
+            let accumulated = 0;
+            const tweens = runner.speeds.map((speed, segment) => {
+                accumulated += speed;
+                return {
+                    x: startX + trackWidth * accumulated / result.winningTotal,
+                    duration: segmentDuration,
+                    ease: 'Sine.easeInOut',
+                    onStart: () => segmentText.setText(`TRECHO ${segment + 1} / ${result.segmentCount}`),
+                };
             });
-            this.scene.tweens.chain({
-                targets: tractor,
-                tweens,
-                onComplete: () => {
-                    completed++;
-
-                    if (completed === result.runners.length) {
-                        onComplete();
-                    }
-                },
-            });
+            this.scene.tweens.chain({ targets: tractor, tweens, onComplete: () => { completed++; if (completed === result.runners.length) onComplete(); } });
         });
-        this.container = this.scene.add.container(0, 0, items).setDepth(500);
+        this.container = this.scene.add.container(0, 0, items).setDepth(BonusLayoutConfig.horseRace.depth);
     }
 
-    public showResult(result: HorseRaceResult, payout: number, duration: number, onComplete: () => void): void {
+    public showResult(result: HorseRaceResult, payout: number, onComplete: () => void): void {
         this.clear();
         const { width, height } = this.scene.scale.gameSize;
-        const prize = payout > 0 ? `PRÊMIO: ${payout.toFixed(2)}` : 'SEM PREMIAÇÃO';
+        const layout = BonusLayoutConfig.horseRace.podium;
         const items: GameObjects.GameObject[] = [
-            this.scene.add.rectangle(width / 2, height / 2, width, height, 0x08150f, 0.96),
-            this.scene.add.text(width / 2, 280, 'RESULTADO DA CORRIDA', { fontFamily: 'Arial', fontSize: '42px', color: '#ffe06b', fontStyle: 'bold' }).setOrigin(0.5),
-            this.scene.add.text(width / 2, 360, 'PÓDIO FINAL', { fontFamily: 'Arial', fontSize: '30px', color: '#ffffff', fontStyle: 'bold' }).setOrigin(0.5),
+            this.scene.add.rectangle(width / 2, height / 2, width, height, 0x07140e, 0.98),
+            this.scene.add.text(width / 2, layout.titleY, 'PÓDIO DA COLHEITA', { fontFamily: 'Arial', fontSize: '46px', color: '#ffe06b', fontStyle: 'bold' }).setOrigin(0.5),
         ];
-
-        const podium = [
-            { rank: 2, x: 270, height: 210, color: 0xc0c0c0 },
-            { rank: 1, x: 540, height: 310, color: 0xffd54a },
-            { rank: 3, x: 810, height: 145, color: 0xcd7f32 },
-        ];
-
-        podium.forEach(place => {
+        layout.places.forEach(place => {
             const runner = result.runners.find(item => item.rank === place.rank);
-            if (!runner) {
-                return;
-            }
-
-            const baseY = 1190;
+            if (!runner) return;
+            const baseY = layout.baseY;
             const topY = baseY - place.height;
             items.push(
-                this.scene.add.rectangle(place.x, baseY - place.height / 2, 220, place.height, place.color).setStrokeStyle(4, 0xffffff),
-                this.scene.add.rectangle(place.x, topY - 62, 150, 72, runner.color).setStrokeStyle(3, 0xffffff),
-                this.scene.add.text(place.x, topY - 62, `${place.rank}º`, { fontFamily: 'Arial', fontSize: '34px', color: '#ffffff', fontStyle: 'bold' }).setOrigin(0.5),
-                this.scene.add.text(place.x, topY - 125, runner.name, { fontFamily: 'Arial', fontSize: '19px', color: '#ffffff', align: 'center', wordWrap: { width: 230 } }).setOrigin(0.5)
+                this.scene.add.rectangle(place.x, baseY - place.height / 2, 235, place.height, place.color).setStrokeStyle(4, 0xffffff),
+                this.createTractor(place.x, topY - 55, runner.color, 0.64),
+                this.scene.add.text(place.x, topY + 42, `${place.rank}º`, { fontFamily: 'Arial', fontSize: '38px', color: '#102d20', fontStyle: 'bold' }).setOrigin(0.5),
+                this.scene.add.text(place.x, topY - 120, runner.name, { fontFamily: 'Arial', fontSize: '18px', color: '#ffffff', wordWrap: { width: 230 }, align: 'center' }).setOrigin(0.5)
             );
         });
-
-        items.push(
-            this.scene.add.text(width / 2, 1450, `${result.selectedRank}º LUGAR\n${prize}`, { fontFamily: 'Arial', fontSize: '44px', color: payout > 0 ? '#ffe06b' : '#ffffff', align: 'center', fontStyle: 'bold' }).setOrigin(0.5)
-        );
-
-        this.container = this.scene.add.container(0, 0, items).setDepth(500);
-        this.pendingTimer = this.scene.time.delayedCall(duration, () => {
-            this.pendingTimer = undefined;
+        const prize = payout > 0 ? `PRÊMIO ${payout.toFixed(2)}` : 'SEM PREMIAÇÃO';
+        const continueButton = this.scene.add.rectangle(width / 2, layout.continueButton.y, layout.continueButton.width, layout.continueButton.height, 0xd28b21).setStrokeStyle(3, 0xffe06b).setInteractive();
+        const continueText = this.scene.add.text(width / 2, layout.continueButton.y, 'CONTINUAR', { fontFamily: 'Arial', fontSize: '31px', color: '#ffffff', fontStyle: 'bold' }).setOrigin(0.5);
+        continueButton.on('pointerdown', () => {
+            if (this.selectionLocked) return;
+            this.selectionLocked = true;
             this.clear();
             onComplete();
         });
+        items.push(
+            this.scene.add.text(width / 2, layout.prizeY, `SEU TRATOR: ${result.selectedRank}º LUGAR\n${prize}`, { fontFamily: 'Arial', fontSize: '37px', color: payout > 0 ? '#ffe06b' : '#ffffff', align: 'center', fontStyle: 'bold' }).setOrigin(0.5),
+            continueButton,
+            continueText
+        );
+        this.container = this.scene.add.container(0, 0, items).setDepth(BonusLayoutConfig.horseRace.depth);
     }
 
     public clear(): void {
-        if (this.pendingTimer) {
-            this.scene.time.removeEvent(this.pendingTimer);
-            this.pendingTimer = undefined;
-        }
-
-        this.tractors.forEach(tractor => {
-            this.scene.tweens.killTweensOf(tractor);
-        });
-
+        this.tractors.forEach(tractor => this.scene.tweens.killTweensOf(tractor));
         this.tractors.length = 0;
         this.selectionLocked = false;
         this.container?.destroy();
         this.container = undefined;
+    }
+
+    private createTractor(x: number, y: number, color: number, scale: number): GameObjects.Container {
+        const tractor = this.scene.add.container(x, y, [
+            this.scene.add.rectangle(0, 3, 108, 70, color).setStrokeStyle(3, 0xffffff),
+            this.scene.add.text(0, 0, '🚜', { fontSize: '68px' }).setOrigin(0.5),
+        ]);
+        tractor.setScale(scale);
+        return tractor;
     }
 }
