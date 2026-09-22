@@ -40,4 +40,12 @@ export const BonusLayoutConfig = {
         grid: { columns: [285, 795], firstY: 530, rowGap: 270, cardWidth: 405, cardHeight: 220, chestOffsetY: -28, chestScale: 1.2, labelOffsetY: 75, labelFontSize: '25px' },
         final: { totalY: 1600, totalFontSize: '54px', detailY: 1515, detailFontSize: '26px', continueButton: { y: 1700, width: 390, height: 105, fontSize: '31px' } },
     },
+    cardDouble: {
+        depth: 530,
+        header: { y: 145, height: 235, titleY: 95, titleFontSize: '45px', prizeY: 160, prizeFontSize: '34px', deckY: 220, deckFontSize: '22px' },
+        card: { x: 540, y: 755, width: 400, height: 550, rankOffsetX: 130, rankOffsetY: 175, rankFontSize: '112px', suitOffsetY: 72, suitFontSize: '100px', questionFontSize: '120px' },
+        prompt: { y: 1115, fontSize: '28px' },
+        buttons: { firstY: 1270, secondY: 1410, width: 370, height: 100, fontSize: '29px', leftX: 320, rightX: 760, cashoutY: 1560 },
+        feedback: { y: 1120, fontSize: '34px', finalY: 1150, finalFontSize: '62px' },
+    },
 } as const;

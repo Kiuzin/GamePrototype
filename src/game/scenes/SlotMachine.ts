@@ -40,6 +40,9 @@ import type { HorseRaceResult } from '../logic/HorseRaceFeature';
 import { TreasureChestFeature } from '../logic/TreasureChestFeature';
 import type { TreasureChestRound } from '../logic/TreasureChestFeature';
 import { TreasureChestPresentation } from '../presentation/TreasureChestPresentation';
+import { CardDoubleFeature } from '../logic/CardDoubleFeature';
+import type { CardDoubleRound, CardGuess } from '../logic/CardDoubleFeature';
+import { CardDoublePresentation } from '../presentation/CardDoublePresentation';
 
 export class SlotMachine extends Scene {
     private reels: Reel[] = [];
@@ -53,6 +56,9 @@ export class SlotMachine extends Scene {
     private turboBtn?:
         GameObjects.Image;
 
+    private historyBtn?:
+        GameObjects.Image;
+
     private historyModal?: SpinHistoryModal;
 
     private winPresentation?:
@@ -64,6 +70,8 @@ export class SlotMachine extends Scene {
     private horseRacePresentation?: HorseRacePresentation;
 
     private treasureChestPresentation?: TreasureChestPresentation;
+
+    private cardDoublePresentation?: CardDoublePresentation;
 
     private betDecreaseBtn?:
         GameObjects.Image;
@@ -102,6 +110,9 @@ export class SlotMachine extends Scene {
 
     private readonly treasureChestFeature =
         new TreasureChestFeature();
+
+    private readonly cardDoubleFeature =
+        new CardDoubleFeature();
 
     /**
      * Controlador dos níveis de aposta.
@@ -186,6 +197,7 @@ export class SlotMachine extends Scene {
         this.createLuckyCornFeedback();
         this.horseRacePresentation = new HorseRacePresentation(this);
         this.treasureChestPresentation = new TreasureChestPresentation(this);
+        this.cardDoublePresentation = new CardDoublePresentation(this);
     }
 
     update(
@@ -744,7 +756,7 @@ export class SlotMachine extends Scene {
         const button =
             GameConfig.layout.historyButton;
 
-        const historyButton =
+        this.historyBtn =
             this.add.image(
                 button.x,
                 button.y,
@@ -756,7 +768,7 @@ export class SlotMachine extends Scene {
                 )
                 .setInteractive();
 
-        historyButton.on(
+        this.historyBtn.on(
             'pointerdown',
             () => {
                 this.openHistoryModal();
@@ -784,6 +796,7 @@ export class SlotMachine extends Scene {
         this.luckyCornFeedback?.clear();
         this.horseRacePresentation?.clear();
         this.treasureChestPresentation?.clear();
+        this.cardDoublePresentation?.clear();
 
         this.clearReelLocks();
 
@@ -854,6 +867,16 @@ export class SlotMachine extends Scene {
             playResult.payout.totalPayout <= 0
                 ? false
                 : this.treasureChestFeature.tryStart();
+
+        // A Dobra de Cartas trabalha sobre o prêmio já pago pela rodada-base.
+        // Ela é exclusiva para que o jogador saiba exatamente o que está em risco.
+        const cardDoubleActivation =
+            luckyCornActivation ||
+            horseRaceActivation ||
+            treasureChestActivation ||
+            playResult.payout.totalPayout <= 0
+                ? false
+                : this.cardDoubleFeature.tryStart();
 
         // -----------------------------------------
         // DEBUG
@@ -936,6 +959,20 @@ export class SlotMachine extends Scene {
                                             0,
                                             () => {
                                                 this.startTreasureChest(
+                                                    playResult.payout
+                                                        .totalPayout
+                                                );
+                                            }
+                                        );
+                                        return;
+                                    }
+
+                                    if (cardDoubleActivation) {
+                                        this.finishSpin(
+                                            playResult,
+                                            0,
+                                            () => {
+                                                this.startCardDouble(
                                                     playResult.payout
                                                         .totalPayout
                                                 );
@@ -1068,6 +1105,87 @@ export class SlotMachine extends Scene {
         }
 
         this.treasureChestPresentation.showFinal(round, basePayout, finish);
+    }
+
+    // =====================================================
+    // DOBRA DE CARTAS
+    // =====================================================
+
+    private startCardDouble(basePayout: number): void {
+        if (!this.cardDoublePresentation) {
+            this.cardDoubleFeature.finish();
+            this.finishSpinInteraction();
+            return;
+        }
+
+        this.showCardDoubleRound(
+            basePayout,
+            this.cardDoubleFeature.start(basePayout)
+        );
+    }
+
+    private showCardDoubleRound(
+        basePayout: number,
+        round: CardDoubleRound
+    ): void {
+        const presentation = this.cardDoublePresentation;
+
+        if (!presentation) {
+            this.cardDoubleFeature.finish();
+            this.finishSpinInteraction();
+            return;
+        }
+
+        presentation.showRound(
+            round,
+            (guess: CardGuess) => {
+                this.showCardDoubleRound(
+                    basePayout,
+                    this.cardDoubleFeature.guess(guess)
+                );
+            },
+            () => {
+                this.showCardDoubleRound(
+                    basePayout,
+                    this.cardDoubleFeature.continue()
+                );
+            },
+            () => this.cashOutCardDouble(basePayout),
+            () => this.loseCardDouble(basePayout)
+        );
+    }
+
+    private cashOutCardDouble(basePayout: number): void {
+        const totalPayout = this.cardDoubleFeature.getCurrentPayout();
+        const extraPayout = totalPayout - basePayout;
+        const finish = (): void => {
+            this.cardDoubleFeature.finish();
+            this.cardDoublePresentation?.clear();
+            this.session.creditPayout(extraPayout);
+            this.session.addPayoutToLatestHistory(extraPayout);
+            this.updateBalanceUI();
+            this.finishSpinInteraction();
+        };
+
+        if (extraPayout <= 0 || !this.cardDoublePresentation) {
+            finish();
+            return;
+        }
+
+        this.cardDoublePresentation.showFinal(
+            basePayout,
+            totalPayout,
+            finish
+        );
+    }
+
+    private loseCardDouble(basePayout: number): void {
+        this.cardDoubleFeature.finish();
+        this.cardDoublePresentation?.clear();
+        this.session.creditPayout(-basePayout);
+        this.session.addPayoutToLatestHistory(-basePayout);
+        this.updateBalanceUI();
+        this.finishSpinInteraction();
     }
 
     // =====================================================
@@ -1429,6 +1547,21 @@ export class SlotMachine extends Scene {
             this.betIncreaseBtn,
             false
         );
+
+        this.setImageButtonEnabled(
+            this.autoSpinBtn,
+            false
+        );
+
+        this.setImageButtonEnabled(
+            this.turboBtn,
+            false
+        );
+
+        this.setImageButtonEnabled(
+            this.historyBtn,
+            false
+        );
     }
 
     private enableControls(): void {
@@ -1437,6 +1570,21 @@ export class SlotMachine extends Scene {
         );
 
         this.updateBetButtons();
+
+        this.setImageButtonEnabled(
+            this.autoSpinBtn,
+            true
+        );
+
+        this.setImageButtonEnabled(
+            this.turboBtn,
+            true
+        );
+
+        this.setImageButtonEnabled(
+            this.historyBtn,
+            true
+        );
     }
 
     // =====================================================

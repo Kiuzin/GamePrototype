@@ -36,4 +36,11 @@ export const BonusThemeConfig = {
         colors: { highlight: '#ffe06b', primaryText: '#ffffff', secondaryText: '#cce6cb', reward: '#8ff0a4', ending: '#ff9b75' },
         final: { buttonColor: 0xd28b21, buttonStrokeColor: 0xffe06b, buttonStrokeWidth: 3 },
     },
+    cardDouble: {
+        overlay: { color: 0x07140e, alpha: 0.98 },
+        headerColor: 0x32183f,
+        card: { color: 0xf5f0df, backColor: 0x481d65, strokeColor: 0xffd54a, strokeWidth: 5 },
+        colors: { highlight: '#ffe06b', primaryText: '#ffffff', secondaryText: '#e6dcec', redCard: '#d64141', blackCard: '#151515', win: '#8ff0a4', loss: '#ff9b75' },
+        buttons: { primaryColor: 0x3e8b55, secondaryColor: 0x345d9d, cashoutColor: 0xd28b21, strokeColor: 0xffe06b, strokeWidth: 3 },
+    },
 } as const;

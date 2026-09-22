@@ -71,4 +71,16 @@ export const FeatureConfig = {
         revealDelay: 700,
         payoutCountDuration: 1800,
     },
+    cardDouble: {
+        enabled: true,
+        activationChance: 100.12,
+        thresholdRank: 7,
+        // Um baralho de 26 cartas: cada valor existe uma vez em cada cor.
+        // O Ás vale 1, deixando seis valores abaixo e seis acima do 7.
+        suits: [
+            { id: 'spades', symbol: '♠', color: 'black' },
+            { id: 'hearts', symbol: '♥', color: 'red' },
+        ],
+        finalDisplayDuration: 1500,
+    },
 } as const;
