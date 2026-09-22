@@ -10,6 +10,8 @@ import {
     SlotCore,
 } from '../logic/SlotCore';
 
+import { PayoutCalculator } from '../logic/PayoutCalculator';
+
 import type {
     SpinResult,
 } from '../logic/SlotCore';
@@ -907,8 +909,8 @@ export class SlotMachine extends Scene {
                                     ) {
                                         this.startLuckyCornFeature(
                                             currentBet,
-                                            luckyCornActivation
-                                                .selectedSymbolId
+                                            luckyCornActivation.selectedSymbolId,
+                                            playResult.winningLines.length
                                         );
 
                                         return;
@@ -1095,7 +1097,8 @@ export class SlotMachine extends Scene {
 
     private startLuckyCornFeature(
         currentBet: number,
-        selectedSymbolId: string
+        selectedSymbolId: string,
+        baseWinningLineCount: number
     ): void {
         this.resultText?.setText(
             'MILHO DA SORTE!'
@@ -1103,7 +1106,8 @@ export class SlotMachine extends Scene {
 
         const startRound = (): void => {
             this.playLuckyCornRound(
-                currentBet
+                currentBet,
+                baseWinningLineCount
             );
         };
 
@@ -1122,7 +1126,8 @@ export class SlotMachine extends Scene {
     }
 
     private playLuckyCornRound(
-        currentBet: number
+        currentBet: number,
+        baseWinningLineCount: number
     ): void {
         const round =
             this.luckyCornFeature.playRound();
@@ -1138,7 +1143,8 @@ export class SlotMachine extends Scene {
             () => {
                 this.completeLuckyCornRound(
                     currentBet,
-                    round
+                    round,
+                    baseWinningLineCount
                 );
             }
         );
@@ -1191,7 +1197,8 @@ export class SlotMachine extends Scene {
 
     private completeLuckyCornRound(
         currentBet: number,
-        round: LuckyCornRound
+        round: LuckyCornRound,
+        baseWinningLineCount: number
     ): void {
         this.applyLuckyCornLocks(
             round.lockedGrid
@@ -1200,7 +1207,8 @@ export class SlotMachine extends Scene {
         if (round.shouldRespin) {
             const playNextRound = (): void => {
                 this.playLuckyCornRound(
-                    currentBet
+                    currentBet,
+                    baseWinningLineCount
                 );
             };
 
@@ -1219,18 +1227,31 @@ export class SlotMachine extends Scene {
                 round.grid
             );
 
+        const payoutMultiplier =
+            this.luckyCornFeature.calculatePayoutMultiplier(
+                baseWinningLineCount
+            );
+
+        const multipliedPlayResult = {
+            ...playResult,
+            payout: PayoutCalculator.applyMultiplier(
+                playResult.payout,
+                payoutMultiplier
+            ),
+        };
+
         this.luckyCornFeature.finish();
 
         this.clearReelLocks();
 
         const finishFeature = (): void => {
-            this.finishSpin(playResult);
+            this.finishSpin(multipliedPlayResult);
         };
 
         // Sem prêmio, a funcionalidade retorna diretamente ao fluxo
         // normal e não exibe a apresentação de Jackpot.
         if (
-            playResult.payout.totalPayout <= 0 ||
+            multipliedPlayResult.payout.totalPayout <= 0 ||
             !this.luckyCornFeedback
         ) {
             this.luckyCornFeedback?.clear();
@@ -1241,7 +1262,8 @@ export class SlotMachine extends Scene {
         }
 
         this.luckyCornFeedback.showFinalPayout(
-            playResult.payout.totalPayout,
+            multipliedPlayResult.payout.totalPayout,
+            payoutMultiplier,
             FeatureConfig.luckyCorn
                 .finalDisplayDuration,
             FeatureConfig.luckyCorn

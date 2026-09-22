@@ -26,7 +26,7 @@ export const BonusThemeConfig = {
             buttonStrokeWidth: 3,
         },
         colors: { highlight: '#ffe06b', primaryText: '#ffffff', secondaryText: '#d7edcf', darkText: '#102d20' },
-        tractor: { bodyY: 3, bodyWidth: 108, bodyHeight: 70, strokeWidth: 3, emoji: '🚜', emojiFontSize: '68px' },
+        tractor: { bodyY: 3, bodyWidth: 108, bodyHeight: 70, strokeWidth: 3, emoji: '🚜', emojiFontSize: '72px' },
     },
     treasureChest: {
         overlay: { color: 0x07140e, alpha: 0.98 },

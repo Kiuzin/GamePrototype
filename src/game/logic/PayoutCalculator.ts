@@ -29,6 +29,33 @@ export interface SpinPayoutResult {
 export class PayoutCalculator {
 
     /**
+     * Retorna uma cópia do prêmio com todas as linhas e o total escalados.
+     * É usado por funcionalidades que multiplicam um prêmio já calculado.
+     */
+    static applyMultiplier(
+        payout: SpinPayoutResult,
+        multiplier: number
+    ): SpinPayoutResult {
+        const validMultiplier =
+            Number.isFinite(multiplier)
+                ? Math.max(0, multiplier)
+                : 0;
+
+        const wins = payout.wins.map(
+            win => ({
+                ...win,
+                multiplier: win.multiplier * validMultiplier,
+                payout: win.payout * validMultiplier,
+            })
+        );
+
+        return {
+            wins,
+            totalPayout: payout.totalPayout * validMultiplier,
+        };
+    }
+
+    /**
      * Recebe as combinações vencedoras
      * já resolvidas pelo WinChecker
      * e calcula apenas os valores.

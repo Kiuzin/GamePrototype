@@ -18,6 +18,32 @@ export const FeatureConfig = {
         selectedSymbolChance: 0.24,
         wildChance: 0.08,
         maxRespins: 20,
+        // Pesos relativos para o símbolo da sorte. Não precisam somar 100:
+        // quanto maior o peso, mais frequente será o símbolo no bônus.
+        // O Wild não participa deste sorteio.
+        symbolSelectionWeights: {
+            Crow: 40,
+            Popcorn: 25,
+            Cake: 15,
+            Pamonha: 10,
+            Canjica: 6,
+            Corn: 2,
+        },
+        // O prêmio formado no re-spin é multiplicado por este valor. O Corvo
+        // começa em x10; símbolos mais valiosos e mais linhas da rodada-base
+        // aumentam o multiplicador final.
+        payoutMultiplier: {
+            base: 10,
+            symbolFactors: {
+                Crow: 1,
+                Popcorn: 1.2,
+                Cake: 1.5,
+                Pamonha: 2,
+                Canjica: 3,
+                Corn: 5,
+            },
+            baseWinningLineFactors: [1, 1, 1.25, 1.5, 1.75, 2],
+        },
     },
     horseRace: {
         enabled: false,
@@ -33,11 +59,12 @@ export const FeatureConfig = {
             { id: 'blueTractor', name: 'TRATOR AZUL', color: 0x4b8ed6 },
             { id: 'redTractor', name: 'TRATOR VERMELHO', color: 0xd65a5a },
             { id: 'yellowTractor', name: 'TRATOR AMARELO', color: 0xe0b844 },
+
         ],
     },
     treasureChest: {
-        enabled: true,
-        activationChance: 100.1,
+        enabled: false,
+        activationChance: 0.1,
         chestCount: 8,
         endingChestCount: 2,
         rewardMultipliers: [0.5, 1, 1.5, 1.75, 2, 2.25],

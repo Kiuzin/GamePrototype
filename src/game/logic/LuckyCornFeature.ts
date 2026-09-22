@@ -24,6 +24,12 @@ interface LuckyCornFeatureSettings {
     selectedSymbolChance: number;
     wildChance: number;
     maxRespins: number;
+    symbolSelectionWeights: Readonly<Record<string, number>>;
+    payoutMultiplier: {
+        base: number;
+        symbolFactors: Readonly<Record<string, number>>;
+        baseWinningLineFactors: readonly number[];
+    };
 }
 
 export interface LuckyCornFeatureOptions {
@@ -174,6 +180,43 @@ export class LuckyCornFeature {
     }
 
     /**
+     * Calcula o multiplicador do prêmio do re-spin conforme o símbolo da
+     * sorte e a quantidade de linhas vencedoras da rodada-base.
+     */
+    public calculatePayoutMultiplier(
+        baseWinningLineCount: number
+    ): number {
+        if (!this.selectedSymbolId) {
+            throw new Error(
+                'O Milho da Sorte deve estar ativo para calcular o multiplicador.'
+            );
+        }
+
+        const lineFactors =
+            this.settings.payoutMultiplier
+                .baseWinningLineFactors;
+
+        const lineIndex = Math.min(
+            Math.max(0, Math.floor(baseWinningLineCount)),
+            lineFactors.length - 1
+        );
+
+        const lineFactor = this.normalizeMultiplier(
+            lineFactors[lineIndex] ?? 1
+        );
+
+        const symbolFactor = this.normalizeMultiplier(
+            this.settings.payoutMultiplier.symbolFactors[
+                this.selectedSymbolId
+            ] ?? 1
+        );
+
+        return this.normalizeMultiplier(
+            this.settings.payoutMultiplier.base
+        ) * symbolFactor * lineFactor;
+    }
+
+    /**
      * Encerra a execução atual, preservando apenas a configuração.
      */
     public finish(): void {
@@ -197,12 +240,27 @@ export class LuckyCornFeature {
             );
         }
 
-        const index = Math.floor(
-            this.random() *
-            eligibleSymbols.length
+        const totalWeight = eligibleSymbols.reduce(
+            (total, symbol) => total +
+                this.getSymbolSelectionWeight(symbol.id),
+            0
         );
 
-        return eligibleSymbols[index].id;
+        if (totalWeight <= 0) {
+            return eligibleSymbols[0].id;
+        }
+
+        let roll = this.random() * totalWeight;
+
+        for (const symbol of eligibleSymbols) {
+            roll -= this.getSymbolSelectionWeight(symbol.id);
+
+            if (roll < 0) {
+                return symbol.id;
+            }
+        }
+
+        return eligibleSymbols[eligibleSymbols.length - 1].id;
     }
 
     private createRoundGrid(
@@ -342,5 +400,23 @@ export class LuckyCornFeature {
             1,
             Math.max(0, probability)
         );
+    }
+
+    private getSymbolSelectionWeight(
+        symbolId: string
+    ): number {
+        return this.normalizeMultiplier(
+            this.settings.symbolSelectionWeights[
+                symbolId
+            ] ?? 1
+        );
+    }
+
+    private normalizeMultiplier(value: number): number {
+        if (!Number.isFinite(value)) {
+            return 0;
+        }
+
+        return Math.max(0, value);
     }
 }

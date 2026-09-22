@@ -49,12 +49,13 @@ export class LuckyCornFeedback {
 
     public showFinalPayout(
         payout: number,
+        multiplier: number,
         duration: number,
         finalPause: number,
         onComplete: () => void
     ): void {
         const valueText = this.showMessage(
-            'JACKPOT!',
+            `JACKPOT x${multiplier.toFixed(2)}!`,
             '0.00',
             BonusThemeConfig.luckyCorn.colors.feature
         );
