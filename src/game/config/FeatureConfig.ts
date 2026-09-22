@@ -46,8 +46,8 @@ export const FeatureConfig = {
         },
     },
     horseRace: {
-        enabled: false,
-        activationChance: 0.04,
+        enabled: true,
+        activationChance: 100.04,
         segmentCount: 12,
         segmentDuration: 650,
         minimumSpeed: 45,
@@ -72,8 +72,8 @@ export const FeatureConfig = {
         payoutCountDuration: 1800,
     },
     cardDouble: {
-        enabled: true,
-        activationChance: 100.12,
+        enabled: false,
+        activationChance: 0.12,
         thresholdRank: 7,
         // Um baralho de 26 cartas: cada valor existe uma vez em cada cor.
         // O Ás vale 1, deixando seis valores abaixo e seis acima do 7.

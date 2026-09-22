@@ -19,6 +19,7 @@ export const BonusThemeConfig = {
             laneColors: [0x265e3d, 0x215536], laneAlpha: 0.95,
             dividerColor: 0xffffff, dividerAlpha: 0.15, dividerWidth: 2,
             finishCheckerColors: [0xffffff, 0x101010],
+            winnerHighlight: { color: 0xffe06b, strokeWidth: 8, minAlpha: 0.25, duration: 420 },
         },
         podium: {
             overlayColor: 0x07140e, overlayAlpha: 0.98, strokeColor: 0xffffff,

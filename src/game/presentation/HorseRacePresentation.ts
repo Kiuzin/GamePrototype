@@ -9,6 +9,8 @@ export class HorseRacePresentation {
 
     private readonly tractors: GameObjects.Container[] = [];
 
+    private winnerHighlight?: GameObjects.Rectangle;
+
     private selectionLocked = false;
 
     constructor(private readonly scene: Scene) {}
@@ -59,9 +61,13 @@ export class HorseRacePresentation {
             segmentText,
         ];
 
+        const trackBottom = layout.track.firstLaneY +
+            (result.runners.length - 0.5) *
+                layout.track.laneHeight;
+
         for (let segment = 1; segment < result.segmentCount; segment++) {
             const x = startX + trackWidth * segment / result.segmentCount;
-            items.push(this.scene.add.line(x, 0, 0, layout.track.dividerTop, 0, height - layout.track.dividerBottomOffset, theme.race.dividerColor, theme.race.dividerAlpha).setLineWidth(theme.race.dividerWidth));
+            items.push(this.scene.add.line(x, 0, 0, layout.track.dividerTop, 0, trackBottom, theme.race.dividerColor, theme.race.dividerAlpha).setLineWidth(theme.race.dividerWidth));
         }
 
         let completed = 0;
@@ -97,12 +103,15 @@ export class HorseRacePresentation {
     }
 
     public showResult(result: HorseRaceResult, payout: number, onComplete: () => void): void {
-        this.clear();
-        const { width, height } = this.scene.scale.gameSize;
+        if (!this.container) {
+            return;
+        }
+
+        const { width } = this.scene.scale.gameSize;
         const layout = BonusLayoutConfig.horseRace.podium;
         const theme = BonusThemeConfig.horseRace;
+        this.showWinnerHighlight(result);
         const items: GameObjects.GameObject[] = [
-            this.scene.add.rectangle(width / 2, height / 2, width, height, theme.podium.overlayColor, theme.podium.overlayAlpha),
             this.scene.add.text(width / 2, layout.titleY, 'PÓDIO DA COLHEITA', { fontFamily: BonusThemeConfig.fontFamily, fontSize: layout.titleFontSize, color: theme.colors.highlight, fontStyle: 'bold' }).setOrigin(0.5),
         ];
         layout.places.forEach(place => {
@@ -131,12 +140,14 @@ export class HorseRacePresentation {
             continueButton,
             continueText
         );
-        this.container = this.scene.add.container(0, 0, items).setDepth(BonusLayoutConfig.horseRace.depth);
+        this.container.add(items);
     }
 
     public clear(): void {
         this.tractors.forEach(tractor => this.scene.tweens.killTweensOf(tractor));
         this.tractors.length = 0;
+        this.scene.tweens.killTweensOf(this.winnerHighlight);
+        this.winnerHighlight = undefined;
         this.selectionLocked = false;
         this.container?.destroy();
         this.container = undefined;
@@ -149,6 +160,48 @@ export class HorseRacePresentation {
         ]);
         tractor.setScale(scale);
         return tractor;
+    }
+
+    /** Destaca a pista vencedora sem alterar os tratores congelados. */
+    private showWinnerHighlight(result: HorseRaceResult): void {
+        const winnerLaneIndex = result.runners.findIndex(
+            runner => runner.rank === 1
+        );
+
+        if (winnerLaneIndex < 0 || !this.container) {
+            return;
+        }
+
+        const { width } = this.scene.scale.gameSize;
+        const track = BonusLayoutConfig.horseRace.race.track;
+        const highlight = BonusThemeConfig.horseRace.race.winnerHighlight;
+        const finishX = width - track.finishRight;
+        const trackWidth = finishX - track.startX;
+        const y = track.firstLaneY +
+            winnerLaneIndex * track.laneHeight;
+
+        this.winnerHighlight = this.scene.add.rectangle(
+            width / 2,
+            y,
+            trackWidth + track.laneExtraWidth,
+            track.laneHeight - track.laneInset,
+            highlight.color,
+            0
+        ).setStrokeStyle(
+            highlight.strokeWidth,
+            highlight.color
+        );
+
+        this.container.add(this.winnerHighlight);
+
+        this.scene.tweens.add({
+            targets: this.winnerHighlight,
+            alpha: highlight.minAlpha,
+            duration: highlight.duration,
+            yoyo: true,
+            repeat: -1,
+            ease: 'Sine.easeInOut',
+        });
     }
 
     /** Cria uma única linha quadriculada com altura baseada nas pistas exibidas. */

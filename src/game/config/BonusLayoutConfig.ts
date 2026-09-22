@@ -19,19 +19,19 @@ export const BonusLayoutConfig = {
         },
         race: {
             header: { y: 105, height: 165, titleY: 82, titleFontSize: '39px', segmentY: 305, segmentFontSize: '24px', segmentLetterSpacing: 2 },
-            track: { startX: 120, finishRight: 115, firstLaneY: 390, laneHeight: 255, laneInset: 1, laneExtraWidth: 70, laneLabelX: 48, laneLabelFontSize: '23px', dividerTop: 270, dividerBottomOffset: 120, finishLine: { edgeOffset: 28, checkerSize: 20, columns: 2 }, tractorScale: 0.78 },
+            track: { startX: 120, finishRight: 115, firstLaneY: 400, laneHeight: 145, laneInset: 1, laneExtraWidth: 70, laneLabelX: 48, laneLabelFontSize: '23px', dividerTop: 315, finishLine: { edgeOffset: 20, checkerSize: 20, columns: 2 }, tractorScale: 0.7 },
         },
         podium: {
-            titleY: 150, titleFontSize: '46px', blockWidth: 235,
-            baseY: 1230,
+            titleY: 1020, titleFontSize: '40px', blockWidth: 210,
+            baseY: 1580,
             places: [
-                { rank: 2, x: 260, height: 210, color: 0xc4cbd0 },
-                { rank: 1, x: 540, height: 325, color: 0xffd54a },
-                { rank: 3, x: 820, height: 145, color: 0xcf8b48 },
+                { rank: 2, x: 285, height: 165, color: 0xc4cbd0 },
+                { rank: 1, x: 540, height: 250, color: 0xffd54a },
+                { rank: 3, x: 795, height: 115, color: 0xcf8b48 },
             ],
-            runner: { tractorOffsetY: -55, tractorScale: 0.64, rankOffsetY: 42, rankFontSize: '38px', nameOffsetY: -120, nameFontSize: '18px', nameWidth: 230 },
-            prizeY: 1490, prizeFontSize: '37px',
-            continueButton: { y: 1690, width: 390, height: 105, fontSize: '31px' },
+            runner: { tractorOffsetY: -45, tractorScale: 0.54, rankOffsetY: 35, rankFontSize: '32px', nameOffsetY: -100, nameFontSize: '16px', nameWidth: 200 },
+            prizeY: 1710, prizeFontSize: '32px',
+            continueButton: { y: 1830, width: 390, height: 90, fontSize: '28px' },
         },
     },
     treasureChest: {
