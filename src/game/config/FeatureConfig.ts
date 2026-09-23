@@ -13,6 +13,7 @@ export const FeatureConfig = {
         suspenseStartDelay: 2050,
         startDisplayDuration: 1150,
         respinDelay: 650,
+        noWinDisplayDuration: 1500,
         finalDisplayDuration: 1800,
         finalDisplayPause: 550,
         selectedSymbolChance: 0.24,
@@ -33,16 +34,7 @@ export const FeatureConfig = {
         // começa em x10; símbolos mais valiosos e mais linhas da rodada-base
         // aumentam o multiplicador final.
         payoutMultiplier: {
-            base: 10,
-            symbolFactors: {
-                Crow: 1,
-                Popcorn: 1.2,
-                Cake: 1.5,
-                Pamonha: 2,
-                Canjica: 3,
-                Corn: 5,
-            },
-            baseWinningLineFactors: [1, 1, 1.25, 1.5, 1.75, 2],
+            fullGrid: 10,
         },
     },
     horseRace: {

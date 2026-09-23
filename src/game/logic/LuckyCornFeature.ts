@@ -26,9 +26,7 @@ interface LuckyCornFeatureSettings {
     maxRespins: number;
     symbolSelectionWeights: Readonly<Record<string, number>>;
     payoutMultiplier: {
-        base: number;
-        symbolFactors: Readonly<Record<string, number>>;
-        baseWinningLineFactors: readonly number[];
+        fullGrid: number;
     };
 }
 
@@ -183,37 +181,22 @@ export class LuckyCornFeature {
      * Calcula o multiplicador do prêmio do re-spin conforme o símbolo da
      * sorte e a quantidade de linhas vencedoras da rodada-base.
      */
-    public calculatePayoutMultiplier(
-        baseWinningLineCount: number
-    ): number {
+    public calculatePayoutMultiplier(): number {
         if (!this.selectedSymbolId) {
             throw new Error(
                 'O Milho da Sorte deve estar ativo para calcular o multiplicador.'
             );
         }
 
-        const lineFactors =
-            this.settings.payoutMultiplier
-                .baseWinningLineFactors;
-
-        const lineIndex = Math.min(
-            Math.max(0, Math.floor(baseWinningLineCount)),
-            lineFactors.length - 1
+        const isFullGrid = this.lockedGrid.every(column =>
+            column.every(symbolId => symbolId !== null)
         );
 
-        const lineFactor = this.normalizeMultiplier(
-            lineFactors[lineIndex] ?? 1
-        );
-
-        const symbolFactor = this.normalizeMultiplier(
-            this.settings.payoutMultiplier.symbolFactors[
-                this.selectedSymbolId
-            ] ?? 1
-        );
-
-        return this.normalizeMultiplier(
-            this.settings.payoutMultiplier.base
-        ) * symbolFactor * lineFactor;
+        return isFullGrid
+            ? this.normalizeMultiplier(
+                this.settings.payoutMultiplier.fullGrid
+            )
+            : 1;
     }
 
     /**

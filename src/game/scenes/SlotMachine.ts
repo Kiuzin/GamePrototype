@@ -954,7 +954,7 @@ export class SlotMachine extends Scene {
                                         this.startLuckyCornFeature(
                                             currentBet,
                                             luckyCornActivation.selectedSymbolId,
-                                            playResult.winningLines.length
+                                            playResult.grid
                                         );
 
                                         return;
@@ -1298,7 +1298,7 @@ export class SlotMachine extends Scene {
     private startLuckyCornFeature(
         currentBet: number,
         selectedSymbolId: string,
-        baseWinningLineCount: number
+        baseGrid: string[][]
     ): void {
         this.resultText?.setText(
             'MILHO DA SORTE!'
@@ -1307,7 +1307,7 @@ export class SlotMachine extends Scene {
         const startRound = (): void => {
             this.playLuckyCornRound(
                 currentBet,
-                baseWinningLineCount
+                baseGrid
             );
         };
 
@@ -1327,7 +1327,7 @@ export class SlotMachine extends Scene {
 
     private playLuckyCornRound(
         currentBet: number,
-        baseWinningLineCount: number
+        baseGrid: string[][]
     ): void {
         const round =
             this.luckyCornFeature.playRound();
@@ -1344,7 +1344,7 @@ export class SlotMachine extends Scene {
                 this.completeLuckyCornRound(
                     currentBet,
                     round,
-                    baseWinningLineCount
+                    baseGrid
                 );
             }
         );
@@ -1398,7 +1398,7 @@ export class SlotMachine extends Scene {
     private completeLuckyCornRound(
         currentBet: number,
         round: LuckyCornRound,
-        baseWinningLineCount: number
+        baseGrid: string[][]
     ): void {
         this.applyLuckyCornLocks(
             round.lockedGrid
@@ -1408,7 +1408,7 @@ export class SlotMachine extends Scene {
             const playNextRound = (): void => {
                 this.playLuckyCornRound(
                     currentBet,
-                    baseWinningLineCount
+                    baseGrid
                 );
             };
 
@@ -1428,9 +1428,7 @@ export class SlotMachine extends Scene {
             );
 
         const payoutMultiplier =
-            this.luckyCornFeature.calculatePayoutMultiplier(
-                baseWinningLineCount
-            );
+            this.luckyCornFeature.calculatePayoutMultiplier();
 
         const multipliedPlayResult = {
             ...playResult,
@@ -1454,9 +1452,20 @@ export class SlotMachine extends Scene {
             multipliedPlayResult.payout.totalPayout <= 0 ||
             !this.luckyCornFeedback
         ) {
-            this.luckyCornFeedback?.clear();
+            // A última grade especial pode conter apenas espaços vazios.
+            // Restaura a rodada normal antes de liberar a próxima aposta.
+            this.restoreBaseGrid(baseGrid);
 
-            finishFeature();
+            if (!this.luckyCornFeedback) {
+                finishFeature();
+
+                return;
+            }
+
+            this.luckyCornFeedback.showNoWin(
+                FeatureConfig.luckyCorn.noWinDisplayDuration,
+                finishFeature
+            );
 
             return;
         }
@@ -1482,6 +1491,12 @@ export class SlotMachine extends Scene {
                 );
             }
         );
+    }
+
+    private restoreBaseGrid(baseGrid: readonly string[][]): void {
+        this.reels.forEach((reel, index) => {
+            reel.showResult(baseGrid[index]);
+        });
     }
 
     private clearReelLocks(): void {

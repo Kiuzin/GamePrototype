@@ -241,6 +241,22 @@ export class Reel {
     }
 
     /**
+     * Exibe uma coluna normal imediatamente, sem animação. É usada ao sair
+     * de uma funcionalidade para não deixar símbolos especiais na tela.
+     */
+    public showResult(finalColumn: string[]): void {
+        if (finalColumn.length !== this.visibleRows || this.isSpinning) {
+            return;
+        }
+
+        this.clearWinEffects();
+        this.featureSpinStrip = undefined;
+        this.position = this.findTargetPosition(finalColumn);
+        this.targetPosition = undefined;
+        this.render();
+    }
+
+    /**
      * Mantém símbolos em suas posições visíveis enquanto o rolo volta
      * a girar. Valores nulos representam posições livres.
      */

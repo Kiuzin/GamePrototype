@@ -47,6 +47,20 @@ export class LuckyCornFeedback {
         );
     }
 
+    /** Exibe o encerramento de uma sequência de re-spin sem prêmio. */
+    public showNoWin(
+        duration: number,
+        onComplete: () => void
+    ): void {
+        this.showTimedMessage(
+            'SEM PRÊMIO',
+            'O RE-SPIN TERMINOU SEM GANHOS.',
+            BonusThemeConfig.luckyCorn.colors.suspense,
+            duration,
+            onComplete
+        );
+    }
+
     public showFinalPayout(
         payout: number,
         multiplier: number,
@@ -55,7 +69,9 @@ export class LuckyCornFeedback {
         onComplete: () => void
     ): void {
         const valueText = this.showMessage(
-            `JACKPOT x${multiplier.toFixed(2)}!`,
+            multiplier > 1
+                ? `JACKPOT x${multiplier.toFixed(2)}!`
+                : 'PRÊMIO DO RE-SPIN',
             '0.00',
             BonusThemeConfig.luckyCorn.colors.feature
         );
