@@ -3,6 +3,9 @@
  * Mantém posições e dimensões fora das apresentações Phaser para facilitar
  * ajustes visuais e testes em resoluções de referência.
  */
+
+import {GameSettings} from './GameSettings';
+
 export const BonusLayoutConfig = {
     luckyCorn: {
         depth: 200,
@@ -25,9 +28,9 @@ export const BonusLayoutConfig = {
             titleY: 1020, titleFontSize: '40px', blockWidth: 210,
             baseY: 1580,
             places: [
-                { rank: 2, x: 285, height: 165, color: 0xc4cbd0 },
-                { rank: 1, x: 540, height: 250, color: 0xffd54a },
-                { rank: 3, x: 795, height: 115, color: 0xcf8b48 },
+                { rank: 2, x: GameSettings.screen.width / 3.5, height: 165, color: 0xc4cbd0 },
+                { rank: 1, x: GameSettings.screen.width / 2, height: 250, color: 0xffd54a },
+                { rank: 3, x: GameSettings.screen.width / 1.4, height: 115, color: 0xcf8b48 },
             ],
             runner: { tractorOffsetY: -45, tractorScale: 0.54, rankOffsetY: 35, rankFontSize: '32px', nameOffsetY: -100, nameFontSize: '16px', nameWidth: 200 },
             prizeY: 1710, prizeFontSize: '32px',
@@ -47,5 +50,12 @@ export const BonusLayoutConfig = {
         prompt: { y: 1115, fontSize: '28px' },
         buttons: { firstY: 1270, secondY: 1410, width: 370, height: 100, fontSize: '29px', leftX: 320, rightX: 760, cashoutY: 1560 },
         feedback: { y: 1120, fontSize: '34px', finalY: 1150, finalFontSize: '62px' },
+    },
+    wheelBonus: {
+        depth: 540,
+        header: { y: 130, height: 230, titleY: 85, titleFontSize: '45px', statusY: 155, statusFontSize: '28px', prizeY: 220, prizeFontSize: '32px' },
+        wheel: { x: GameSettings.screen.width / 2, y: 795, radius: 360, labelRadius: 220, labelFontSize: '21px', pointerX: GameSettings.screen.width / 2, pointerY: 400 },
+        feedback: { y: 1235, fontSize: '29px' },
+        buttons: { spinY: 1400, skipY: 1535, width: 520, height: 100, fontSize: '29px' },
     },
 } as const;

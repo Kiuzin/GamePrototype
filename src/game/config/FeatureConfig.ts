@@ -8,7 +8,7 @@
 export const FeatureConfig = {
     luckyCorn: {
         enabled: false,
-        activationChance: 0.12,
+        activationChance: 0.01,
         extraSpinDuration: 3400,
         suspenseStartDelay: 2050,
         startDisplayDuration: 1150,
@@ -82,5 +82,22 @@ export const FeatureConfig = {
             { id: 'hearts', symbol: '♥', color: 'red' },
         ],
         finalDisplayDuration: 1500,
+    },
+    wheelBonus: {
+        enabled: false,
+        activationChance: 100.08,
+        initialSpins: 3,
+        spinDuration: 2200,
+        finalDisplayDuration: 1200,
+        // Cada item representa uma fatia. O peso controla a chance relativa
+        // de parada; os valores de prêmio são multiplicadores da rodada-base.
+        slices: [
+            { id: 'prize', label: 'PRÊMIO x2', type: 'payout', multiplier: 2, weight: 25 },
+            { id: 'pass', label: 'PASSA A VEZ', type: 'pass', weight: 25 },
+            { id: 'extra', label: '+2 GIROS', type: 'extraSpins', spins: 2, weight: 5 },
+            { id: 'double', label: 'MULTIPLICA x2', type: 'multiply', multiplier: 2, weight: 10 },
+            { id: 'jackpot', label: 'PRÊMIO x5', type: 'payout', multiplier: 5, weight: 2 },
+            { id: 'lose', label: 'PERDE TUDO', type: 'loseAll', weight: 7 },
+        ],
     },
 } as const;

@@ -43,6 +43,9 @@ import { TreasureChestPresentation } from '../presentation/TreasureChestPresenta
 import { CardDoubleFeature } from '../logic/CardDoubleFeature';
 import type { CardDoubleRound, CardGuess } from '../logic/CardDoubleFeature';
 import { CardDoublePresentation } from '../presentation/CardDoublePresentation';
+import { WheelBonusFeature } from '../logic/WheelBonusFeature';
+import type { WheelBonusRound } from '../logic/WheelBonusFeature';
+import { WheelBonusPresentation } from '../presentation/WheelBonusPresentation';
 
 export class SlotMachine extends Scene {
     private reels: Reel[] = [];
@@ -72,6 +75,8 @@ export class SlotMachine extends Scene {
     private treasureChestPresentation?: TreasureChestPresentation;
 
     private cardDoublePresentation?: CardDoublePresentation;
+
+    private wheelBonusPresentation?: WheelBonusPresentation;
 
     private betDecreaseBtn?:
         GameObjects.Image;
@@ -113,6 +118,9 @@ export class SlotMachine extends Scene {
 
     private readonly cardDoubleFeature =
         new CardDoubleFeature();
+
+    private readonly wheelBonusFeature =
+        new WheelBonusFeature();
 
     /**
      * Controlador dos níveis de aposta.
@@ -198,6 +206,7 @@ export class SlotMachine extends Scene {
         this.horseRacePresentation = new HorseRacePresentation(this);
         this.treasureChestPresentation = new TreasureChestPresentation(this);
         this.cardDoublePresentation = new CardDoublePresentation(this);
+        this.wheelBonusPresentation = new WheelBonusPresentation(this);
     }
 
     update(
@@ -797,6 +806,7 @@ export class SlotMachine extends Scene {
         this.horseRacePresentation?.clear();
         this.treasureChestPresentation?.clear();
         this.cardDoublePresentation?.clear();
+        this.wheelBonusPresentation?.clear();
 
         this.clearReelLocks();
 
@@ -877,6 +887,17 @@ export class SlotMachine extends Scene {
             playResult.payout.totalPayout <= 0
                 ? false
                 : this.cardDoubleFeature.tryStart();
+
+        // A roleta também estende o prêmio-base e permanece exclusiva dos
+        // demais bônus de continuação para manter o saldo previsível.
+        const wheelBonusActivation =
+            luckyCornActivation ||
+            horseRaceActivation ||
+            treasureChestActivation ||
+            cardDoubleActivation ||
+            playResult.payout.totalPayout <= 0
+                ? false
+                : this.wheelBonusFeature.tryStart();
 
         // -----------------------------------------
         // DEBUG
@@ -973,6 +994,20 @@ export class SlotMachine extends Scene {
                                             0,
                                             () => {
                                                 this.startCardDouble(
+                                                    playResult.payout
+                                                        .totalPayout
+                                                );
+                                            }
+                                        );
+                                        return;
+                                    }
+
+                                    if (wheelBonusActivation) {
+                                        this.finishSpin(
+                                            playResult,
+                                            0,
+                                            () => {
+                                                this.startWheelBonus(
                                                     playResult.payout
                                                         .totalPayout
                                                 );
@@ -1185,6 +1220,53 @@ export class SlotMachine extends Scene {
         this.session.creditPayout(-basePayout);
         this.session.addPayoutToLatestHistory(-basePayout);
         this.updateBalanceUI();
+        this.finishSpinInteraction();
+    }
+
+    // =====================================================
+    // ROLETA DA COLHEITA
+    // =====================================================
+
+    private startWheelBonus(basePayout: number): void {
+        const presentation = this.wheelBonusPresentation;
+        if (!presentation) {
+            this.wheelBonusFeature.finish();
+            this.finishSpinInteraction();
+            return;
+        }
+
+        presentation.resetWheelPosition();
+        this.showWheelBonusRound(this.wheelBonusFeature.start(basePayout));
+    }
+
+    private showWheelBonusRound(round: WheelBonusRound): void {
+        const presentation = this.wheelBonusPresentation;
+        if (!presentation) {
+            this.wheelBonusFeature.finish();
+            this.finishSpinInteraction();
+            return;
+        }
+
+        presentation.showRound(
+            round,
+            () => this.wheelBonusFeature.spin(),
+            () => this.wheelBonusFeature.skip(),
+            completedRound => this.completeWheelBonus(completedRound)
+        );
+    }
+
+    private completeWheelBonus(round: WheelBonusRound): void {
+        const extraPayout = this.wheelBonusFeature.getExtraPayout();
+        this.wheelBonusFeature.finish();
+        this.wheelBonusPresentation?.clear();
+        this.session.creditPayout(extraPayout);
+        this.session.addPayoutToLatestHistory(extraPayout);
+        this.updateBalanceUI();
+        this.resultText?.setText(
+            round.accumulatedPayout <= 0
+                ? 'ROLETA: PRÊMIO PERDIDO'
+                : `ROLETA: PRÊMIO ${round.accumulatedPayout.toFixed(2)}`
+        );
         this.finishSpinInteraction();
     }
 
