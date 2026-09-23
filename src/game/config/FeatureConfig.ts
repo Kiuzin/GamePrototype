@@ -7,8 +7,8 @@
  */
 export const FeatureConfig = {
     luckyCorn: {
-        enabled: false,
-        activationChance: 0.01,
+        enabled: true,
+        activationChance: 100.01,
         extraSpinDuration: 3400,
         suspenseStartDelay: 2050,
         startDisplayDuration: 1150,
@@ -46,7 +46,7 @@ export const FeatureConfig = {
         },
     },
     horseRace: {
-        enabled: true,
+        enabled: false,
         activationChance: 100.04,
         segmentCount: 12,
         segmentDuration: 650,

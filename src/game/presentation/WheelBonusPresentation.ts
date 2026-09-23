@@ -37,7 +37,7 @@ export class WheelBonusPresentation {
         const overlay = this.scene.add.rectangle(width / 2, height / 2, width, height, theme.overlay.color, theme.overlay.alpha).setInteractive();
         const status = `GIROS RESTANTES: ${round.remainingSpins}  |  ACUMULADO: ${round.accumulatedPayout.toFixed(2)}`;
         this.wheel = this.createWheel();
-        const pointer = this.scene.add.triangle(layout.wheel.pointerX, layout.wheel.pointerY, 0, 0, -28, -52, 28, -52, theme.pointerColor);
+        const pointer = this.scene.add.triangle(layout.wheel.pointerX, layout.wheel.pointerY, 0, 0, -layout.wheel.pointerHalfWidth, -layout.wheel.pointerHeight, layout.wheel.pointerHalfWidth, -layout.wheel.pointerHeight, theme.pointerColor);
 
         this.container = this.scene.add.container(0, 0, [
             overlay,
@@ -47,7 +47,7 @@ export class WheelBonusPresentation {
             this.scene.add.text(width / 2, layout.header.prizeY, `PRÊMIO-BASE: ${round.basePayout.toFixed(2)}`, { fontFamily: BonusThemeConfig.fontFamily, fontSize: layout.header.prizeFontSize, color: theme.colors.primaryText }).setOrigin(0.5),
             this.wheel,
             pointer,
-            this.scene.add.text(width / 2, layout.feedback.y, 'Gire a roleta ou pule o bônus e fique com o prêmio atual.', { fontFamily: BonusThemeConfig.fontFamily, fontSize: layout.feedback.fontSize, color: theme.colors.primaryText, align: 'center', wordWrap: { width: 930 } }).setOrigin(0.5),
+            this.scene.add.text(width / 2, layout.feedback.y, 'Gire a roleta ou pule o bônus e fique com o prêmio atual.', { fontFamily: BonusThemeConfig.fontFamily, fontSize: layout.feedback.fontSize, color: theme.colors.primaryText, align: 'center', wordWrap: { width: layout.feedback.width } }).setOrigin(0.5),
         ]).setDepth(layout.depth);
 
         this.addButton(layout.buttons.spinY, 'GIRAR ROLETA', theme.buttons.primaryColor, () => {
@@ -82,7 +82,7 @@ export class WheelBonusPresentation {
         this.container = this.scene.add.container(0, 0, [
             overlay,
             this.scene.add.text(width / 2, layout.header.titleY, lost ? 'FIM DA ROLETA' : 'PRÊMIO DA ROLETA!', { fontFamily: BonusThemeConfig.fontFamily, fontSize: layout.header.titleFontSize, color: lost ? theme.colors.loss : theme.colors.win, fontStyle: 'bold' }).setOrigin(0.5),
-            this.scene.add.text(width / 2, layout.wheel.y, message, { fontFamily: BonusThemeConfig.fontFamily, fontSize: '48px', color: theme.colors.highlight, fontStyle: 'bold', align: 'center', wordWrap: { width: 900 } }).setOrigin(0.5),
+            this.scene.add.text(width / 2, layout.wheel.y, message, { fontFamily: BonusThemeConfig.fontFamily, fontSize: layout.final.messageFontSize, color: theme.colors.highlight, fontStyle: 'bold', align: 'center', wordWrap: { width: layout.final.messageWidth } }).setOrigin(0.5),
         ]).setDepth(layout.depth);
         this.scene.time.delayedCall(FeatureConfig.wheelBonus.finalDisplayDuration, () => {
             if (!this.container) return;
@@ -107,7 +107,7 @@ export class WheelBonusPresentation {
             graphics.lineStyle(theme.wheelStrokeWidth, theme.wheelStrokeColor, 1);
             graphics.strokePath();
             const labelAngle = start + sector / 2;
-            labels.push(this.scene.add.text(Math.cos(labelAngle) * layout.labelRadius, Math.sin(labelAngle) * layout.labelRadius, slice.label, { fontFamily: BonusThemeConfig.fontFamily, fontSize: layout.labelFontSize, color: theme.colors.primaryText, fontStyle: 'bold', align: 'center', wordWrap: { width: 130 } }).setOrigin(0.5).setRotation(labelAngle + Math.PI / 2));
+            labels.push(this.scene.add.text(Math.cos(labelAngle) * layout.labelRadius, Math.sin(labelAngle) * layout.labelRadius, slice.label, { fontFamily: BonusThemeConfig.fontFamily, fontSize: layout.labelFontSize, color: theme.colors.primaryText, fontStyle: 'bold', align: 'center', wordWrap: { width: layout.labelWidth } }).setOrigin(0.5).setRotation(labelAngle + Math.PI / 2));
         });
 
         graphics.lineStyle(theme.wheelStrokeWidth + 2, theme.wheelStrokeColor, 1);
@@ -143,7 +143,7 @@ export class WheelBonusPresentation {
         const layout = BonusLayoutConfig.wheelBonus.buttons;
         const theme = BonusThemeConfig.wheelBonus.buttons;
         const button = this.scene.add.rectangle(width / 2, y, layout.width, layout.height, color).setStrokeStyle(theme.strokeWidth, theme.strokeColor).setInteractive();
-        const text = this.scene.add.text(width / 2, y, label, { fontFamily: BonusThemeConfig.fontFamily, fontSize: layout.fontSize, color: BonusThemeConfig.wheelBonus.colors.primaryText, fontStyle: 'bold', align: 'center', wordWrap: { width: layout.width - 24 } }).setOrigin(0.5);
+        const text = this.scene.add.text(width / 2, y, label, { fontFamily: BonusThemeConfig.fontFamily, fontSize: layout.fontSize, color: BonusThemeConfig.wheelBonus.colors.primaryText, fontStyle: 'bold', align: 'center', wordWrap: { width: layout.width - layout.labelPadding } }).setOrigin(0.5);
         button.on('pointerdown', () => {
             if (this.selectionLocked) return;
             this.selectionLocked = true;

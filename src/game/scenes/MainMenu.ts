@@ -2,6 +2,7 @@ import {
     GameObjects,
     Scene,
 } from 'phaser';
+import { ScreenLayout } from '../config/ScreenLayout';
 
 export class MainMenu extends Scene {
     private progressBar?:
@@ -49,7 +50,10 @@ export class MainMenu extends Scene {
 
     public create(): void {
         this.progressText?.setText('CARREGAMENTO CONCLUÍDO');
-        this.progressBar?.setDisplaySize(480, 20);
+        this.progressBar?.setDisplaySize(
+            ScreenLayout.horizontal(480),
+            ScreenLayout.vertical(20)
+        );
 
         this.createStartButton();
     }
@@ -74,7 +78,7 @@ export class MainMenu extends Scene {
 
         this.add.text(
             centerX,
-            centerY - 170,
+            centerY - ScreenLayout.vertical(170),
             'Corn Game',
             {
                 fontFamily: 'Arial Black, Arial',
@@ -87,7 +91,7 @@ export class MainMenu extends Scene {
 
         this.add.text(
             centerX,
-            centerY - 90,
+            centerY - ScreenLayout.vertical(90),
             'PREPARANDO SUA EXPERIÊNCIA',
             {
                 fontFamily: 'Arial',
@@ -99,24 +103,24 @@ export class MainMenu extends Scene {
 
         this.add.rectangle(
             centerX,
-            centerY + 10,
-            492,
-            32,
+            centerY + ScreenLayout.vertical(10),
+            ScreenLayout.horizontal(492),
+            ScreenLayout.vertical(32),
             0x0f172a,
             0.92
         ).setStrokeStyle(2, 0xffffff, 0.28);
 
         this.progressBar = this.add.rectangle(
-            centerX - 240,
-            centerY + 10,
+            centerX - ScreenLayout.horizontal(240),
+            centerY + ScreenLayout.vertical(10),
             0,
-            20,
+            ScreenLayout.vertical(20),
             0xf6b43c
         ).setOrigin(0, 0.5);
 
         this.progressText = this.add.text(
             centerX,
-            centerY + 62,
+            centerY + ScreenLayout.vertical(62),
             'CARREGANDO 0%',
             {
                 fontFamily: 'Arial',
@@ -129,7 +133,10 @@ export class MainMenu extends Scene {
     private updateLoadingProgress(progress: number): void {
         const percentage = Math.round(progress * 100);
 
-        this.progressBar?.setDisplaySize(480 * progress, 20);
+        this.progressBar?.setDisplaySize(
+            ScreenLayout.horizontal(480) * progress,
+            ScreenLayout.vertical(20)
+        );
         this.progressText?.setText(`CARREGANDO ${percentage}%`);
     }
 
@@ -137,14 +144,14 @@ export class MainMenu extends Scene {
         const { width, height } = this.scale.gameSize;
         const startButton = this.add.container(
             width / 2,
-            height / 2 + 190
+            height / 2 + ScreenLayout.vertical(190)
         ).setAlpha(0);
 
         const background = this.add.rectangle(
             0,
             0,
-            420,
-            110,
+            ScreenLayout.horizontal(420),
+            ScreenLayout.vertical(110),
             0xe59a21
         ).setStrokeStyle(3, 0xffe0a3);
 
@@ -160,7 +167,10 @@ export class MainMenu extends Scene {
         ).setOrigin(0.5);
 
         startButton.add([background, label]);
-        startButton.setSize(420, 110);
+        startButton.setSize(
+            ScreenLayout.horizontal(420),
+            ScreenLayout.vertical(110)
+        );
         startButton.setInteractive({ useHandCursor: true });
 
         startButton.on('pointerover', () => {
@@ -178,7 +188,7 @@ export class MainMenu extends Scene {
         this.tweens.add({
             targets: startButton,
             alpha: 1,
-            y: height / 2 + 155,
+            y: height / 2 + ScreenLayout.vertical(155),
             duration: 420,
             ease: 'Sine.easeOut',
         });

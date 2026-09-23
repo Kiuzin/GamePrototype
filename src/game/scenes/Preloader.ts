@@ -1,4 +1,5 @@
 import { Scene } from 'phaser';
+import { ScreenLayout } from '../config/ScreenLayout';
 
 export class Preloader extends Scene {
     constructor() {
@@ -9,8 +10,8 @@ export class Preloader extends Scene {
         const { width, height } =
             this.scale.gameSize;
 
-        const barWidth = 464;
-        const barHeight = 28;
+        const barWidth = ScreenLayout.horizontal(464);
+        const barHeight = ScreenLayout.vertical(28);
 
         this.add.image(
             width / 2,

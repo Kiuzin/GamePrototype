@@ -50,7 +50,7 @@ export class CardDoublePresentation {
             this.scene.add.text(width / 2, layout.header.prizeY, `PRÊMIO EM JOGO: ${round.currentPayout.toFixed(2)}`, { fontFamily: BonusThemeConfig.fontFamily, fontSize: layout.header.prizeFontSize, color: theme.colors.primaryText, fontStyle: 'bold' }).setOrigin(0.5),
             this.scene.add.text(width / 2, layout.header.deckY, `CARTAS RESTANTES: ${round.remainingCardCount}`, { fontFamily: BonusThemeConfig.fontFamily, fontSize: layout.header.deckFontSize, color: theme.colors.secondaryText }).setOrigin(0.5),
             this.createCard(round.revealedCard),
-            this.scene.add.text(width / 2, layout.prompt.y, feedback.text, { fontFamily: BonusThemeConfig.fontFamily, fontSize: feedback.fontSize, color: feedback.color, fontStyle: 'bold', align: 'center', wordWrap: { width: 900 } }).setOrigin(0.5),
+            this.scene.add.text(width / 2, layout.prompt.y, feedback.text, { fontFamily: BonusThemeConfig.fontFamily, fontSize: feedback.fontSize, color: feedback.color, fontStyle: 'bold', align: 'center', wordWrap: { width: layout.prompt.width } }).setOrigin(0.5),
         ];
 
         this.container = this.scene.add.container(0, 0, items).setDepth(layout.depth);
@@ -164,7 +164,7 @@ export class CardDoublePresentation {
         const layout = BonusLayoutConfig.cardDouble.buttons;
         const theme = BonusThemeConfig.cardDouble;
         const button = this.scene.add.rectangle(x, y, layout.width, layout.height, color).setStrokeStyle(theme.buttons.strokeWidth, theme.buttons.strokeColor).setInteractive();
-        const text = this.scene.add.text(x, y, label, { fontFamily: BonusThemeConfig.fontFamily, fontSize: layout.fontSize, color: theme.colors.primaryText, fontStyle: 'bold', align: 'center', wordWrap: { width: layout.width - 25 } }).setOrigin(0.5);
+        const text = this.scene.add.text(x, y, label, { fontFamily: BonusThemeConfig.fontFamily, fontSize: layout.fontSize, color: theme.colors.primaryText, fontStyle: 'bold', align: 'center', wordWrap: { width: layout.width - layout.labelPadding } }).setOrigin(0.5);
 
         button.on('pointerdown', () => {
             if (this.selectionLocked) {
