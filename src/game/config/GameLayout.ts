@@ -12,7 +12,7 @@ export const GameLayout = {
     controlsDetails: { x: x(175), y: y(1590), width: horizontal(225), height: vertical(125) },
     controlsDetailsOpposite: { x: x(905), y: y(1590), width: horizontal(225), height: vertical(125) },
     reelMask: { width: horizontal(250), height: vertical(800), offsetX: 0, offsetY: vertical(200) },
-    title: { x: centerX, y: y(50) }, debug: { x: x(300), y: y(260) },
+    title: { x: centerX, y: y(50) },
     topHud: {
         panel: { x: centerX, y: y(150), width: horizontal(1000), height: vertical(130) },
         buttons: [
@@ -24,6 +24,16 @@ export const GameLayout = {
     },
     balanceLabel: { x: x(145), y: y(1560), fontSize: '24px', color: '#ffffff' },
     balanceValue: { x: x(175), y: y(1600), fontSize: '38px', color: '#00ff00' },
+    winPayoutFeedback: {
+        x: centerX,
+        y: y(950),
+        targetX: x(175),
+        targetY: y(1600),
+        fontSize: '58px',
+        countDuration: 650,
+        transferDuration: 520,
+        depth: 110,
+    },
     betLabel: { x: x(850), y: y(1560), fontSize: '24px', color: '#ffffff' },
     betValue: { x: x(910), y: y(1600), fontSize: '38px', color: '#ffffff' },
     result: { x: centerX, y: y(1460) }, spinButton: { x: centerX, y: y(1578), width: horizontal(175), height: vertical(175) },

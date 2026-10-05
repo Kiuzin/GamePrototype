@@ -19,7 +19,7 @@ export class WalletModal {
         private readonly callbacks: WalletModalCallbacks
     ) {}
 
-    public open(): void {
+    public open(initialStatus?: string): void {
         this.close();
 
         const { width, height } = this.scene.scale.gameSize;
@@ -31,7 +31,12 @@ export class WalletModal {
         const title = this.createLabel(width / 2, layout.titleY, 'CAIXA', { fontSize: '40px', color: GameConfig.colors.text });
         const balanceText = this.createLabel(width / 2, layout.balanceY, '', { fontSize: '30px', color: '#00ff00' });
         const amountLabel = this.createLabel(width / 2, layout.amountY, 'SELECIONE O VALOR', { fontSize: '24px', color: GameConfig.colors.text });
-        const statusText = this.createLabel(width / 2, layout.closeButtonY - 90, '', { fontSize: '22px', color: GameConfig.colors.text });
+        const statusText = this.createLabel(width / 2, layout.closeButtonY - 90, '', {
+            fontSize: '22px',
+            color: GameConfig.colors.text,
+            align: 'center',
+            wordWrap: { width: layout.panel.width - 100 },
+        });
         modal.add([overlay, panel, title, balanceText, amountLabel, statusText]);
         this.balanceText = balanceText;
         this.statusText = statusText;
@@ -54,7 +59,7 @@ export class WalletModal {
             this.setStatus(
                 succeeded
                     ? `R$ ${this.selectedAmount.toFixed(2)} depositados.`
-                    : 'OperaÃ§Ã£o disponÃ­vel somente com servidor.',
+                    : 'Operação disponível somente com servidor.',
                 !succeeded
             );
         });
@@ -64,7 +69,7 @@ export class WalletModal {
             this.setStatus(
                 succeeded
                     ? `R$ ${this.selectedAmount.toFixed(2)} sacados.`
-                    : 'OperaÃ§Ã£o disponÃ­vel somente com servidor.',
+                    : 'Operação disponível somente com servidor.',
                 !succeeded
             );
         });
@@ -78,6 +83,10 @@ export class WalletModal {
         this.modal = modal;
         this.updateBalance();
         this.updateAmountButtons();
+
+        if (initialStatus) {
+            this.setStatus(initialStatus, true);
+        }
     }
 
     private close(): void {

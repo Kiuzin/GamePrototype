@@ -10,6 +10,11 @@ export const GameTheme = {
         symbolStrokeColor: 0xffffff, symbolPulseScale: 1.12, symbolPulseDuration: 220,
         finalPauseDuration: 350,
     },
+    winPayoutFeedback: {
+        color: '#ffe34f',
+        strokeColor: '#4a2507',
+        strokeThickness: 10,
+    },
     historyModal: {
         overlayColor: 0x000000, overlayAlpha: 0.7, panelColor: 0x24150e,
         panelStrokeColor: 0xd28b21, panelStrokeWidth: 4,

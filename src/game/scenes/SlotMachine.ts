@@ -33,6 +33,7 @@ import { Reel } from '../objects/Reel';
 import {
     WinPresentation,
 } from '../presentation/WinPresentation';
+import { WinPayoutFeedback } from '../presentation/WinPayoutFeedback';
 import { SpinHistoryModal } from '../presentation/SpinHistoryModal';
 import { LuckyCornFeedback } from '../presentation/LuckyCornFeedback';
 import { HorseRacePresentation } from '../presentation/HorseRacePresentation';
@@ -75,6 +76,9 @@ export class SlotMachine extends Scene {
     private winPresentation?:
         WinPresentation;
 
+    private winPayoutFeedback?:
+        WinPayoutFeedback;
+
     private luckyCornFeedback?:
         LuckyCornFeedback;
 
@@ -91,9 +95,6 @@ export class SlotMachine extends Scene {
 
     private betIncreaseBtn?:
         GameObjects.Image;
-
-    private debugText?:
-        GameObjects.Text;
 
     private resultText?:
         GameObjects.Text;
@@ -210,8 +211,6 @@ export class SlotMachine extends Scene {
 
         this.createControlsDetails();
 
-        this.createDebugText();
-
         this.createResultText();
 
         this.createBalanceText();
@@ -289,6 +288,9 @@ export class SlotMachine extends Scene {
                 this,
                 this.reels
             );
+
+        this.winPayoutFeedback =
+            new WinPayoutFeedback(this);
     }
 
     private createLuckyCornFeedback(): void {
@@ -476,25 +478,6 @@ export class SlotMachine extends Scene {
     // =====================================================
     // TEXTOS
     // =====================================================
-
-    private createDebugText(): void {
-        if (!SecurityConfig.showDebugInformation) {
-            return;
-        }
-
-        this.debugText =
-            this.createLabel(
-                GameConfig.layout.debug.x,
-                GameConfig.layout.debug.y,
-                '',
-                {
-                    fontSize: '16px',
-                    color:
-                        GameConfig.colors.text,
-                    lineSpacing: 4,
-                }
-            );
-    }
 
     private createResultText(): void {
         this.resultText =
@@ -840,6 +823,7 @@ export class SlotMachine extends Scene {
         }
 
         this.winPresentation?.stop();
+        this.winPayoutFeedback?.stop();
 
         this.luckyCornFeedback?.clear();
         this.horseRacePresentation?.clear();
@@ -865,8 +849,8 @@ export class SlotMachine extends Scene {
                 this.updateAutoSpinButton();
             }
 
-            this.showError(
-                'INSUFFICIENT BALANCE'
+            this.walletModal?.open(
+                'Voce nao tem fundos suficientes. Faca um deposito para continuar.'
             );
 
             return;
@@ -937,18 +921,6 @@ export class SlotMachine extends Scene {
             playResult.payout.totalPayout <= 0
                 ? false
                 : this.wheelBonusFeature.tryStart();
-
-        // -----------------------------------------
-        // DEBUG
-        // -----------------------------------------
-
-        this.updateDebug(
-            playResult.grid
-        );
-
-        this.resultText?.setText(
-            'SPINNING...'
-        );
 
         // -----------------------------------------
         // REELS
@@ -1371,8 +1343,6 @@ export class SlotMachine extends Scene {
         const round =
             this.luckyCornFeature.playRound();
 
-        this.updateDebug(round.grid);
-
         this.resultText?.setText(
             'MILHO DA SORTE'
         );
@@ -1564,23 +1534,19 @@ export class SlotMachine extends Scene {
         // CREDITA PRÊMIO
         // ==========================================
 
-        this.session.creditPayout(payout.totalPayout + bonusPayout);
+        const totalPayout =
+            payout.totalPayout + bonusPayout;
 
-        this.updateBalanceUI();
-
-        this.addSpinToHistory(playResult, bonusPayout);
-
-        // ==========================================
-        // NO WIN
-        // ==========================================
+        const creditWinnings = (): void => {
+            this.session.creditPayout(totalPayout);
+            this.updateBalanceUI();
+            this.addSpinToHistory(playResult, bonusPayout);
+        };
 
         if (
             winningLines.length === 0
         ) {
-            this.resultText?.setText(
-                'NO WIN'
-            );
-
+            creditWinnings();
             this.completeSpin(onComplete);
 
             return;
@@ -1590,37 +1556,51 @@ export class SlotMachine extends Scene {
         // WIN
         // ==========================================
 
-        this.winPresentation?.play(
+        if (!this.winPresentation || !this.winPayoutFeedback) {
+            creditWinnings();
+            this.completeSpin(onComplete);
+
+            return;
+        }
+
+        let displayedPayout = 0;
+        this.winPayoutFeedback.start();
+
+        this.winPresentation.play(
             winningLines,
 
             payout.wins,
 
             {
                 onLineStart:
-                    (
-                        win,
-                        linePayout
-                    ) => {
-                        const payoutValue =
-                            linePayout?.payout ??
-                            0;
+                    (_win, linePayout) => {
+                        displayedPayout +=
+                            linePayout?.payout ?? 0;
 
-                        this.resultText?.setText(
-                            `LINE ${win.lineId} | ${win.symbolId} | WIN ${payoutValue.toFixed(
-                                2
-                            )}`
+                        this.winPayoutFeedback?.increaseTo(
+                            Math.min(
+                                totalPayout,
+                                displayedPayout
+                            )
                         );
                     },
 
                 onComplete:
                     () => {
-                        this.resultText?.setText(
-                            `TOTAL WIN: ${payout.totalPayout.toFixed(
-                                2
-                            )}`
+                        this.winPayoutFeedback?.increaseTo(
+                            totalPayout
                         );
-
-                        this.completeSpin(onComplete);
+                        this.time.delayedCall(
+                            GameConfig.layout.winPayoutFeedback.countDuration,
+                            () => {
+                                this.winPayoutFeedback?.transferToBalance(
+                                    () => {
+                                        creditWinnings();
+                                        this.completeSpin(onComplete);
+                                    }
+                                );
+                            }
+                        );
                     },
             }
         );
@@ -1776,54 +1756,4 @@ export class SlotMachine extends Scene {
             .setAlpha(0.45);
     }
 
-    private showError(
-        message: string
-    ): void {
-        this.resultText?.setText(
-            message
-        );
-    }
-
-    // =====================================================
-    // DEBUG
-    // =====================================================
-
-    private updateDebug(
-        result: string[][]
-    ): void {
-        if (!SecurityConfig.showDebugInformation) {
-            return;
-        }
-
-        if (!this.debugText) {
-            return;
-        }
-
-        const lines: string[] = [
-            'UPCOMING RESULT',
-            '',
-        ];
-
-        result.forEach(
-            (column, reelIndex) => {
-                lines.push(
-                    `REEL ${reelIndex + 1}`
-                );
-
-                column.forEach(
-                    symbol => {
-                        lines.push(
-                            `[${symbol}]`
-                        );
-                    }
-                );
-
-                lines.push('');
-            }
-        );
-
-        this.debugText.setText(
-            lines.join('\n')
-        );
-    }
 }
