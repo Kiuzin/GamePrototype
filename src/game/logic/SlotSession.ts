@@ -41,6 +41,20 @@ export class SlotSession {
         this.balance += payout;
     }
 
+    public withdraw(amount: number): boolean {
+        if (
+            !Number.isFinite(amount) ||
+            amount <= 0 ||
+            amount > this.balance
+        ) {
+            return false;
+        }
+
+        this.balance -= amount;
+
+        return true;
+    }
+
     public addHistoryEntry(entry: SpinHistoryEntry): void {
         this.history.unshift(entry);
         this.history.length = Math.min(this.history.length, GameSettings.history.maxEntries);

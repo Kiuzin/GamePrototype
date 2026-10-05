@@ -8,7 +8,7 @@
 export const FeatureConfig = {
     luckyCorn: {
         enabled: true,
-        activationChance: 100.01,
+        activationChance: 2,
         extraSpinDuration: 3400,
         suspenseStartDelay: 2050,
         startDisplayDuration: 1150,
@@ -56,7 +56,7 @@ export const FeatureConfig = {
     },
     treasureChest: {
         enabled: false,
-        activationChance: 0.1,
+        activationChance: 100.1,
         chestCount: 8,
         endingChestCount: 2,
         rewardMultipliers: [0.5, 1, 1.5, 1.75, 2, 2.25],
@@ -65,7 +65,7 @@ export const FeatureConfig = {
     },
     cardDouble: {
         enabled: false,
-        activationChance: 0.12,
+        activationChance: 100.12,
         thresholdRank: 7,
         // Um baralho de 26 cartas: cada valor existe uma vez em cada cor.
         // O Ás vale 1, deixando seis valores abaixo e seis acima do 7.

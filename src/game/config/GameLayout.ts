@@ -12,7 +12,16 @@ export const GameLayout = {
     controlsDetails: { x: x(175), y: y(1590), width: horizontal(225), height: vertical(125) },
     controlsDetailsOpposite: { x: x(905), y: y(1590), width: horizontal(225), height: vertical(125) },
     reelMask: { width: horizontal(250), height: vertical(800), offsetX: 0, offsetY: vertical(200) },
-    title: { x: centerX, y: y(50) }, debug: { x: x(300), y: y(150) },
+    title: { x: centerX, y: y(50) }, debug: { x: x(300), y: y(260) },
+    topHud: {
+        panel: { x: centerX, y: y(150), width: horizontal(1000), height: vertical(130) },
+        buttons: [
+            { x: x(150), y: y(150), width: horizontal(190), height: vertical(82) },
+            { x: x(390), y: y(150), width: horizontal(190), height: vertical(82) },
+            { x: x(650), y: y(150), width: horizontal(230), height: vertical(82) },
+            { x: x(910), y: y(150), width: horizontal(230), height: vertical(82) },
+        ],
+    },
     balanceLabel: { x: x(145), y: y(1560), fontSize: '24px', color: '#ffffff' },
     balanceValue: { x: x(175), y: y(1600), fontSize: '38px', color: '#00ff00' },
     betLabel: { x: x(850), y: y(1560), fontSize: '24px', color: '#ffffff' },
@@ -25,6 +34,19 @@ export const GameLayout = {
         depth: 20, panel: { width: horizontal(900), height: vertical(1080) }, titleY: y(500),
         content: { offsetX: horizontal(-370), y: y(590), width: horizontal(740) },
         closeButton: { y: y(1440), width: horizontal(240), height: vertical(70) },
+    },
+    walletModal: {
+        depth: 30, panel: { width: horizontal(880), height: vertical(900) },
+        titleY: y(590), balanceY: y(680), amountY: y(800),
+        amountButtonsY: y(920), actionButtonsY: y(1080), closeButtonY: y(1240),
+        amountButton: { width: horizontal(170), height: vertical(76) },
+        actionButton: { width: horizontal(330), height: vertical(88) },
+        closeButton: { width: horizontal(250), height: vertical(70) },
+    },
+    rulesModal: {
+        depth: 30, panel: { width: horizontal(900), height: vertical(1080) },
+        titleY: y(450), contentY: y(550), closeButtonY: y(1400),
+        contentWidth: horizontal(760), closeButton: { width: horizontal(250), height: vertical(70) },
     },
     screen: { width: screenWidth, height: screenHeight },
 } as const;

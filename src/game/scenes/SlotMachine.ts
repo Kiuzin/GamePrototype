@@ -46,6 +46,9 @@ import { CardDoublePresentation } from '../presentation/CardDoublePresentation';
 import { WheelBonusFeature } from '../logic/WheelBonusFeature';
 import type { WheelBonusRound } from '../logic/WheelBonusFeature';
 import { WheelBonusPresentation } from '../presentation/WheelBonusPresentation';
+import { SlotHud } from '../presentation/SlotHud';
+import { RulesModal } from '../presentation/RulesModal';
+import { WalletModal } from '../presentation/WalletModal';
 
 export class SlotMachine extends Scene {
     private reels: Reel[] = [];
@@ -63,6 +66,10 @@ export class SlotMachine extends Scene {
         GameObjects.Image;
 
     private historyModal?: SpinHistoryModal;
+
+    private rulesModal?: RulesModal;
+
+    private walletModal?: WalletModal;
 
     private winPresentation?:
         WinPresentation;
@@ -162,9 +169,25 @@ export class SlotMachine extends Scene {
 
     create(): void {
         this.historyModal = new SpinHistoryModal(this);
+        this.rulesModal = new RulesModal(this);
+        this.walletModal = new WalletModal(this, {
+            getBalance: () => this.session.getBalance(),
+            deposit: amount => {
+                this.session.creditPayout(amount);
+                this.updateBalanceUI();
+            },
+            withdraw: amount => {
+                const succeeded = this.session.withdraw(amount);
+                this.updateBalanceUI();
+
+                return succeeded;
+            },
+        });
         this.createBackground();
 
         this.createTitle();
+
+        this.createTopHud();
 
         this.createReelBackdrop();
 
@@ -273,6 +296,15 @@ export class SlotMachine extends Scene {
                     GameConfig.colors.text,
             }
         );
+    }
+
+    private createTopHud(): void {
+        new SlotHud(this, {
+            onMusicToggle: () => undefined,
+            onSoundToggle: () => undefined,
+            onRulesOpen: () => this.rulesModal?.open(),
+            onWalletOpen: () => this.walletModal?.open(),
+        }).create();
     }
 
     private createLabel(
@@ -572,10 +604,6 @@ export class SlotMachine extends Scene {
     }
 
     private increaseBet(): void {
-        if (this.isSpinning) {
-            return;
-        }
-
         this.session.betManager.increase();
 
         this.updateBetUI();
@@ -584,10 +612,6 @@ export class SlotMachine extends Scene {
     }
 
     private decreaseBet(): void {
-        if (this.isSpinning) {
-            return;
-        }
-
         this.session.betManager.decrease();
 
         this.updateBetUI();
@@ -1634,31 +1658,6 @@ export class SlotMachine extends Scene {
 
     private disableControls(): void {
         this.setSpinButtonEnabled(false);
-
-        this.setImageButtonEnabled(
-            this.betDecreaseBtn,
-            false
-        );
-
-        this.setImageButtonEnabled(
-            this.betIncreaseBtn,
-            false
-        );
-
-        this.setImageButtonEnabled(
-            this.autoSpinBtn,
-            false
-        );
-
-        this.setImageButtonEnabled(
-            this.turboBtn,
-            false
-        );
-
-        this.setImageButtonEnabled(
-            this.historyBtn,
-            false
-        );
     }
 
     private enableControls(): void {
@@ -1710,10 +1709,6 @@ export class SlotMachine extends Scene {
      * chegamos ao mínimo/máximo.
      */
     private updateBetButtons(): void {
-        if (this.isSpinning) {
-            return;
-        }
-
         this.setImageButtonEnabled(
             this.betDecreaseBtn,
             this.session.betManager.canDecrease()
