@@ -3,7 +3,7 @@ import { GameConfig } from '../config/GameConfig';
 
 export interface WalletModalCallbacks {
     getBalance: () => number;
-    deposit: (amount: number) => void;
+    deposit: (amount: number) => boolean;
     withdraw: (amount: number) => boolean;
 }
 
@@ -49,14 +49,24 @@ export class WalletModal {
         });
         this.amountButtons = amountButtons;
         const depositButton = this.createActionButton(width / 2 - 185, layout.actionButtonsY, 'DEPOSITAR', theme.depositButtonColor, () => {
-            this.callbacks.deposit(this.selectedAmount);
+            const succeeded = this.callbacks.deposit(this.selectedAmount);
             this.updateBalance();
-            this.setStatus(`R$ ${this.selectedAmount.toFixed(2)} depositados.`);
+            this.setStatus(
+                succeeded
+                    ? `R$ ${this.selectedAmount.toFixed(2)} depositados.`
+                    : 'OperaÃ§Ã£o disponÃ­vel somente com servidor.',
+                !succeeded
+            );
         });
         const withdrawButton = this.createActionButton(width / 2 + 185, layout.actionButtonsY, 'SACAR', theme.withdrawButtonColor, () => {
             const succeeded = this.callbacks.withdraw(this.selectedAmount);
             this.updateBalance();
-            this.setStatus(succeeded ? `R$ ${this.selectedAmount.toFixed(2)} sacados.` : 'Saldo insuficiente para este saque.', !succeeded);
+            this.setStatus(
+                succeeded
+                    ? `R$ ${this.selectedAmount.toFixed(2)} sacados.`
+                    : 'OperaÃ§Ã£o disponÃ­vel somente com servidor.',
+                !succeeded
+            );
         });
         const closeButton = this.scene.add.rectangle(width / 2, layout.closeButtonY, layout.closeButton.width, layout.closeButton.height, GameConfig.colors.button).setInteractive();
         const closeText = this.createLabel(width / 2, layout.closeButtonY, 'FECHAR', { fontSize: '26px', color: GameConfig.colors.buttonText });

@@ -5,6 +5,7 @@ import {
 
 import { GameConfig } from '../config/GameConfig';
 import { FeatureConfig } from '../config/FeatureConfig';
+import { SecurityConfig } from '../config/SecurityConfig';
 
 import {
     SlotCore,
@@ -173,10 +174,20 @@ export class SlotMachine extends Scene {
         this.walletModal = new WalletModal(this, {
             getBalance: () => this.session.getBalance(),
             deposit: amount => {
+                if (!SecurityConfig.allowLocalWalletMutations) {
+                    return false;
+                }
+
                 this.session.creditPayout(amount);
                 this.updateBalanceUI();
+
+                return true;
             },
             withdraw: amount => {
+                if (!SecurityConfig.allowLocalWalletMutations) {
+                    return false;
+                }
+
                 const succeeded = this.session.withdraw(amount);
                 this.updateBalanceUI();
 
@@ -467,6 +478,10 @@ export class SlotMachine extends Scene {
     // =====================================================
 
     private createDebugText(): void {
+        if (!SecurityConfig.showDebugInformation) {
+            return;
+        }
+
         this.debugText =
             this.createLabel(
                 GameConfig.layout.debug.x,
@@ -1776,6 +1791,10 @@ export class SlotMachine extends Scene {
     private updateDebug(
         result: string[][]
     ): void {
+        if (!SecurityConfig.showDebugInformation) {
+            return;
+        }
+
         if (!this.debugText) {
             return;
         }
