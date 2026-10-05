@@ -36,7 +36,7 @@ export const GameLayout = {
     },
     betLabel: { x: x(850), y: y(1560), fontSize: '24px', color: '#ffffff' },
     betValue: { x: x(910), y: y(1600), fontSize: '38px', color: '#ffffff' },
-    result: { x: centerX, y: y(1460) }, spinButton: { x: centerX, y: y(1578), width: horizontal(175), height: vertical(175) },
+    result: { x: centerX, y: y(1460) }, spinButton: { x: x(535), y: y(1578), width: horizontal(170), height: vertical(170) },
     autoSpinButton: { x: x(215), y: y(1775), width: horizontal(275), height: vertical(135) },
     turboButton: { x: x(875), y: y(1775), width: horizontal(285), height: vertical(150) },
     historyButton: { x: centerX, y: y(1775), width: horizontal(350), height: vertical(100) },
