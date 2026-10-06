@@ -1,4 +1,5 @@
 import { FeatureConfig } from '../config/FeatureConfig';
+import { normalizeProbability } from './RandomUtils';
 
 export type WheelSlice = typeof FeatureConfig.wheelBonus.slices[number];
 
@@ -23,7 +24,9 @@ export class WheelBonusFeature {
     }
 
     public tryStart(): boolean {
-        return this.settings.enabled && !this.currentRound && this.random() < this.normalizeChance(this.settings.activationChance);
+        return this.settings.enabled &&
+            !this.currentRound &&
+            this.random() < normalizeProbability(this.settings.activationChance);
     }
 
     public start(basePayout: number): WheelBonusRound {
@@ -102,7 +105,4 @@ export class WheelBonusFeature {
         }
     }
 
-    private normalizeChance(value: number): number {
-        return Math.min(1, Math.max(0, value > 1 ? value / 100 : value));
-    }
 }

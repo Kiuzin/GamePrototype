@@ -179,7 +179,7 @@ export class SlotMachine extends Scene {
                     return false;
                 }
 
-                this.session.creditPayout(amount);
+                this.session.adjustBalance(amount);
                 this.updateBalanceUI();
 
                 return true;
@@ -250,7 +250,7 @@ export class SlotMachine extends Scene {
             return;
         }
 
-        this.spinBtn.angle -=
+        this.spinBtn.angle +=
             this.spinRotationSpeed *
             delta / 1000;
     }
@@ -1080,7 +1080,7 @@ export class SlotMachine extends Scene {
         const payout = this.horseRaceFeature.getPayout(basePayout, result.selectedRank);
         this.horseRaceFeature.finish();
         const finish = (): void => {
-            this.session.creditPayout(payout);
+            this.session.adjustBalance(payout);
             this.session.addPayoutToLatestHistory(payout);
             this.updateBalanceUI();
             this.finishSpinInteraction();
@@ -1139,7 +1139,7 @@ export class SlotMachine extends Scene {
         const extraPayout = this.treasureChestFeature.getExtraPayout(basePayout);
         const finish = (): void => {
             this.treasureChestFeature.finish();
-            this.session.creditPayout(extraPayout);
+            this.session.adjustBalance(extraPayout);
             this.session.addPayoutToLatestHistory(extraPayout);
             this.updateBalanceUI();
             this.finishSpinInteraction();
@@ -1207,7 +1207,7 @@ export class SlotMachine extends Scene {
         const finish = (): void => {
             this.cardDoubleFeature.finish();
             this.cardDoublePresentation?.clear();
-            this.session.creditPayout(extraPayout);
+            this.session.adjustBalance(extraPayout);
             this.session.addPayoutToLatestHistory(extraPayout);
             this.updateBalanceUI();
             this.finishSpinInteraction();
@@ -1228,7 +1228,7 @@ export class SlotMachine extends Scene {
     private loseCardDouble(basePayout: number): void {
         this.cardDoubleFeature.finish();
         this.cardDoublePresentation?.clear();
-        this.session.creditPayout(-basePayout);
+        this.session.adjustBalance(-basePayout);
         this.session.addPayoutToLatestHistory(-basePayout);
         this.updateBalanceUI();
         this.finishSpinInteraction();
@@ -1270,7 +1270,7 @@ export class SlotMachine extends Scene {
         const extraPayout = this.wheelBonusFeature.getExtraPayout();
         this.wheelBonusFeature.finish();
         this.wheelBonusPresentation?.clear();
-        this.session.creditPayout(extraPayout);
+        this.session.adjustBalance(extraPayout);
         this.session.addPayoutToLatestHistory(extraPayout);
         this.updateBalanceUI();
         this.resultText?.setText(
@@ -1538,7 +1538,7 @@ export class SlotMachine extends Scene {
             payout.totalPayout + bonusPayout;
 
         const creditWinnings = (): void => {
-            this.session.creditPayout(totalPayout);
+            this.session.adjustBalance(totalPayout);
             this.updateBalanceUI();
             this.addSpinToHistory(playResult, bonusPayout);
         };

@@ -1,4 +1,5 @@
 import { FeatureConfig } from '../config/FeatureConfig';
+import { normalizeProbability, shuffle } from './RandomUtils';
 
 export type CardGuess = 'lower' | 'higher';
 
@@ -46,7 +47,7 @@ export class CardDoubleFeature {
     public tryStart(): boolean {
         return this.settings.enabled &&
             !this.isActive() &&
-            this.random() < this.normalizeChance(this.settings.activationChance);
+            this.random() < normalizeProbability(this.settings.activationChance);
     }
 
     public start(basePayout: number): CardDoubleRound {
@@ -150,14 +151,15 @@ export class CardDoubleFeature {
             { rank: 'K', value: 13 },
         ];
 
-        this.deck = this.shuffle(
+        this.deck = shuffle(
             this.settings.suits.flatMap(suit =>
                 ranks.map(rank => ({
                     ...rank,
                     suit: suit.symbol,
                     color: suit.color,
                 }))
-            )
+            ),
+            this.random
         );
     }
 
@@ -172,22 +174,4 @@ export class CardDoubleFeature {
         return card;
     }
 
-    private shuffle<T>(items: readonly T[]): T[] {
-        const shuffled = [...items];
-
-        for (let index = shuffled.length - 1; index > 0; index--) {
-            const targetIndex = Math.floor(this.random() * (index + 1));
-            [shuffled[index], shuffled[targetIndex]] = [
-                shuffled[targetIndex],
-                shuffled[index],
-            ];
-        }
-
-        return shuffled;
-    }
-
-    private normalizeChance(value: number): number {
-        const chance = value > 1 ? value / 100 : value;
-        return Math.min(1, Math.max(0, chance));
-    }
 }

@@ -53,7 +53,8 @@ export class WinPayoutFeedback {
             duration: GameConfig.layout.winPayoutFeedback.countDuration,
             ease: 'Cubic.Out',
             onUpdate: tween => {
-                const value = tween.getValue();
+                const value =
+                    tween.getValue() ?? targetAmount;
                 this.currentAmount = value;
                 this.text.setText(this.formatAmount(value));
             },

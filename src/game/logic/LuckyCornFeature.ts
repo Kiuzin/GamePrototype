@@ -1,5 +1,6 @@
 import { FeatureConfig } from '../config/FeatureConfig';
 import { SymbolConfig } from '../config/SymbolConfig';
+import { normalizeProbability } from './RandomUtils';
 
 export interface LuckyCornActivation {
     selectedSymbolId: string;
@@ -82,7 +83,7 @@ export class LuckyCornFeature {
             !this.settings.enabled ||
             this.isActive() ||
             this.random() >=
-                this.normalizeProbability(
+                normalizeProbability(
                     this.settings.activationChance
                 )
         ) {
@@ -270,13 +271,13 @@ export class LuckyCornFeature {
         const roll = this.random();
 
         const selectedSymbolChance =
-            this.normalizeProbability(
+            normalizeProbability(
                 this.settings
                     .selectedSymbolChance
             );
 
         const wildChance =
-            this.normalizeProbability(
+            normalizeProbability(
                 this.settings.wildChance
             );
 
@@ -365,23 +366,6 @@ export class LuckyCornFeature {
             column => column.some(
                 symbolId => symbolId === null
             )
-        );
-    }
-
-    private normalizeProbability(
-        value: number
-    ): number {
-        if (!Number.isFinite(value)) {
-            return 0;
-        }
-
-        const probability = value > 1
-            ? value / 100
-            : value;
-
-        return Math.min(
-            1,
-            Math.max(0, probability)
         );
     }
 

@@ -14,7 +14,7 @@ export class SlotSession {
         GameSettings.bet.defaultBet
     );
 
-    private balance = GameSettings.bet.initialBalance;
+    private balance: number = GameSettings.bet.initialBalance;
 
     private readonly history: SpinHistoryEntry[] = [];
 
@@ -37,8 +37,19 @@ export class SlotSession {
         return bet;
     }
 
-    public creditPayout(payout: number): void {
-        this.balance += payout;
+    /** Aplica uma variaÃ§Ã£o validada de saldo, positiva ou negativa. */
+    public adjustBalance(amount: number): void {
+        if (!Number.isFinite(amount)) {
+            throw new Error('Balance adjustment must be a finite number.');
+        }
+
+        const nextBalance = this.balance + amount;
+
+        if (nextBalance < 0) {
+            throw new Error('Balance cannot be negative.');
+        }
+
+        this.balance = nextBalance;
     }
 
     public withdraw(amount: number): boolean {
@@ -50,17 +61,33 @@ export class SlotSession {
             return false;
         }
 
-        this.balance -= amount;
+        this.adjustBalance(-amount);
 
         return true;
     }
 
     public addHistoryEntry(entry: SpinHistoryEntry): void {
-        this.history.unshift(entry);
-        this.history.length = Math.min(this.history.length, GameSettings.history.maxEntries);
+        if (
+            !Number.isFinite(entry.bet) ||
+            !Number.isFinite(entry.payout) ||
+            !Number.isInteger(entry.winningLines) ||
+            entry.winningLines < 0
+        ) {
+            throw new Error('Invalid spin history entry.');
+        }
+
+        this.history.unshift({ ...entry });
+        this.history.length = Math.min(
+            this.history.length,
+            GameSettings.history.maxEntries
+        );
     }
 
     public addPayoutToLatestHistory(payout: number): void {
+        if (!Number.isFinite(payout)) {
+            throw new Error('History payout must be a finite number.');
+        }
+
         const latestEntry = this.history[0];
 
         if (!latestEntry) {
@@ -71,6 +98,6 @@ export class SlotSession {
     }
 
     public getHistory(): readonly SpinHistoryEntry[] {
-        return this.history;
+        return this.history.map(entry => ({ ...entry }));
     }
 }

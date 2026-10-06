@@ -1,4 +1,5 @@
 import { FeatureConfig } from '../config/FeatureConfig';
+import { normalizeProbability, shuffle } from './RandomUtils';
 
 export type TreasureChestContent =
     | { type: 'reward'; multiplier: number }
@@ -32,16 +33,16 @@ export class TreasureChestFeature {
     public tryStart(): boolean {
         return this.settings.enabled &&
             !this.currentRound &&
-            this.random() < this.normalizeChance(this.settings.activationChance);
+            this.random() < normalizeProbability(this.settings.activationChance);
     }
 
     public start(): TreasureChestRound {
         this.validateSettings();
 
-        const contents = this.shuffle([
+        const contents = shuffle([
             ...this.settings.rewardMultipliers.map(multiplier => ({ type: 'reward' as const, multiplier })),
             ...Array.from({ length: this.settings.endingChestCount }, () => ({ type: 'ending' as const })),
-        ]);
+        ], this.random);
 
         this.currentRound = {
             chests: contents.map((content, index) => ({
@@ -111,17 +112,4 @@ export class TreasureChestFeature {
         }
     }
 
-    private shuffle<T>(items: readonly T[]): T[] {
-        const shuffled = [...items];
-        for (let index = shuffled.length - 1; index > 0; index--) {
-            const targetIndex = Math.floor(this.random() * (index + 1));
-            [shuffled[index], shuffled[targetIndex]] = [shuffled[targetIndex], shuffled[index]];
-        }
-        return shuffled;
-    }
-
-    private normalizeChance(value: number): number {
-        const chance = value > 1 ? value / 100 : value;
-        return Math.min(1, Math.max(0, chance));
-    }
 }

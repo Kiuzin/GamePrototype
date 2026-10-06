@@ -252,7 +252,7 @@ export class Reel {
         this.clearWinEffects();
         this.featureSpinStrip = undefined;
         this.position = this.findTargetPosition(finalColumn);
-        this.targetPosition = undefined;
+        this.targetPosition = null;
         this.render();
     }
 

@@ -146,7 +146,9 @@ export class HorseRacePresentation {
     public clear(): void {
         this.tractors.forEach(tractor => this.scene.tweens.killTweensOf(tractor));
         this.tractors.length = 0;
-        this.scene.tweens.killTweensOf(this.winnerHighlight);
+        if (this.winnerHighlight) {
+            this.scene.tweens.killTweensOf(this.winnerHighlight);
+        }
         this.winnerHighlight = undefined;
         this.selectionLocked = false;
         this.container?.destroy();

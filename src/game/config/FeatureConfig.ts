@@ -8,7 +8,7 @@
 export const FeatureConfig = {
     luckyCorn: {
         enabled: true,
-        activationChance: 2,
+        activationChance: 0.01,
         extraSpinDuration: 3400,
         suspenseStartDelay: 2050,
         startDisplayDuration: 1150,
@@ -38,25 +38,44 @@ export const FeatureConfig = {
         },
     },
     horseRace: {
-        enabled: false,
-        activationChance: 100.04,
+        enabled: true,
+        activationChance: 0.01,
         segmentCount: 12,
         segmentDuration: 650,
         minimumSpeed: 45,
         maximumSpeed: 100,
-        payouts: { 1: 12, 2: 4, 3: 1.5 },
+        payouts: {
+            1: 12,
+            2: 4,
+            3: 1.5,
+        },
         // A ordem abaixo define as pistas da corrida.
         runners: [
-            { id: 'greenTractor', name: 'TRATOR VERDE', color: 0x58a65c },
-            { id: 'blueTractor', name: 'TRATOR AZUL', color: 0x4b8ed6 },
-            { id: 'redTractor', name: 'TRATOR VERMELHO', color: 0xd65a5a },
-            { id: 'yellowTractor', name: 'TRATOR AMARELO', color: 0xe0b844 },
-
+            {
+                id: 'greenTractor',
+                name: 'TRATOR VERDE',
+                color: 0x58a65c,
+            },
+            {
+                id: 'blueTractor',
+                name: 'TRATOR AZUL',
+                color: 0x4b8ed6,
+            },
+            {
+                id: 'redTractor',
+                name: 'TRATOR VERMELHO',
+                color: 0xd65a5a,
+            },
+            {
+                id: 'yellowTractor',
+                name: 'TRATOR AMARELO',
+                color: 0xe0b844,
+            },
         ],
     },
     treasureChest: {
-        enabled: false,
-        activationChance: 100.1,
+        enabled: true,
+        activationChance: 0.01,
         chestCount: 8,
         endingChestCount: 2,
         rewardMultipliers: [0.5, 1, 1.5, 1.75, 2, 2.25],
@@ -64,8 +83,8 @@ export const FeatureConfig = {
         payoutCountDuration: 1800,
     },
     cardDouble: {
-        enabled: false,
-        activationChance: 100.12,
+        enabled: true,
+        activationChance: 0.01,
         thresholdRank: 7,
         // Um baralho de 26 cartas: cada valor existe uma vez em cada cor.
         // O Ás vale 1, deixando seis valores abaixo e seis acima do 7.
@@ -76,8 +95,8 @@ export const FeatureConfig = {
         finalDisplayDuration: 1500,
     },
     wheelBonus: {
-        enabled: false,
-        activationChance: 100.08,
+        enabled: true,
+        activationChance: 0.01,
         initialSpins: 3,
         spinDuration: 2200,
         finalDisplayDuration: 1200,

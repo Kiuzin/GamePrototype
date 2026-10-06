@@ -1,4 +1,5 @@
 import { FeatureConfig } from '../config/FeatureConfig';
+import { normalizeProbability } from './RandomUtils';
 
 export type HorseRaceRunner =
     typeof FeatureConfig.horseRace.runners[number];
@@ -30,7 +31,11 @@ export class HorseRaceFeature {
     }
 
     public tryStart(): boolean {
-        if (!this.settings.enabled || this.isRunning || this.random() >= this.normalizeChance(this.settings.activationChance)) {
+        if (
+            !this.settings.enabled ||
+            this.isRunning ||
+            this.random() >= normalizeProbability(this.settings.activationChance)
+        ) {
             return false;
         }
 
@@ -118,8 +123,4 @@ export class HorseRaceFeature {
         }
     }
 
-    private normalizeChance(value: number): number {
-        const chance = value > 1 ? value / 100 : value;
-        return Math.min(1, Math.max(0, chance));
-    }
 }
