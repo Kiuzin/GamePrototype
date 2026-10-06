@@ -224,8 +224,6 @@ export class Reel {
 
                 this.isSpinning = false;
 
-                this.featureSpinStrip = undefined;
-
                 this.render();
 
                 this.onSpinComplete();
@@ -238,6 +236,69 @@ export class Reel {
     ): void {
         this.onCompleteCallback =
             callback;
+    }
+
+    /**
+     * Substitui o strip exibido sem interromper o giro atual. O destino da
+     * animação é preservado, permitindo a transição durante o giro regular.
+     */
+    public replaceSpinStrip(
+        finalColumn: string[],
+        featureSpinSymbols: readonly string[],
+        transitionDuration = 0
+    ): void {
+        if (
+            !this.isSpinning ||
+            this.targetPosition === null ||
+            finalColumn.length !== this.visibleRows ||
+            featureSpinSymbols.length === 0
+        ) {
+            return;
+        }
+
+        const targetIndex = this.wrapIndex(
+            Math.floor(this.targetPosition)
+        );
+
+        const replaceStrip = (): void => {
+            this.featureSpinStrip = this.createFeatureSpinStrip(
+                featureSpinSymbols,
+                targetIndex,
+                finalColumn
+            );
+
+            this.render();
+        };
+
+        this.scene.tweens.killTweensOf(
+            this.container
+        );
+
+        if (transitionDuration <= 0) {
+            replaceStrip();
+
+            return;
+        }
+
+        const fadeDuration =
+            transitionDuration / 2;
+
+        this.scene.tweens.add({
+            targets: this.container,
+            alpha: 0.55,
+            duration: fadeDuration,
+            ease: 'Sine.easeIn',
+            onComplete: () => {
+                replaceStrip();
+
+                this.scene.tweens.add({
+                    targets: this.container,
+                    alpha: 1,
+                    duration: fadeDuration,
+                    ease: 'Sine.easeOut',
+                });
+            },
+        });
     }
 
     /**

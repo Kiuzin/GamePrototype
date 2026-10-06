@@ -884,6 +884,13 @@ export class SlotMachine extends Scene {
         const playResult =
             SlotCore.play(currentBet);
 
+        // A primeira grade especial é sorteada agora, mas só substitui o
+        // conteúdo visual dos rolos enquanto o giro normal ainda acontece.
+        const luckyCornRound =
+            luckyCornActivation
+                ? this.luckyCornFeature.playRound()
+                : undefined;
+
         // A corrida é um bônus de continuação: só pode ser sorteada
         // quando a rodada base já gerou algum ganho.
         const horseRaceActivation =
@@ -940,8 +947,10 @@ export class SlotMachine extends Scene {
                     : 0
             );
 
-        if (luckyCornActivation) {
-            this.scheduleLuckyCornSuspense();
+        if (luckyCornRound) {
+            this.scheduleLuckyCornSuspense(
+                luckyCornRound
+            );
         }
 
         this.reels.forEach(
@@ -959,12 +968,10 @@ export class SlotMachine extends Scene {
                                     stoppedReels ===
                                     this.reels.length
                                 ) {
-                                    if (
-                                        luckyCornActivation
-                                    ) {
-                                        this.startLuckyCornFeature(
+                                    if (luckyCornRound) {
+                                        this.completeLuckyCornRound(
                                             currentBet,
-                                            luckyCornActivation.selectedSymbolId,
+                                            luckyCornRound,
                                             playResult.grid
                                         );
 
@@ -1285,7 +1292,9 @@ export class SlotMachine extends Scene {
     // MILHO DA SORTE
     // =====================================================
 
-    private scheduleLuckyCornSuspense(): void {
+    private scheduleLuckyCornSuspense(
+        round: LuckyCornRound
+    ): void {
         this.time.delayedCall(
             FeatureConfig.luckyCorn
                 .suspenseStartDelay,
@@ -1297,42 +1306,29 @@ export class SlotMachine extends Scene {
                     return;
                 }
 
-                this.luckyCornFeedback?.showSuspense();
+                this.luckyCornFeedback?.showSuspense(
+                    FeatureConfig.luckyCorn
+                        .suspenseDisplayDuration
+                );
+
+                const featureSpinSymbols =
+                    this.luckyCornFeature.getSpinSymbols();
+
+                this.reels.forEach(
+                    (reel, index) => {
+                        reel.replaceSpinStrip(
+                            round.grid[index],
+                            featureSpinSymbols,
+                            FeatureConfig.luckyCorn
+                                .reelTransitionDuration
+                        );
+                    }
+                );
 
                 this.resultText?.setText(
                     'O MILHO DA SORTE ESTÁ CHEGANDO...'
                 );
             }
-        );
-    }
-
-    private startLuckyCornFeature(
-        currentBet: number,
-        selectedSymbolId: string,
-        baseGrid: string[][]
-    ): void {
-        this.resultText?.setText(
-            'MILHO DA SORTE!'
-        );
-
-        const startRound = (): void => {
-            this.playLuckyCornRound(
-                currentBet,
-                baseGrid
-            );
-        };
-
-        if (!this.luckyCornFeedback) {
-            startRound();
-
-            return;
-        }
-
-        this.luckyCornFeedback.showStart(
-            selectedSymbolId,
-            FeatureConfig.luckyCorn
-                .startDisplayDuration,
-            startRound
         );
     }
 

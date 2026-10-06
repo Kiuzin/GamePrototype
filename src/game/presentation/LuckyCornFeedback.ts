@@ -25,25 +25,15 @@ export class LuckyCornFeedback {
         this.scene = scene;
     }
 
-    public showSuspense(): void {
-        this.showMessage(
-            'O MILHO DA SORTE ESTÁ CHEGANDO!',
-            'Os rolos ganharam um giro extra...',
-            BonusThemeConfig.luckyCorn.colors.suspense
-        );
-    }
-
-    public showStart(
-        selectedSymbolId: string,
-        duration: number,
-        onComplete: () => void
+    public showSuspense(
+        duration: number
     ): void {
         this.showTimedMessage(
-            'MILHO DA SORTE!',
-            `Símbolo da sorte: ${selectedSymbolId.toUpperCase()}`,
-            BonusThemeConfig.luckyCorn.colors.feature,
+            'O MILHO DA SORTE ESTÁ CHEGANDO!',
+            'Os rolos ganharam um giro extra...',
+            BonusThemeConfig.luckyCorn.colors.suspense,
             duration,
-            onComplete
+            () => undefined
         );
     }
 
