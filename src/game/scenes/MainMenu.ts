@@ -50,6 +50,8 @@ export class MainMenu extends Scene {
         this.load.image('tractorGreen', 'CornGame/Trator-Verde.png');
         this.load.image('tractorYellow', 'CornGame/Trator-Amarelo.png');
         this.load.image('tractorRed', 'CornGame/Trator-Vermelho.png');
+        this.load.image('cornEarClosed', 'CornGame/espiga-fechada.png');
+        this.load.image('cornEarOpen', 'CornGame/espiga-aberta.png');
     }
 
     public create(): void {

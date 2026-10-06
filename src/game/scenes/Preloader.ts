@@ -159,6 +159,16 @@ export class Preloader extends Scene {
             'tractorRed',
             'CornGame/Trator-Vermelho.png'
         );
+
+        this.load.image(
+            'cornEarClosed',
+            'CornGame/espiga-fechada.png'
+        );
+
+        this.load.image(
+            'cornEarOpen',
+            'CornGame/espiga-aberta.png'
+        );
     }
 
     public create(): void {

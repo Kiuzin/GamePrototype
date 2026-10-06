@@ -38,8 +38,9 @@ export const BonusLayoutConfig = {
     },
     treasureChest: {
         depth: 520,
-        header: { y: y(140), height: vertical(225), titleY: y(105), titleFontSize: '45px', subtitleY: y(165), subtitleFontSize: '23px', progressY: y(245), progressFontSize: '27px' },
-        grid: { columns: [x(285), x(795)], firstY: y(530), rowGap: vertical(270), cardWidth: horizontal(405), cardHeight: vertical(220), chestOffsetY: vertical(-28), chestScale: 1.2, labelOffsetY: vertical(75), labelFontSize: '25px' },
+        header: { y: y(140), height: vertical(225), titleY: y(105), titleFontSize: '45px', subtitleY: y(165), subtitleFontSize: '23px' },
+        grid: { columns: [x(285), x(795)], firstY: y(500), rowGap: vertical(255), cardWidth: horizontal(420), cardHeight: vertical(225), earOffsetY: vertical(-32), earWidth: horizontal(165), earHeight: vertical(165), labelOffsetY: vertical(84), labelFontSize: '24px', debugLabelOffsetY: vertical(-88), debugLabelFontSize: '16px' },
+        accumulated: { labelY: y(1440), valueY: y(1490), labelFontSize: '22px', valueFontSize: '54px' },
         final: { totalY: y(1600), totalFontSize: '54px', detailY: y(1515), detailFontSize: '26px', continueButton: { y: y(1700), width: horizontal(390), height: vertical(105), fontSize: '31px' } },
     },
     cardDouble: {

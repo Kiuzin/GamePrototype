@@ -40,7 +40,7 @@ export const FeatureConfig = {
     },
     horseRace: {
         enabled: true,
-        activationChance: 100,
+        activationChance: 0.01,
         segmentCount: 12,
         segmentDuration: 650,
         minimumSpeed: 45,
@@ -80,7 +80,10 @@ export const FeatureConfig = {
     },
     treasureChest: {
         enabled: true,
-        activationChance: 0.01,
+        activationChance: 100,
+        // Uso exclusivo de build: destaca as espigas que encerram a feature.
+        // Não altera a distribuição dos prêmios nem o resultado da rodada.
+        debugShowEndingChests: false,
         chestCount: 8,
         endingChestCount: 2,
         rewardMultipliers: [0.5, 1, 1.5, 1.75, 2, 2.25],
