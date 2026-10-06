@@ -46,6 +46,10 @@ export class MainMenu extends Scene {
         this.load.image('symbolCanjica', 'CornGame/canjica_.png');
         this.load.image('symbolCorn', 'CornGame/milho_.png');
         this.load.image('symbolWild', 'CornGame/wild_.png');
+        this.load.image('tractorBlue', 'CornGame/Trator_Azul.png');
+        this.load.image('tractorGreen', 'CornGame/Trator-Verde.png');
+        this.load.image('tractorYellow', 'CornGame/Trator-Amarelo.png');
+        this.load.image('tractorRed', 'CornGame/Trator-Vermelho.png');
     }
 
     public create(): void {

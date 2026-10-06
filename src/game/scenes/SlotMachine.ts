@@ -197,8 +197,6 @@ export class SlotMachine extends Scene {
         });
         this.createBackground();
 
-        this.createTitle();
-
         this.createTopHud();
 
         this.createReelBackdrop();
@@ -296,19 +294,6 @@ export class SlotMachine extends Scene {
     private createLuckyCornFeedback(): void {
         this.luckyCornFeedback =
             new LuckyCornFeedback(this);
-    }
-
-    private createTitle(): void {
-        this.createLabel(
-            GameConfig.layout.title.x,
-            GameConfig.layout.title.y,
-            'Slot Machine MVP',
-            {
-                fontSize: '32px',
-                color:
-                    GameConfig.colors.text,
-            }
-        );
     }
 
     private createTopHud(): void {

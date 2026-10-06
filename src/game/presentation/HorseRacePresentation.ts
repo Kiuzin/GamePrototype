@@ -32,13 +32,20 @@ export class HorseRacePresentation {
             const x = layout.cards.columns[index % 2];
             const y = layout.cards.firstY + Math.floor(index / 2) * layout.cards.rowGap;
             const card = this.scene.add.rectangle(x, y, layout.cards.width, layout.cards.height, theme.selection.cardColor).setStrokeStyle(theme.selection.cardStrokeWidth, runner.color).setInteractive();
-            const tractor = this.createTractor(x, y + layout.cards.tractorOffsetY, runner.color, layout.cards.tractorScale);
+            const tractor = this.createTractor(
+                x,
+                y + layout.cards.tractorOffsetY,
+                runner,
+                layout.cards.tractorWidth
+            );
             const label = this.scene.add.text(x, y + layout.cards.labelOffsetY, runner.name, { fontFamily: BonusThemeConfig.fontFamily, fontSize: layout.cards.labelFontSize, color: theme.colors.primaryText, fontStyle: 'bold', align: 'center', wordWrap: { width: layout.cards.labelWidth } }).setOrigin(0.5);
             card.on('pointerdown', () => {
                 if (this.selectionLocked) return;
                 this.selectionLocked = true;
                 onSelect(runner.id);
             });
+            card.on('pointerover', () => card.setScale(1.03));
+            card.on('pointerout', () => card.setScale(1));
             items.push(card, tractor, label);
         });
 
@@ -53,12 +60,10 @@ export class HorseRacePresentation {
         const startX = layout.track.startX;
         const finishX = width - layout.track.finishRight;
         const trackWidth = finishX - startX;
-        const segmentText = this.scene.add.text(width / 2, layout.header.segmentY, `TRECHO 1 / ${result.segmentCount}`, { fontFamily: BonusThemeConfig.fontFamily, fontSize: layout.header.segmentFontSize, color: theme.colors.secondaryText, letterSpacing: layout.header.segmentLetterSpacing }).setOrigin(0.5);
         const items: GameObjects.GameObject[] = [
             this.scene.add.rectangle(width / 2, height / 2, width, height, theme.race.backgroundColor),
             this.scene.add.rectangle(width / 2, layout.header.y, width, layout.header.height, theme.race.headerColor),
             this.scene.add.text(width / 2, layout.header.titleY, 'CORRIDA DE TRATORES', { fontFamily: BonusThemeConfig.fontFamily, fontSize: layout.header.titleFontSize, color: theme.colors.highlight, fontStyle: 'bold' }).setOrigin(0.5),
-            segmentText,
         ];
 
         const trackBottom = layout.track.firstLaneY +
@@ -78,17 +83,31 @@ export class HorseRacePresentation {
                 this.scene.add.rectangle(width / 2, y, trackWidth + layout.track.laneExtraWidth, layout.track.laneHeight - layout.track.laneInset, theme.race.laneColors[index % theme.race.laneColors.length], theme.race.laneAlpha),
                 this.scene.add.text(layout.track.laneLabelX, y, `${index + 1}`, { fontFamily: BonusThemeConfig.fontFamily, fontSize: layout.track.laneLabelFontSize, color: theme.colors.secondaryText, fontStyle: 'bold' }).setOrigin(0.5)
             );
-            const tractor = this.createTractor(startX, y, runner.color, layout.track.tractorScale);
+            if (runner.id === result.selectedRunnerId) {
+                items.push(
+                    this.createSelectedIndicator(
+                        layout.track.selectedIndicatorX,
+                        y,
+                        layout.track.selectedIndicatorWidth,
+                        layout.track.selectedIndicatorHeight
+                    )
+                );
+            }
+            const tractor = this.createTractor(
+                startX,
+                y,
+                runner,
+                layout.track.tractorWidth
+            );
             this.tractors.push(tractor);
             tractorItems.push(tractor);
             let accumulated = 0;
-            const tweens = runner.speeds.map((speed, segment) => {
+            const tweens = runner.speeds.map(speed => {
                 accumulated += speed;
                 return {
                     x: startX + trackWidth * accumulated / result.winningTotal,
                     duration: segmentDuration,
                     ease: 'Sine.easeInOut',
-                    onStart: () => segmentText.setText(`TRECHO ${segment + 1} / ${result.segmentCount}`),
                 };
             });
             this.scene.tweens.chain({ targets: tractor, tweens, onComplete: () => { completed++; if (completed === result.runners.length) onComplete(); } });
@@ -114,21 +133,98 @@ export class HorseRacePresentation {
         const items: GameObjects.GameObject[] = [
             this.scene.add.text(width / 2, layout.titleY, 'PÓDIO DA COLHEITA', { fontFamily: BonusThemeConfig.fontFamily, fontSize: layout.titleFontSize, color: theme.colors.highlight, fontStyle: 'bold' }).setOrigin(0.5),
         ];
-        layout.places.forEach(place => {
+
+        const podiumEntries: Array<{
+            block: GameObjects.Rectangle;
+            content: GameObjects.GameObject[];
+        }> = [];
+
+        [1, 2, 3].forEach(rank => {
+            const place = layout.places.find(
+                item => item.rank === rank
+            );
+
+            if (!place) {
+                return;
+            }
+
             const runner = result.runners.find(item => item.rank === place.rank);
-            if (!runner) return;
+            if (!runner) {
+                return;
+            }
+
             const baseY = layout.baseY;
             const topY = baseY - place.height;
+            const reveal = theme.podium.reveal;
+            const block = this.scene.add.rectangle(
+                place.x,
+                baseY,
+                layout.blockWidth,
+                place.height,
+                place.color
+            )
+                .setOrigin(0.5, 1)
+                .setScale(1, 0)
+                .setStrokeStyle(
+                    theme.podium.strokeWidth,
+                    theme.podium.strokeColor
+                );
+            const tractor = this.createTractor(
+                place.x,
+                topY + layout.runner.tractorOffsetY + reveal.contentOffsetY,
+                runner,
+                layout.runner.tractorWidth
+            ).setAlpha(0);
+            const rankText = this.scene.add.text(
+                place.x,
+                topY +
+                    layout.runner.rankOffsetY +
+                    reveal.contentOffsetY,
+                `${place.rank}º`,
+                {
+                    fontFamily: BonusThemeConfig.fontFamily,
+                    fontSize: layout.runner.rankFontSize,
+                    color: theme.colors.darkText,
+                    fontStyle: 'bold',
+                }
+            ).setOrigin(0.5).setAlpha(0);
+            const content: GameObjects.GameObject[] = [
+                tractor,
+                rankText,
+            ];
+
             items.push(
-                this.scene.add.rectangle(place.x, baseY - place.height / 2, layout.blockWidth, place.height, place.color).setStrokeStyle(theme.podium.strokeWidth, theme.podium.strokeColor),
-                this.createTractor(place.x, topY + layout.runner.tractorOffsetY, runner.color, layout.runner.tractorScale),
-                this.scene.add.text(place.x, topY + layout.runner.rankOffsetY, `${place.rank}º`, { fontFamily: BonusThemeConfig.fontFamily, fontSize: layout.runner.rankFontSize, color: theme.colors.darkText, fontStyle: 'bold' }).setOrigin(0.5),
-                this.scene.add.text(place.x, topY + layout.runner.nameOffsetY, runner.name, { fontFamily: BonusThemeConfig.fontFamily, fontSize: layout.runner.nameFontSize, color: theme.colors.primaryText, wordWrap: { width: layout.runner.nameWidth }, align: 'center' }).setOrigin(0.5)
+                block,
+                tractor,
+                rankText
             );
+
+            if (runner.id === result.selectedRunnerId) {
+                const selectedIndicator =
+                    this.createSelectedIndicator(
+                        place.x,
+                        topY +
+                            layout.runner
+                                .selectedIndicatorOffsetY +
+                            reveal.contentOffsetY,
+                        layout.runner.selectedIndicatorWidth,
+                        layout.runner.selectedIndicatorHeight,
+                        'down'
+                    ).setAlpha(0);
+
+                items.push(selectedIndicator);
+                content.push(selectedIndicator);
+            }
+
+            podiumEntries.push({
+                block,
+                content,
+            });
         });
         const prize = payout > 0 ? `PRÊMIO ${payout.toFixed(2)}` : 'SEM PREMIAÇÃO';
-        const continueButton = this.scene.add.rectangle(width / 2, layout.continueButton.y, layout.continueButton.width, layout.continueButton.height, theme.podium.buttonColor).setStrokeStyle(theme.podium.buttonStrokeWidth, theme.podium.buttonStrokeColor).setInteractive();
-        const continueText = this.scene.add.text(width / 2, layout.continueButton.y, 'CONTINUAR', { fontFamily: BonusThemeConfig.fontFamily, fontSize: layout.continueButton.fontSize, color: theme.colors.primaryText, fontStyle: 'bold' }).setOrigin(0.5);
+        const prizeText = this.scene.add.text(width / 2, layout.prizeY, `SEU TRATOR: ${result.selectedRank}º LUGAR\n${prize}`, { fontFamily: BonusThemeConfig.fontFamily, fontSize: layout.prizeFontSize, color: payout > 0 ? theme.colors.highlight : theme.colors.primaryText, align: 'center', fontStyle: 'bold' }).setOrigin(0.5).setAlpha(0);
+        const continueButton = this.scene.add.rectangle(width / 2, layout.continueButton.y, layout.continueButton.width, layout.continueButton.height, theme.podium.buttonColor).setStrokeStyle(theme.podium.buttonStrokeWidth, theme.podium.buttonStrokeColor).setAlpha(0);
+        const continueText = this.scene.add.text(width / 2, layout.continueButton.y, 'CONTINUAR', { fontFamily: BonusThemeConfig.fontFamily, fontSize: layout.continueButton.fontSize, color: theme.colors.primaryText, fontStyle: 'bold' }).setOrigin(0.5).setAlpha(0);
         continueButton.on('pointerdown', () => {
             if (this.selectionLocked) return;
             this.selectionLocked = true;
@@ -136,11 +232,72 @@ export class HorseRacePresentation {
             onComplete();
         });
         items.push(
-            this.scene.add.text(width / 2, layout.prizeY, `SEU TRATOR: ${result.selectedRank}º LUGAR\n${prize}`, { fontFamily: BonusThemeConfig.fontFamily, fontSize: layout.prizeFontSize, color: payout > 0 ? theme.colors.highlight : theme.colors.primaryText, align: 'center', fontStyle: 'bold' }).setOrigin(0.5),
+            prizeText,
             continueButton,
             continueText
         );
         this.container.add(items);
+
+        this.animatePodium(
+            podiumEntries,
+            [prizeText, continueButton, continueText],
+            () => continueButton.setInteractive()
+        );
+    }
+
+    private animatePodium(
+        entries: Array<{
+            block: GameObjects.Rectangle;
+            content: GameObjects.GameObject[];
+        }>,
+        controls: GameObjects.GameObject[],
+        onComplete: () => void
+    ): void {
+        const reveal =
+            BonusThemeConfig.horseRace.podium.reveal;
+
+        if (entries.length === 0) {
+            onComplete();
+
+            return;
+        }
+
+        const entryDuration =
+            reveal.blockDuration +
+            reveal.contentDuration +
+            reveal.stepDelay;
+
+        entries.forEach((entry, index) => {
+            this.scene.tweens.add({
+                targets: entry.block,
+                scaleY: 1,
+                delay: index * entryDuration,
+                duration: reveal.blockDuration,
+                ease: 'Back.easeOut',
+                onComplete: () => {
+                    this.scene.tweens.add({
+                        targets: entry.content,
+                        alpha: 1,
+                        y: `-=${reveal.contentOffsetY}`,
+                        duration: reveal.contentDuration,
+                        ease: 'Sine.easeOut',
+                        onComplete: () => {
+                            if (index !== entries.length - 1) {
+                                return;
+                            }
+
+                            this.scene.tweens.add({
+                                targets: controls,
+                                alpha: 1,
+                                duration: reveal.contentDuration,
+                                ease: 'Sine.easeOut',
+                                onComplete,
+                            });
+                        },
+                    });
+                },
+            });
+        });
     }
 
     public clear(): void {
@@ -155,13 +312,47 @@ export class HorseRacePresentation {
         this.container = undefined;
     }
 
-    private createTractor(x: number, y: number, color: number, scale: number): GameObjects.Container {
-        const tractor = this.scene.add.container(x, y, [
-            this.scene.add.rectangle(0, BonusThemeConfig.horseRace.tractor.bodyY, BonusThemeConfig.horseRace.tractor.bodyWidth, BonusThemeConfig.horseRace.tractor.bodyHeight, color).setStrokeStyle(BonusThemeConfig.horseRace.tractor.strokeWidth, BonusThemeConfig.horseRace.podium.strokeColor),
-            this.scene.add.text(0, 0, BonusThemeConfig.horseRace.tractor.emoji, { fontSize: BonusThemeConfig.horseRace.tractor.emojiFontSize }).setOrigin(0.5),
-        ]);
-        tractor.setScale(scale);
-        return tractor;
+    private createTractor(
+        x: number,
+        y: number,
+        runner: HorseRaceRunner,
+        width: number
+    ): GameObjects.Container {
+        const tractorImage = this.scene.add.image(
+            0,
+            0,
+            runner.textureKey
+        ).setDisplaySize(
+            width,
+            width
+        );
+
+        return this.scene.add.container(
+            x,
+            y,
+            [tractorImage]
+        );
+    }
+
+    /** Marca visualmente o trator escolhido sem adicionar texto à interface. */
+    private createSelectedIndicator(
+        x: number,
+        y: number,
+        width: number,
+        height: number,
+        direction: 'down' | 'right' = 'right'
+    ): GameObjects.Triangle {
+        const points = direction === 'down'
+            ? [0, 0, width, 0, width / 2, height]
+            : [0, 0, width, height / 2, 0, height];
+
+        return this.scene.add.triangle(
+            x,
+            y,
+            ...points,
+            BonusThemeConfig.horseRace.race
+                .selectedIndicatorColor
+        ).setOrigin(0.5);
     }
 
     /** Destaca a pista vencedora sem alterar os tratores congelados. */
@@ -194,7 +385,15 @@ export class HorseRacePresentation {
             highlight.color
         );
 
-        this.container.add(this.winnerHighlight);
+        const firstTractorIndex =
+            this.container.list.indexOf(
+                this.tractors[0]
+            );
+
+        this.container.addAt(
+            this.winnerHighlight,
+            Math.max(0, firstTractorIndex)
+        );
 
         this.scene.tweens.add({
             targets: this.winnerHighlight,

@@ -18,11 +18,11 @@ export const BonusLayoutConfig = {
         depth: 500,
         selection: {
             header: { y: y(150), height: vertical(220), eyebrowY: y(115), eyebrowFontSize: '25px', eyebrowLetterSpacing: 4, titleY: y(170), titleFontSize: '48px', subtitleY: y(245), subtitleFontSize: '24px' },
-            cards: { columns: [x(285), x(795)], firstY: y(560), rowGap: vertical(350), width: horizontal(430), height: vertical(270), tractorOffsetY: vertical(-32), tractorScale: 1.35, labelOffsetY: vertical(105), labelFontSize: '24px', labelWidth: horizontal(370) },
+            cards: { columns: [x(285), x(795)], firstY: y(560), rowGap: vertical(350), width: horizontal(430), height: vertical(270), tractorOffsetY: vertical(-32), tractorWidth: horizontal(190), labelOffsetY: vertical(105), labelFontSize: '24px', labelWidth: horizontal(370) },
         },
         race: {
-            header: { y: y(105), height: vertical(165), titleY: y(82), titleFontSize: '39px', segmentY: y(305), segmentFontSize: '24px', segmentLetterSpacing: 2 },
-            track: { startX: x(120), finishRight: horizontal(115), firstLaneY: y(400), laneHeight: vertical(145), laneInset: 1, laneExtraWidth: horizontal(70), laneLabelX: x(48), laneLabelFontSize: '23px', dividerTop: y(315), finishLine: { edgeOffset: horizontal(20), checkerSize: horizontal(20), columns: 2 }, tractorScale: 0.7 },
+            header: { y: y(105), height: vertical(165), titleY: y(82), titleFontSize: '39px' },
+            track: { startX: x(120), finishRight: horizontal(115), firstLaneY: y(400), laneHeight: vertical(145), laneInset: 1, laneExtraWidth: horizontal(70), laneLabelX: x(48), laneLabelFontSize: '23px', selectedIndicatorX: x(84), selectedIndicatorWidth: horizontal(24), selectedIndicatorHeight: vertical(28), dividerTop: y(315), finishLine: { edgeOffset: horizontal(20), checkerSize: horizontal(20), columns: 2 }, tractorWidth: horizontal(125) },
         },
         podium: {
             titleY: y(1020), titleFontSize: '40px', blockWidth: horizontal(210), baseY: y(1580),
@@ -31,7 +31,7 @@ export const BonusLayoutConfig = {
                 { rank: 1, x: centerX, height: vertical(250), color: 0xffd54a },
                 { rank: 3, x: x(795), height: vertical(115), color: 0xcf8b48 },
             ],
-            runner: { tractorOffsetY: vertical(-45), tractorScale: 0.54, rankOffsetY: vertical(35), rankFontSize: '32px', nameOffsetY: vertical(-100), nameFontSize: '16px', nameWidth: horizontal(200) },
+            runner: { tractorOffsetY: vertical(-45), tractorWidth: horizontal(135), rankOffsetY: vertical(35), rankFontSize: '32px', selectedIndicatorOffsetY: vertical(-135), selectedIndicatorWidth: horizontal(30), selectedIndicatorHeight: vertical(28) },
             prizeY: y(1710), prizeFontSize: '32px',
             continueButton: { y: y(1830), width: horizontal(390), height: vertical(90), fontSize: '28px' },
         },

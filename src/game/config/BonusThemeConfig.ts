@@ -20,15 +20,16 @@ export const BonusThemeConfig = {
             laneColors: [0x265e3d, 0x215536], laneAlpha: 0.95,
             dividerColor: 0xffffff, dividerAlpha: 0.15, dividerWidth: 2,
             finishCheckerColors: [0xffffff, 0x101010],
+            selectedIndicatorColor: 0xffe06b,
             winnerHighlight: { color: 0xffe06b, strokeWidth: 8, minAlpha: 0.25, duration: 420 },
         },
         podium: {
             overlayColor: 0x07140e, overlayAlpha: 0.98, strokeColor: 0xffffff,
             strokeWidth: 4, buttonColor: 0xd28b21, buttonStrokeColor: 0xffe06b,
             buttonStrokeWidth: 3,
+            reveal: { blockDuration: 440, contentDuration: 230, stepDelay: 180, contentOffsetY: 28 },
         },
         colors: { highlight: '#ffe06b', primaryText: '#ffffff', secondaryText: '#d7edcf', darkText: '#102d20' },
-        tractor: { bodyY: 3, bodyWidth: 108, bodyHeight: 70, strokeWidth: 3, emoji: '🚜', emojiFontSize: '72px' },
     },
 
     treasureChest: {
