@@ -79,6 +79,11 @@ export class CardDoublePresentation {
             return;
         }
 
+        if (round.status === 'capped') {
+            this.addButton(width / 2, layout.buttons.cashoutY, 'RECOLHER PRÊMIO MÁXIMO', theme.buttons.cashoutColor, onCashOut);
+            return;
+        }
+
         this.addButton(width / 2, layout.buttons.secondY, round.status === 'won' ? 'DOBRAR NOVAMENTE' : 'TENTAR NOVAMENTE', theme.buttons.primaryColor, onContinue);
         this.addButton(width / 2, layout.buttons.cashoutY, 'FICAR COM O PRÊMIO', theme.buttons.cashoutColor, onCashOut);
     }
@@ -202,6 +207,8 @@ export class CardDoublePresentation {
         switch (round.status) {
             case 'won':
                 return { text: 'ACERTOU! O PRÊMIO DOBROU.', color: colors.win, fontSize: BonusLayoutConfig.cardDouble.feedback.fontSize };
+            case 'capped':
+                return { text: 'LIMITE MÁXIMO ATINGIDO! RECOLHA O PRÊMIO.', color: colors.highlight, fontSize: BonusLayoutConfig.cardDouble.feedback.fontSize };
             case 'tie':
                 return { text: 'SAIU 7. EMPATE — TENTE DE NOVO OU RECOLHA.', color: colors.highlight, fontSize: BonusLayoutConfig.cardDouble.prompt.fontSize };
             case 'lost':

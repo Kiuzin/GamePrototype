@@ -8,6 +8,7 @@ export interface CardDoubleSettings {
     readonly enabled: boolean;
     readonly activationChance: number;
     readonly thresholdValue: number;
+    readonly maxPayoutMultiplier: number;
     readonly suits: readonly {
         readonly id: string;
         readonly symbol: string;
@@ -26,6 +27,7 @@ export type CardGuess = 'lower' | 'higher';
 export type CardDoubleStatus =
     | 'awaitingGuess'
     | 'won'
+    | 'capped'
     | 'tie'
     | 'lost';
 
@@ -56,6 +58,8 @@ export class CardDoubleFeature implements BonusFeatureLifecycle {
 
     private currentPayout: MoneyCredits = 0;
 
+    private maxPayout: MoneyCredits = 0;
+
     private status?: CardDoubleStatus;
 
     private revealedCard?: CardDoubleCard;
@@ -77,6 +81,10 @@ export class CardDoubleFeature implements BonusFeatureLifecycle {
         }
 
         this.currentPayout = basePayout;
+        this.maxPayout = Money.multiply(
+            basePayout,
+            this.settings.maxPayoutMultiplier
+        );
         this.status = 'awaitingGuess';
         this.revealedCard = undefined;
         this.ensureDeck();
@@ -107,8 +115,11 @@ export class CardDoubleFeature implements BonusFeatureLifecycle {
             return this.getRound();
         }
 
-        this.currentPayout = Money.multiply(this.currentPayout, 2);
-        this.status = 'won';
+        const doubledPayout = Money.multiply(this.currentPayout, 2);
+        this.currentPayout = Math.min(doubledPayout, this.maxPayout);
+        this.status = this.currentPayout >= this.maxPayout
+            ? 'capped'
+            : 'won';
         return this.getRound();
     }
 
@@ -130,6 +141,7 @@ export class CardDoubleFeature implements BonusFeatureLifecycle {
 
     public finish(): void {
         this.currentPayout = 0;
+        this.maxPayout = 0;
         this.status = undefined;
         this.revealedCard = undefined;
     }

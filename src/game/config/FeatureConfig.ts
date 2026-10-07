@@ -94,6 +94,9 @@ export const FeatureConfig = {
         enabled: true,
         activationChance: 1,
         thresholdValue: 7,
+        // Teto absoluto da feature em relação ao prêmio-base. Ao alcançá-lo,
+        // o jogador deve recolher o prêmio.
+        maxPayoutMultiplier: 100,
         // Um baralho de 26 cartas: cada valor existe uma vez em cada cor.
         // O Ás vale 1, deixando seis valores abaixo e seis acima do 7.
         suits: [

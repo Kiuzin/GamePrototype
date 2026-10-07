@@ -32,6 +32,16 @@ export const validateGameConfig = (): void => {
         features.wheelBonus.activationChance,
     ].forEach(validateProbability);
 
+    if (
+        !Number.isFinite(features.cardDouble.maxPayoutMultiplier) ||
+        features.cardDouble.maxPayoutMultiplier < 1
+    ) {
+        throw new GameError(
+            'INVALID_CONFIGURATION',
+            'O limite da Dobra de Cartas deve ser ao menos x1.'
+        );
+    }
+
     if (features.luckyCorn.selectedSymbolChance + features.luckyCorn.wildChance > 1) {
         throw new GameError(
             'INVALID_CONFIGURATION',
