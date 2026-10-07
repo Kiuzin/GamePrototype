@@ -14,7 +14,13 @@ export class CardDoublePresentation {
 
     private payoutCounter?: Tweens.Tween;
 
+    private transitionTween?: Tweens.Tween;
+
+    private cardTween?: Tweens.Tween;
+
     private selectionLocked = false;
+
+    private isFirstRound = true;
 
     public constructor(private readonly scene: Scene) {}
 
@@ -25,6 +31,7 @@ export class CardDoublePresentation {
         onCashOut: () => void,
         onLost: () => void
     ): void {
+        const shouldAnimateEntrance = this.isFirstRound;
         this.clear();
 
         const { width, height } = this.scene.scale.gameSize;
@@ -43,17 +50,21 @@ export class CardDoublePresentation {
             theme.overlay.alpha
         ).setInteractive();
 
+        const card = this.createCard(round.revealedCard);
+        const title = this.scene.add.text(width / 2, layout.header.titleY, 'DOBRA DE CARTAS', { fontFamily: BonusThemeConfig.fontFamily, fontSize: layout.header.titleFontSize, color: theme.colors.highlight, fontStyle: 'bold' }).setOrigin(0.5).setShadow(0, 3, '#16051f', 4, true, true);
         const items: GameObjects.GameObject[] = [
             overlay,
             this.scene.add.rectangle(width / 2, layout.header.y, width, layout.header.height, theme.headerColor),
-            this.scene.add.text(width / 2, layout.header.titleY, 'DOBRA DE CARTAS', { fontFamily: BonusThemeConfig.fontFamily, fontSize: layout.header.titleFontSize, color: theme.colors.highlight, fontStyle: 'bold' }).setOrigin(0.5),
+            title,
             this.scene.add.text(width / 2, layout.header.prizeY, `PRÊMIO EM JOGO: ${round.currentPayout.toFixed(2)}`, { fontFamily: BonusThemeConfig.fontFamily, fontSize: layout.header.prizeFontSize, color: theme.colors.primaryText, fontStyle: 'bold' }).setOrigin(0.5),
             this.scene.add.text(width / 2, layout.header.deckY, `CARTAS RESTANTES: ${round.remainingCardCount}`, { fontFamily: BonusThemeConfig.fontFamily, fontSize: layout.header.deckFontSize, color: theme.colors.secondaryText }).setOrigin(0.5),
-            this.createCard(round.revealedCard),
+            card,
             this.scene.add.text(width / 2, layout.prompt.y, feedback.text, { fontFamily: BonusThemeConfig.fontFamily, fontSize: feedback.fontSize, color: feedback.color, fontStyle: 'bold', align: 'center', wordWrap: { width: layout.prompt.width } }).setOrigin(0.5),
         ];
 
         this.container = this.scene.add.container(0, 0, items).setDepth(layout.depth);
+        this.animateRoundEntrance(card, shouldAnimateEntrance, round.revealedCard !== undefined);
+        this.isFirstRound = false;
 
         if (isAwaitingGuess) {
             this.addButton(layout.buttons.leftX, layout.buttons.firstY, 'MENOR QUE 7', theme.buttons.secondaryColor, () => onGuess('lower'));
@@ -98,6 +109,7 @@ export class CardDoublePresentation {
             this.scene.add.text(width / 2, layout.prompt.y, `${basePayout.toFixed(2)}  →  ${totalPayout.toFixed(2)}`, { fontFamily: BonusThemeConfig.fontFamily, fontSize: layout.feedback.fontSize, color: theme.colors.secondaryText }).setOrigin(0.5),
             totalText,
         ]).setDepth(layout.depth);
+        this.animateFinalEntrance();
 
         this.payoutCounter = this.scene.tweens.addCounter({
             from: basePayout,
@@ -107,17 +119,53 @@ export class CardDoublePresentation {
             onUpdate: tween => totalText.setText((tween.getValue() ?? 0).toFixed(2)),
             onComplete: () => {
                 this.payoutCounter = undefined;
-                this.addButton(width / 2, layout.buttons.cashoutY, 'RECOLHER PRÊMIO', theme.buttons.cashoutColor, onComplete);
+                this.addButton(width / 2, layout.buttons.cashoutY, 'RECOLHER PRÊMIO', theme.buttons.cashoutColor, () => this.dismiss(onComplete));
             },
         });
+    }
+
+    /** Prepara a animação de entrada para uma nova ativação do bônus. */
+    public beginBonus(): void {
+        this.isFirstRound = true;
     }
 
     public clear(): void {
         this.payoutCounter?.stop();
         this.payoutCounter = undefined;
+        this.transitionTween?.stop();
+        this.transitionTween = undefined;
+        this.cardTween?.stop();
+        this.cardTween = undefined;
         this.selectionLocked = false;
         this.container?.destroy();
         this.container = undefined;
+    }
+
+    /** Fecha a interface antes de liberar a interação principal novamente. */
+    public dismiss(onComplete: () => void): void {
+        if (!this.container) {
+            onComplete();
+            return;
+        }
+
+        const animation = BonusThemeConfig.cardDouble.animation;
+        this.selectionLocked = true;
+        this.transitionTween?.stop();
+        this.transitionTween = this.scene.tweens.add({
+            targets: this.container,
+            alpha: 0,
+            y: animation.exitOffsetY,
+            scaleX: 0.97,
+            scaleY: 0.97,
+            duration: animation.exitDuration,
+            ease: 'Quad.easeIn',
+            onComplete: () => {
+                this.transitionTween = undefined;
+                this.clear();
+                this.isFirstRound = true;
+                onComplete();
+            },
+        });
     }
 
     private createCard(card?: CardDoubleCard): GameObjects.Container {
@@ -126,7 +174,9 @@ export class CardDoublePresentation {
         const isRevealed = card !== undefined;
         const cardColor = isRevealed ? theme.color : theme.backColor;
         const objects: GameObjects.GameObject[] = [
+            this.scene.add.rectangle(8, 10, layout.width, layout.height, 0x120918, 0.32),
             this.scene.add.rectangle(0, 0, layout.width, layout.height, cardColor).setStrokeStyle(theme.strokeWidth, theme.strokeColor),
+            this.scene.add.rectangle(0, 0, layout.width - 34, layout.height - 34, cardColor, 0).setStrokeStyle(2, isRevealed ? 0x9c7aaa : 0xb78bc9, 0.55),
         ];
 
         if (!card) {
@@ -166,15 +216,91 @@ export class CardDoublePresentation {
         const button = this.scene.add.rectangle(x, y, layout.width, layout.height, color).setStrokeStyle(theme.buttons.strokeWidth, theme.buttons.strokeColor).setInteractive();
         const text = this.scene.add.text(x, y, label, { fontFamily: BonusThemeConfig.fontFamily, fontSize: layout.fontSize, color: theme.colors.primaryText, fontStyle: 'bold', align: 'center', wordWrap: { width: layout.width - layout.labelPadding } }).setOrigin(0.5);
 
+        button.on('pointerover', () => {
+            if (!this.selectionLocked) {
+                button.setFillStyle(color, 1).setScale(1.025);
+                text.setScale(1.025);
+            }
+        });
+        button.on('pointerout', () => {
+            button.setScale(1);
+            text.setScale(1);
+        });
         button.on('pointerdown', () => {
             if (this.selectionLocked) {
                 return;
             }
 
             this.selectionLocked = true;
-            onClick();
+            button.disableInteractive();
+            this.scene.tweens.add({
+                targets: [button, text],
+                scaleX: 0.97,
+                scaleY: 0.97,
+                duration: BonusThemeConfig.cardDouble.animation.buttonDuration,
+                yoyo: true,
+                onComplete: onClick,
+            });
         });
 
         this.container?.add([button, text]);
+    }
+
+    private animateRoundEntrance(
+        card: GameObjects.Container,
+        isInitialRound: boolean,
+        isRevealed: boolean
+    ): void {
+        if (!this.container) return;
+
+        const animation = BonusThemeConfig.cardDouble.animation;
+        if (isInitialRound) {
+            this.container.setAlpha(0).setY(animation.entranceOffsetY).setScale(0.96);
+            this.transitionTween = this.scene.tweens.add({
+                targets: this.container,
+                alpha: 1,
+                y: 0,
+                scaleX: 1,
+                scaleY: 1,
+                duration: animation.entranceDuration,
+                ease: 'Back.easeOut',
+                onComplete: () => {
+                    this.transitionTween = undefined;
+                },
+            });
+        }
+
+        if (!isInitialRound && !isRevealed) return;
+
+        card.setScale(isRevealed ? 0.04 : 0.82);
+        this.cardTween = this.scene.tweens.add({
+            targets: card,
+            scaleX: 1,
+            scaleY: 1,
+            duration: isRevealed ? animation.cardFlipDuration : animation.entranceDuration,
+            delay: isInitialRound ? animation.cardDealDelay : 0,
+            ease: isRevealed ? 'Cubic.easeOut' : 'Back.easeOut',
+            onComplete: () => {
+                this.cardTween = undefined;
+            },
+        });
+    }
+
+    private animateFinalEntrance(): void {
+        if (!this.container) return;
+
+        const animation = BonusThemeConfig.cardDouble.animation;
+        this.container.setAlpha(0).setScale(0.96);
+        this.transitionTween = this.scene.tweens.add({
+            targets: this.container,
+            alpha: 1,
+            scaleX: 1,
+            scaleY: 1,
+            duration: animation.entranceDuration,
+            ease: 'Back.easeOut',
+            onComplete: () => {
+                this.transitionTween = undefined;
+            },
+        });
     }
 }

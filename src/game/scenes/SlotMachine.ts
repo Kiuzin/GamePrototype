@@ -1156,6 +1156,7 @@ export class SlotMachine extends Scene {
             return;
         }
 
+        this.cardDoublePresentation.beginBonus();
         this.showCardDoubleRound(
             basePayout,
             this.cardDoubleFeature.start(basePayout)
@@ -1198,15 +1199,19 @@ export class SlotMachine extends Scene {
         const extraPayout = totalPayout - basePayout;
         const finish = (): void => {
             this.cardDoubleFeature.finish();
-            this.cardDoublePresentation?.clear();
             this.session.adjustBalance(extraPayout);
             this.session.addPayoutToLatestHistory(extraPayout);
             this.updateBalanceUI();
             this.finishSpinInteraction();
         };
 
-        if (extraPayout <= 0 || !this.cardDoublePresentation) {
+        if (!this.cardDoublePresentation) {
             finish();
+            return;
+        }
+
+        if (extraPayout <= 0) {
+            this.cardDoublePresentation.dismiss(finish);
             return;
         }
 
@@ -1218,12 +1223,20 @@ export class SlotMachine extends Scene {
     }
 
     private loseCardDouble(basePayout: number): void {
-        this.cardDoubleFeature.finish();
-        this.cardDoublePresentation?.clear();
-        this.session.adjustBalance(-basePayout);
-        this.session.addPayoutToLatestHistory(-basePayout);
-        this.updateBalanceUI();
-        this.finishSpinInteraction();
+        const finish = (): void => {
+            this.cardDoubleFeature.finish();
+            this.session.adjustBalance(-basePayout);
+            this.session.addPayoutToLatestHistory(-basePayout);
+            this.updateBalanceUI();
+            this.finishSpinInteraction();
+        };
+
+        if (this.cardDoublePresentation) {
+            this.cardDoublePresentation.dismiss(finish);
+            return;
+        }
+
+        finish();
     }
 
     // =====================================================

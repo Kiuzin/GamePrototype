@@ -48,6 +48,7 @@ export const BonusThemeConfig = {
         card: { color: 0xf5f0df, backColor: 0x481d65, strokeColor: 0xffd54a, strokeWidth: 5 },
         colors: { highlight: '#ffe06b', primaryText: '#ffffff', secondaryText: '#e6dcec', redCard: '#d64141', blackCard: '#151515', win: '#8ff0a4', loss: '#ff9b75' },
         buttons: { primaryColor: 0x3e8b55, secondaryColor: 0x345d9d, cashoutColor: 0xd28b21, strokeColor: 0xffe06b, strokeWidth: 3 },
+        animation: { entranceDuration: 360, entranceOffsetY: 42, cardDealDelay: 110, cardFlipDuration: 340, buttonDuration: 140, exitDuration: 260, exitOffsetY: 28 },
     },
     wheelBonus: {
         overlay: { color: 0x07140e, alpha: 0.98 },

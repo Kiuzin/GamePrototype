@@ -80,7 +80,7 @@ export const FeatureConfig = {
     },
     treasureChest: {
         enabled: true,
-        activationChance: 100,
+        activationChance: 0.01,
         // Uso exclusivo de build: destaca as espigas que encerram a feature.
         // Não altera a distribuição dos prêmios nem o resultado da rodada.
         debugShowEndingChests: false,
@@ -92,7 +92,7 @@ export const FeatureConfig = {
     },
     cardDouble: {
         enabled: true,
-        activationChance: 0.01,
+        activationChance: 100,
         thresholdRank: 7,
         // Um baralho de 26 cartas: cada valor existe uma vez em cada cor.
         // O Ás vale 1, deixando seis valores abaixo e seis acima do 7.
