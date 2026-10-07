@@ -1,5 +1,5 @@
 export interface SymbolPayout {
-    3: number;
+    readonly [symbolCount: number]: number;
 }
 
 export type WinAnimation =
@@ -8,15 +8,15 @@ export type WinAnimation =
     | 'wiggle';
 
 export interface SlotSymbol {
-    id: string;
-    color: number;
-    count: number;
-    textureKey?: string;
-    winAnimation: WinAnimation;
+    readonly id: string;
+    readonly color: number;
+    readonly weight: number;
+    readonly textureKey?: string;
+    readonly winAnimation: WinAnimation;
 
     // Multiplicador pago quando aparecem
     // 3 símbolos iguais em uma linha.
-    payout: SymbolPayout;
+    readonly payout: SymbolPayout;
 }
 
 const WILD_ID = 'Wild';
@@ -28,11 +28,11 @@ const WILD_ID = 'Wild';
  */
 const BLANK_ID = 'Blank';
 
-const symbols: readonly SlotSymbol[] = [
+const symbols = [
     {
         id: 'Crow',
         color: 0x0000ff,
-        count: 25,
+        weight: 25,
         textureKey: 'symbolCrow',
         winAnimation: 'wiggle',
 
@@ -44,7 +44,7 @@ const symbols: readonly SlotSymbol[] = [
     {
         id: 'Popcorn',
         color: 0xff0000,
-        count: 15,
+        weight: 15,
         textureKey: 'symbolPopcorn',
         winAnimation: 'scaling',
 
@@ -56,7 +56,7 @@ const symbols: readonly SlotSymbol[] = [
     {
         id: 'Cake',
         color: 0x00ff00,
-        count: 8,
+        weight: 8,
         textureKey: 'symbolCake',
         winAnimation: 'wiggle',
 
@@ -68,7 +68,7 @@ const symbols: readonly SlotSymbol[] = [
     {
         id: 'Pamonha',
         color: 0xffff00,
-        count: 7,
+        weight: 7,
         textureKey: 'symbolPamonha',
         winAnimation: 'bouncing',
 
@@ -80,7 +80,7 @@ const symbols: readonly SlotSymbol[] = [
     {
         id: 'Canjica',
         color: 0x800080,
-        count: 5,
+        weight: 5,
         textureKey: 'symbolCanjica',
         winAnimation: 'scaling',
 
@@ -92,7 +92,7 @@ const symbols: readonly SlotSymbol[] = [
     {
         id: 'Corn',
         color: 0x000000,
-        count: 5,
+        weight: 5,
         textureKey: 'symbolCorn',
         winAnimation: 'wiggle',
 
@@ -104,7 +104,7 @@ const symbols: readonly SlotSymbol[] = [
     {
         id: WILD_ID,
         color: 0xffa500,
-        count: 3,
+        weight: 3,
         textureKey: 'symbolWild',
         winAnimation: 'scaling',
 
@@ -112,7 +112,28 @@ const symbols: readonly SlotSymbol[] = [
             3: 50,
         },
     },
-];
+] as const satisfies readonly SlotSymbol[];
+
+const getById = (id: string): SlotSymbol | undefined =>
+    symbols.find(symbol => symbol.id === id);
+
+const getTotalWeight = (): number =>
+    symbols.reduce((total, symbol) => total + symbol.weight, 0);
+
+export const getWeightedRandomSymbol = (): SlotSymbol => {
+    const totalWeight = getTotalWeight();
+    let random = Math.random() * totalWeight;
+
+    for (const symbol of symbols) {
+        random -= symbol.weight;
+
+        if (random < 0) {
+            return symbol;
+        }
+    }
+
+    return symbols[symbols.length - 1];
+};
 
 export const SymbolConfig = {
     WILD_ID,
@@ -129,37 +150,7 @@ export const SymbolConfig = {
         return id === BLANK_ID;
     },
 
-    getById(id: string): SlotSymbol | undefined {
-        return symbols.find(
-            symbol => symbol.id === id
-        );
-    },
-
-    getTotalCount(): number {
-        return symbols.reduce(
-            (total, symbol) =>
-                total + symbol.count,
-            0
-        );
-    },
-
-    getWeightedRandom(): SlotSymbol {
-        const total =
-            this.getTotalCount();
-
-        let random =
-            Math.random() * total;
-
-        for (const symbol of symbols) {
-            random -= symbol.count;
-
-            if (random < 0) {
-                return symbol;
-            }
-        }
-
-        return symbols[
-            symbols.length - 1
-        ];
-    },
+    getById,
+    getTotalWeight,
+    getWeightedRandom: getWeightedRandomSymbol,
 };

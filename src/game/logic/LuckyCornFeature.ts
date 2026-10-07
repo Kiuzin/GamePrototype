@@ -180,8 +180,8 @@ export class LuckyCornFeature implements BonusFeatureLifecycle {
     }
 
     /**
-     * Calcula o multiplicador do prêmio do re-spin conforme o símbolo da
-     * sorte e a quantidade de linhas vencedoras da rodada-base.
+     * Calcula o multiplicador do prêmio do re-spin. A regra atual concede o
+     * multiplicador configurado apenas quando toda a grade estiver travada.
      */
     public calculatePayoutMultiplier(): number {
         if (!this.selectedSymbolId) {
@@ -195,7 +195,7 @@ export class LuckyCornFeature implements BonusFeatureLifecycle {
         );
 
         return isFullGrid
-            ? this.normalizeMultiplier(
+            ? this.normalizeNonNegative(
                 this.settings.payoutMultiplier.fullGrid
             )
             : 1;
@@ -373,14 +373,12 @@ export class LuckyCornFeature implements BonusFeatureLifecycle {
     private getSymbolSelectionWeight(
         symbolId: string
     ): number {
-        return this.normalizeMultiplier(
-            this.settings.symbolSelectionWeights[
-                symbolId
-            ] ?? 1
+        return this.normalizeNonNegative(
+            this.settings.symbolSelectionWeights[symbolId] ?? 0
         );
     }
 
-    private normalizeMultiplier(value: number): number {
+    private normalizeNonNegative(value: number): number {
         if (!Number.isFinite(value)) {
             return 0;
         }

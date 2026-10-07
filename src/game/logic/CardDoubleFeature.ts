@@ -4,6 +4,23 @@ import type { BonusFeatureLifecycle } from './BonusFeatureLifecycle';
 import { Money } from './Money';
 import type { MoneyCredits } from './Money';
 
+export interface CardDoubleSettings {
+    readonly enabled: boolean;
+    readonly activationChance: number;
+    readonly thresholdValue: number;
+    readonly suits: readonly {
+        readonly id: string;
+        readonly symbol: string;
+        readonly color: 'red' | 'black';
+    }[];
+    readonly finalDisplayDuration: number;
+}
+
+export interface CardDoubleFeatureOptions {
+    settings?: CardDoubleSettings;
+    random?: () => number;
+}
+
 export type CardGuess = 'lower' | 'higher';
 
 export type CardDoubleStatus =
@@ -31,7 +48,7 @@ export interface CardDoubleRound {
  * permitindo que o jogador acompanhe as cartas que já saíram.
  */
 export class CardDoubleFeature implements BonusFeatureLifecycle {
-    private readonly settings = FeatureConfig.cardDouble;
+    private readonly settings: CardDoubleSettings;
 
     private readonly random: () => number;
 
@@ -43,8 +60,9 @@ export class CardDoubleFeature implements BonusFeatureLifecycle {
 
     private revealedCard?: CardDoubleCard;
 
-    public constructor(random: () => number = Math.random) {
-        this.random = random;
+    public constructor(options: CardDoubleFeatureOptions = {}) {
+        this.settings = options.settings ?? FeatureConfig.cardDouble;
+        this.random = options.random ?? Math.random;
     }
 
     public tryStart(): boolean {
@@ -74,14 +92,14 @@ export class CardDoubleFeature implements BonusFeatureLifecycle {
         const card = this.drawCard();
         this.revealedCard = card;
 
-        if (card.value === this.settings.thresholdRank) {
+        if (card.value === this.settings.thresholdValue) {
             this.status = 'tie';
             return this.getRound();
         }
 
         const isCorrect = guess === 'higher'
-            ? card.value > this.settings.thresholdRank
-            : card.value < this.settings.thresholdRank;
+            ? card.value > this.settings.thresholdValue
+            : card.value < this.settings.thresholdValue;
 
         if (!isCorrect) {
             this.currentPayout = 0;

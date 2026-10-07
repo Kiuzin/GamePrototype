@@ -31,9 +31,9 @@ export const FeatureConfig = {
             Canjica: 6,
             Corn: 2,
         },
-        // O prêmio formado no re-spin é multiplicado por este valor. O Corvo
-        // começa em x10; símbolos mais valiosos e mais linhas da rodada-base
-        // aumentam o multiplicador final.
+        // O prêmio do re-spin recebe este multiplicador apenas quando toda a
+        // grade fica travada. O símbolo e as linhas da rodada-base não alteram
+        // esse valor.
         payoutMultiplier: {
             fullGrid: 10,
         },
@@ -93,7 +93,7 @@ export const FeatureConfig = {
     cardDouble: {
         enabled: true,
         activationChance: 1,
-        thresholdRank: 7,
+        thresholdValue: 7,
         // Um baralho de 26 cartas: cada valor existe uma vez em cada cor.
         // O Ás vale 1, deixando seis valores abaixo e seis acima do 7.
         suits: [

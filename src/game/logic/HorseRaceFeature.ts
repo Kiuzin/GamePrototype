@@ -2,9 +2,15 @@ import { FeatureConfig } from '../config/FeatureConfig';
 import { validateProbability } from './RandomUtils';
 import type { BonusFeatureLifecycle } from './BonusFeatureLifecycle';
 import { Money } from './Money';
+import type { FeatureSettings } from './FeatureSettings';
 
-export type HorseRaceRunner =
-    typeof FeatureConfig.horseRace.runners[number];
+export type HorseRaceSettings = FeatureSettings<typeof FeatureConfig.horseRace>;
+export type HorseRaceRunner = HorseRaceSettings['runners'][number];
+
+export interface HorseRaceFeatureOptions {
+    settings?: HorseRaceSettings;
+    random?: () => number;
+}
 
 export type HorseRaceResultRunner = HorseRaceRunner & {
     speeds: number[];
@@ -24,14 +30,15 @@ type HorseRaceStatus = 'inactive' | 'selecting' | 'finished';
 
 /** Simulação pura e testável da Corrida de Tratores. */
 export class HorseRaceFeature implements BonusFeatureLifecycle {
-    private readonly settings = FeatureConfig.horseRace;
+    private readonly settings: HorseRaceSettings;
 
     private readonly random: () => number;
 
     private status: HorseRaceStatus = 'inactive';
 
-    constructor(random: () => number = Math.random) {
-        this.random = random;
+    constructor(options: HorseRaceFeatureOptions = {}) {
+        this.settings = options.settings ?? FeatureConfig.horseRace;
+        this.random = options.random ?? Math.random;
     }
 
     public tryStart(): boolean {

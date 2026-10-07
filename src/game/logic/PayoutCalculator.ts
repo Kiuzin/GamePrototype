@@ -7,6 +7,7 @@ import type {
 } from './WinChecker';
 import { Money } from './Money';
 import type { MoneyCredits } from './Money';
+import { GameError } from './GameError';
 
 export interface LinePayoutResult {
 
@@ -83,13 +84,20 @@ export class PayoutCalculator {
 
             if (!symbol) {
 
-                throw new Error(
-                    `Unknown symbol: ${win.symbolId}.`
+                throw new GameError(
+                    'UNKNOWN_SYMBOL',
+                    `Símbolo desconhecido: ${win.symbolId}.`
                 );
             }
 
-            const multiplier =
-                symbol.payout[3];
+            const multiplier = symbol.payout[win.symbols.length];
+
+            if (multiplier === undefined) {
+                throw new GameError(
+                    'INVALID_CONFIGURATION',
+                    `Pagamento ausente para ${win.symbols.length} símbolos.`
+                );
+            }
 
             return {
 

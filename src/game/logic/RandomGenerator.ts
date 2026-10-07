@@ -3,7 +3,9 @@ import { shuffle } from './RandomUtils';
 
 export class RandomGenerator {
     /**
-     * Gera o resultado final do spin.
+     * Gera o resultado final do spin. Cada célula é sorteada de forma
+     * independente; a fita criada por generateReelStrip é somente visual e
+     * não participa da matemática do resultado.
      *
      * A estrutura retornada é:
      *
@@ -28,7 +30,7 @@ export class RandomGenerator {
     /**
      * Gera o strip físico de um reel.
      *
-     * Cada símbolo aparece a quantidade configurada
+     * Cada símbolo aparece conforme o peso configurado.
      * em SymbolConfig.
      *
      * Depois o strip é embaralhado.
@@ -37,7 +39,7 @@ export class RandomGenerator {
         const strip: string[] = [];
 
         for (const symbol of SymbolConfig.SYMBOLS) {
-            for (let i = 0; i < symbol.count; i++) {
+            for (let i = 0; i < symbol.weight; i++) {
                 strip.push(symbol.id);
             }
         }

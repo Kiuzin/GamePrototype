@@ -3,8 +3,24 @@ import { validateProbability } from './RandomUtils';
 import type { BonusFeatureLifecycle } from './BonusFeatureLifecycle';
 import { Money } from './Money';
 import type { MoneyCredits } from './Money';
+export type WheelSlice =
+    | { readonly id: string; readonly label: string; readonly type: 'payout' | 'multiply'; readonly multiplier: number; readonly weight: number }
+    | { readonly id: string; readonly label: string; readonly type: 'pass' | 'loseAll'; readonly weight: number }
+    | { readonly id: string; readonly label: string; readonly type: 'extraSpins'; readonly spins: number; readonly weight: number };
 
-export type WheelSlice = typeof FeatureConfig.wheelBonus.slices[number];
+export interface WheelBonusSettings {
+    readonly enabled: boolean;
+    readonly activationChance: number;
+    readonly initialSpins: number;
+    readonly spinDuration: number;
+    readonly finalDisplayDuration: number;
+    readonly slices: readonly WheelSlice[];
+}
+
+export interface WheelBonusFeatureOptions {
+    settings?: WheelBonusSettings;
+    random?: () => number;
+}
 
 export interface WheelBonusRound {
     basePayout: MoneyCredits;
@@ -16,14 +32,15 @@ export interface WheelBonusRound {
 
 /** Regras puras da roleta bônus, incluindo acúmulo e rodadas extras. */
 export class WheelBonusFeature implements BonusFeatureLifecycle {
-    private readonly settings = FeatureConfig.wheelBonus;
+    private readonly settings: WheelBonusSettings;
 
     private readonly random: () => number;
 
     private currentRound?: WheelBonusRound;
 
-    public constructor(random: () => number = Math.random) {
-        this.random = random;
+    public constructor(options: WheelBonusFeatureOptions = {}) {
+        this.settings = options.settings ?? FeatureConfig.wheelBonus;
+        this.random = options.random ?? Math.random;
     }
 
     public tryStart(): boolean {

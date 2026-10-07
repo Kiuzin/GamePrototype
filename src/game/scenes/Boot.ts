@@ -1,4 +1,5 @@
 import { Scene } from 'phaser';
+import { validateGameConfig } from '../config/GameConfigValidator';
 
 export class Boot extends Scene {
     constructor() {
@@ -10,6 +11,7 @@ export class Boot extends Scene {
     }
 
     public create(): void {
+        validateGameConfig();
         this.scene.start('MainMenu');
     }
 }

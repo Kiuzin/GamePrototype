@@ -53,6 +53,7 @@ import { RulesModal } from '../presentation/RulesModal';
 import { WalletModal } from '../presentation/WalletModal';
 import type { BonusFeatureLifecycle } from '../logic/BonusFeatureLifecycle';
 import { Money } from '../logic/Money';
+import { FeatureRegistry } from '../logic/FeatureRegistry';
 
 export class SlotMachine extends Scene {
     private reels: Reel[] = [];
@@ -133,6 +134,14 @@ export class SlotMachine extends Scene {
     private readonly wheelBonusFeature =
         new WheelBonusFeature();
 
+    private readonly featureRegistry = new FeatureRegistry([
+        ['luckyCorn', this.luckyCornFeature],
+        ['horseRace', this.horseRaceFeature],
+        ['treasureChest', this.treasureChestFeature],
+        ['cardDouble', this.cardDoubleFeature],
+        ['wheelBonus', this.wheelBonusFeature],
+    ]);
+
     /**
      * Controlador dos níveis de aposta.
      */
@@ -148,6 +157,10 @@ export class SlotMachine extends Scene {
      * ao final da rodada atual.
      */
     private isAutoSpinning = false;
+
+    private roundPayout = 0;
+
+    private roundWinningLines = 0;
 
     /**
      * Reduz a duração e o atraso de início
@@ -172,6 +185,7 @@ export class SlotMachine extends Scene {
     }
 
     create(): void {
+        this.events.once('shutdown', () => this.featureRegistry.finishAll());
         this.historyModal = new SpinHistoryModal(this);
         this.rulesModal = new RulesModal(this);
         this.walletModal = new WalletModal(this, {
@@ -871,6 +885,10 @@ export class SlotMachine extends Scene {
         const playResult =
             SlotCore.play(currentBet);
 
+        this.roundPayout = 0;
+        this.roundWinningLines = 0;
+        this.session.beginRoundHistory(currentBet);
+
         // A primeira grade especial é sorteada agora, mas só substitui o
         // conteúdo visual dos rolos enquanto o giro normal ainda acontece.
         const luckyCornRound =
@@ -884,43 +902,29 @@ export class SlotMachine extends Scene {
                 )
                 : undefined;
 
-        // A corrida é um bônus de continuação: só pode ser sorteada
-        // quando a rodada base já gerou algum ganho.
-        const horseRaceActivation =
-            luckyCornActivation ||
-            playResult.payout.totalPayout <= 0
-                ? false
-                : this.horseRaceFeature.tryStart();
-
-        // Apenas um bônus de continuação pode ocorrer por rodada. A corrida
-        // possui prioridade quando ambas as funcionalidades estiverem ativas.
-        const treasureChestActivation =
-            luckyCornActivation ||
-            horseRaceActivation ||
-            playResult.payout.totalPayout <= 0
-                ? false
-                : this.treasureChestFeature.tryStart();
-
-        // A Dobra de Cartas trabalha sobre o prêmio já pago pela rodada-base.
-        // Ela é exclusiva para que o jogador saiba exatamente o que está em risco.
-        const cardDoubleActivation =
-            luckyCornActivation ||
-            horseRaceActivation ||
-            treasureChestActivation ||
-            playResult.payout.totalPayout <= 0
-                ? false
-                : this.cardDoubleFeature.tryStart();
-
-        // A roleta também estende o prêmio-base e permanece exclusiva dos
-        // demais bônus de continuação para manter o saldo previsível.
-        const wheelBonusActivation =
-            luckyCornActivation ||
-            horseRaceActivation ||
-            treasureChestActivation ||
-            cardDoubleActivation ||
-            playResult.payout.totalPayout <= 0
-                ? false
-                : this.wheelBonusFeature.tryStart();
+        // Apenas um bônus de continuação é ativado por rodada. A ordem do
+        // registro também expressa sua prioridade e evita uma cadeia de ifs.
+        const continuationBonus =
+            luckyCornActivation || playResult.payout.totalPayout <= 0
+                ? undefined
+                : [
+                    {
+                        tryStart: () => this.horseRaceFeature.tryStart(),
+                        start: () => this.startHorseRace(playResult.payout.totalPayout),
+                    },
+                    {
+                        tryStart: () => this.treasureChestFeature.tryStart(),
+                        start: () => this.startTreasureChest(playResult.payout.totalPayout),
+                    },
+                    {
+                        tryStart: () => this.cardDoubleFeature.tryStart(),
+                        start: () => this.startCardDouble(playResult.payout.totalPayout),
+                    },
+                    {
+                        tryStart: () => this.wheelBonusFeature.tryStart(),
+                        start: () => this.startWheelBonus(playResult.payout.totalPayout),
+                    },
+                ].find(feature => feature.tryStart());
 
         // -----------------------------------------
         // REELS
@@ -971,58 +975,11 @@ export class SlotMachine extends Scene {
                                         return;
                                     }
 
-                                    if (horseRaceActivation) {
+                                    if (continuationBonus) {
                                         this.finishSpin(
                                             playResult,
                                             0,
-                                            () => {
-                                                this.startHorseRace(
-                                                    playResult.payout
-                                                        .totalPayout
-                                                );
-                                            }
-                                        );
-                                        return;
-                                    }
-
-                                    if (treasureChestActivation) {
-                                        this.finishSpin(
-                                            playResult,
-                                            0,
-                                            () => {
-                                                this.startTreasureChest(
-                                                    playResult.payout
-                                                        .totalPayout
-                                                );
-                                            }
-                                        );
-                                        return;
-                                    }
-
-                                    if (cardDoubleActivation) {
-                                        this.finishSpin(
-                                            playResult,
-                                            0,
-                                            () => {
-                                                this.startCardDouble(
-                                                    playResult.payout
-                                                        .totalPayout
-                                                );
-                                            }
-                                        );
-                                        return;
-                                    }
-
-                                    if (wheelBonusActivation) {
-                                        this.finishSpin(
-                                            playResult,
-                                            0,
-                                            () => {
-                                                this.startWheelBonus(
-                                                    playResult.payout
-                                                        .totalPayout
-                                                );
-                                            }
+                                            continuationBonus.start
                                         );
                                         return;
                                     }
@@ -1106,8 +1063,7 @@ export class SlotMachine extends Scene {
         const payout = this.horseRaceFeature.getPayout(basePayout, result.selectedRank);
         this.horseRaceFeature.finish();
         const finish = (): void => {
-            this.session.adjustBalance(payout);
-            this.session.addPayoutToLatestHistory(payout);
+            this.creditRoundPayout(payout);
             this.updateBalanceUI();
             this.finishSpinInteraction();
         };
@@ -1171,8 +1127,7 @@ export class SlotMachine extends Scene {
         const extraPayout = this.treasureChestFeature.getExtraPayout(basePayout);
         const finish = (): void => {
             this.treasureChestFeature.finish();
-            this.session.adjustBalance(extraPayout);
-            this.session.addPayoutToLatestHistory(extraPayout);
+            this.creditRoundPayout(extraPayout);
             this.updateBalanceUI();
             this.finishSpinInteraction();
         };
@@ -1247,8 +1202,7 @@ export class SlotMachine extends Scene {
         const extraPayout = totalPayout - basePayout;
         const finish = (): void => {
             this.cardDoubleFeature.finish();
-            this.session.adjustBalance(extraPayout);
-            this.session.addPayoutToLatestHistory(extraPayout);
+            this.creditRoundPayout(extraPayout);
             this.updateBalanceUI();
             this.finishSpinInteraction();
         };
@@ -1273,8 +1227,7 @@ export class SlotMachine extends Scene {
     private loseCardDouble(basePayout: number): void {
         const finish = (): void => {
             this.cardDoubleFeature.finish();
-            this.session.adjustBalance(-basePayout);
-            this.session.addPayoutToLatestHistory(-basePayout);
+            this.creditRoundPayout(-basePayout);
             this.updateBalanceUI();
             this.finishSpinInteraction();
         };
@@ -1333,8 +1286,7 @@ export class SlotMachine extends Scene {
         const extraPayout = this.wheelBonusFeature.getExtraPayout();
         this.wheelBonusFeature.finish();
         this.wheelBonusPresentation?.clear();
-        this.session.adjustBalance(extraPayout);
-        this.session.addPayoutToLatestHistory(extraPayout);
+        this.creditRoundPayout(extraPayout);
         this.updateBalanceUI();
         this.resultText?.setText(
             round.accumulatedPayout <= 0
@@ -1596,9 +1548,9 @@ export class SlotMachine extends Scene {
             payout.totalPayout + bonusPayout;
 
         const creditWinnings = (): void => {
-            this.session.adjustBalance(totalPayout);
+            this.creditRoundPayout(totalPayout);
             this.updateBalanceUI();
-            this.addSpinToHistory(playResult, bonusPayout);
+            this.roundWinningLines = winningLines.length;
         };
 
         if (
@@ -1665,6 +1617,10 @@ export class SlotMachine extends Scene {
     }
 
     private finishSpinInteraction(): void {
+        this.session.completeRoundHistory(
+            this.roundPayout,
+            this.roundWinningLines
+        );
         this.isSpinning = false;
 
         this.enableControls();
@@ -1692,17 +1648,9 @@ export class SlotMachine extends Scene {
         this.finishSpinInteraction();
     }
 
-    private addSpinToHistory(
-        playResult: SpinResult,
-        bonusPayout = 0
-    ): void {
-        this.session.addHistoryEntry({
-            bet: playResult.bet,
-            payout: playResult.payout.totalPayout + bonusPayout,
-            winningLines:
-                playResult.winningLines.length,
-        });
-
+    private creditRoundPayout(amount: number): void {
+        this.session.adjustBalance(amount);
+        this.roundPayout += amount;
     }
 
     // =====================================================

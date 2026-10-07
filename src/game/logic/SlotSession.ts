@@ -2,6 +2,7 @@ import { GameSettings } from '../config/GameSettings';
 import { BetManager } from './BetManager';
 import { Money } from './Money';
 import type { MoneyCredits } from './Money';
+import { GameError } from './GameError';
 
 export interface SpinHistoryEntry {
     bet: MoneyCredits;
@@ -20,6 +21,8 @@ export class SlotSession {
 
     private readonly history: SpinHistoryEntry[] = [];
 
+    private pendingHistoryBet?: MoneyCredits;
+
     public getBalance(): MoneyCredits {
         return this.balance;
     }
@@ -32,21 +35,21 @@ export class SlotSession {
         const bet = this.betManager.getCurrentBet();
 
         if (this.balance < bet) {
-            throw new Error('Insufficient balance.');
+            throw new GameError('INSUFFICIENT_BALANCE', 'Saldo insuficiente.');
         }
 
         this.balance -= bet;
         return bet;
     }
 
-    /** Aplica uma variaÃ§Ã£o validada de saldo, positiva ou negativa. */
+    /** Aplica uma variação validada de saldo, positiva ou negativa. */
     public adjustBalance(amount: MoneyCredits): void {
         Money.assertCredits(amount);
 
         const nextBalance = this.balance + amount;
 
         if (nextBalance < 0) {
-            throw new Error('Balance cannot be negative.');
+            throw new GameError('INVALID_MONEY', 'O saldo não pode ser negativo.');
         }
 
         this.balance = nextBalance;
@@ -66,33 +69,43 @@ export class SlotSession {
         return true;
     }
 
-    public addHistoryEntry(entry: SpinHistoryEntry): void {
-        if (
-            !Number.isSafeInteger(entry.bet) ||
-            !Number.isSafeInteger(entry.payout) ||
-            !Number.isInteger(entry.winningLines) ||
-            entry.winningLines < 0
-        ) {
-            throw new Error('Invalid spin history entry.');
+    public beginRoundHistory(bet: MoneyCredits): void {
+        Money.assertCredits(bet);
+
+        if (this.pendingHistoryBet !== undefined) {
+            throw new GameError(
+                'ROUND_IN_PROGRESS',
+                'Já existe uma rodada pendente no histórico.'
+            );
         }
 
-        this.history.unshift({ ...entry });
-        this.history.length = Math.min(
-            this.history.length,
-            GameSettings.history.maxEntries
-        );
+        this.pendingHistoryBet = bet;
     }
 
-    public addPayoutToLatestHistory(payout: MoneyCredits): void {
+    public completeRoundHistory(
+        payout: MoneyCredits,
+        winningLines: number
+    ): void {
         Money.assertCredits(payout);
 
-        const latestEntry = this.history[0];
+        if (!Number.isInteger(winningLines) || winningLines < 0) {
+            throw new GameError(
+                'INVALID_HISTORY',
+                'A quantidade de linhas vencedoras é inválida.'
+            );
+        }
 
-        if (!latestEntry) {
+        if (this.pendingHistoryBet === undefined) {
             return;
         }
 
-        latestEntry.payout += payout;
+        this.history.unshift({
+            bet: this.pendingHistoryBet,
+            payout,
+            winningLines,
+        });
+        this.history.length = Math.min(this.history.length, GameSettings.history.maxEntries);
+        this.pendingHistoryBet = undefined;
     }
 
     public getHistory(): readonly SpinHistoryEntry[] {

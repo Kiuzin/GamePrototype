@@ -23,6 +23,7 @@ import type {
 } from './WinChecker';
 import { Money } from './Money';
 import type { MoneyCredits } from './Money';
+import { GameError } from './GameError';
 
 export interface SpinResult {
     bet: MoneyCredits;
@@ -69,8 +70,9 @@ export class SlotCore {
             !Number.isSafeInteger(bet) ||
             bet <= 0
         ) {
-            throw new Error(
-                'SlotCore.play requires a positive bet.'
+            throw new GameError(
+                'INVALID_MONEY',
+                'A aposta deve ser um crédito inteiro positivo.'
             );
         }
 

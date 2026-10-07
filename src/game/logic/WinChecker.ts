@@ -1,14 +1,15 @@
 import { SymbolConfig } from '../config/SymbolConfig';
+import { GameError } from './GameError';
 
 export interface LinePosition {
-    reel: number;
-    row: number;
+    readonly reel: number;
+    readonly row: number;
 }
 
 export interface WinLine {
-    id: number;
+    readonly id: number;
 
-    positions: LinePosition[];
+    readonly positions: readonly LinePosition[];
 }
 
 /**
@@ -62,7 +63,7 @@ export interface WinningLineResult {
     positions: LinePosition[];
 }
 
-export const WIN_LINES: WinLine[] = [
+export const WIN_LINES = [
     {
         id: 1,
 
@@ -112,7 +113,7 @@ export const WIN_LINES: WinLine[] = [
             { reel: 2, row: 0 },
         ],
     },
-];
+] as const satisfies readonly WinLine[];
 
 export class WinChecker {
 
@@ -125,6 +126,8 @@ export class WinChecker {
     static checkWinningLines(
         result: string[][]
     ): WinningLineResult[] {
+
+        this.validateGrid(result);
 
         const wins: WinningLineResult[] = [];
 
@@ -142,17 +145,13 @@ export class WinChecker {
                     ];
 
                 if (symbol === undefined) {
-                    break;
+                    throw new GameError(
+                        'INVALID_GRID',
+                        `Grade inválida: posição ${position.reel},${position.row} ausente.`
+                    );
                 }
 
                 symbols.push(symbol);
-            }
-
-            if (
-                symbols.length !==
-                line.positions.length
-            ) {
-                continue;
             }
 
             const win =
@@ -169,6 +168,36 @@ export class WinChecker {
         return wins;
     }
 
+    private static validateGrid(result: string[][]): void {
+        const expectedReels = Math.max(
+            ...WIN_LINES.flatMap(line => line.positions.map(position => position.reel))
+        ) + 1;
+        const expectedRows = Math.max(
+            ...WIN_LINES.flatMap(line => line.positions.map(position => position.row))
+        ) + 1;
+
+        if (
+            result.length !== expectedReels ||
+            result.some(column => column.length !== expectedRows)
+        ) {
+            throw new GameError(
+                'INVALID_GRID',
+                `A grade deve possuir ${expectedReels} rolos e ${expectedRows} linhas.`
+            );
+        }
+
+        if (
+            result.some(column => column.some(
+                symbolId => !SymbolConfig.getById(symbolId) && !SymbolConfig.isBlank(symbolId)
+            ))
+        ) {
+            throw new GameError(
+                'UNKNOWN_SYMBOL',
+                'A grade contém um símbolo desconhecido.'
+            );
+        }
+    }
+
     /**
      * Analisa uma única linha.
      */
@@ -177,7 +206,7 @@ export class WinChecker {
         symbols: string[]
     ): WinningLineResult | null {
 
-        if (symbols.length !== 3) {
+        if (symbols.length !== line.positions.length) {
             return null;
         }
 
@@ -200,7 +229,7 @@ export class WinChecker {
         // WILD + WILD + WILD
         // =========================================
 
-        if (wildCount === 3) {
+        if (wildCount === symbols.length) {
 
             return {
                 lineId: line.id,
