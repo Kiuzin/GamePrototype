@@ -21,9 +21,11 @@ import {
 import type {
     WinningLineResult,
 } from './WinChecker';
+import { Money } from './Money';
+import type { MoneyCredits } from './Money';
 
 export interface SpinResult {
-    bet: number;
+    bet: MoneyCredits;
 
     grid: string[][];
 
@@ -40,7 +42,7 @@ export interface SpinResult {
  */
 export class SlotCore {
     public static play(
-        bet: number
+        bet: MoneyCredits
     ): SpinResult {
         const grid =
             RandomGenerator.generateOutcome(
@@ -60,17 +62,19 @@ export class SlotCore {
      * aplicada às rodadas regulares.
      */
     public static resolve(
-        bet: number,
+        bet: MoneyCredits,
         grid: string[][]
     ): SpinResult {
         if (
-            !Number.isFinite(bet) ||
+            !Number.isSafeInteger(bet) ||
             bet <= 0
         ) {
             throw new Error(
                 'SlotCore.play requires a positive bet.'
             );
         }
+
+        Money.assertCredits(bet);
 
         const winningLines =
             WinChecker.checkWinningLines(

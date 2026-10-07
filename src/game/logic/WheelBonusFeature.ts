@@ -1,18 +1,21 @@
 import { FeatureConfig } from '../config/FeatureConfig';
-import { normalizeProbability } from './RandomUtils';
+import { validateProbability } from './RandomUtils';
+import type { BonusFeatureLifecycle } from './BonusFeatureLifecycle';
+import { Money } from './Money';
+import type { MoneyCredits } from './Money';
 
 export type WheelSlice = typeof FeatureConfig.wheelBonus.slices[number];
 
 export interface WheelBonusRound {
-    basePayout: number;
-    accumulatedPayout: number;
+    basePayout: MoneyCredits;
+    accumulatedPayout: MoneyCredits;
     remainingSpins: number;
     status: 'ready' | 'completed';
     lastSlice?: WheelSlice;
 }
 
 /** Regras puras da roleta bônus, incluindo acúmulo e rodadas extras. */
-export class WheelBonusFeature {
+export class WheelBonusFeature implements BonusFeatureLifecycle {
     private readonly settings = FeatureConfig.wheelBonus;
 
     private readonly random: () => number;
@@ -26,11 +29,11 @@ export class WheelBonusFeature {
     public tryStart(): boolean {
         return this.settings.enabled &&
             !this.currentRound &&
-            this.random() < normalizeProbability(this.settings.activationChance);
+            this.random() < validateProbability(this.settings.activationChance);
     }
 
-    public start(basePayout: number): WheelBonusRound {
-        if (!Number.isFinite(basePayout) || basePayout <= 0) {
+    public start(basePayout: MoneyCredits): WheelBonusRound {
+        if (!Number.isSafeInteger(basePayout) || basePayout <= 0) {
             throw new Error('A roleta requer um prêmio-base positivo.');
         }
 
@@ -46,8 +49,8 @@ export class WheelBonusFeature {
         round.lastSlice = slice;
 
         switch (slice.type) {
-            case 'payout': round.accumulatedPayout += round.basePayout * slice.multiplier; break;
-            case 'multiply': round.accumulatedPayout *= slice.multiplier; break;
+            case 'payout': round.accumulatedPayout += Money.multiply(round.basePayout, slice.multiplier); break;
+            case 'multiply': round.accumulatedPayout = Money.multiply(round.accumulatedPayout, slice.multiplier); break;
             case 'extraSpins': round.remainingSpins += slice.spins; break;
             case 'loseAll': round.accumulatedPayout = 0; round.remainingSpins = 0; break;
             case 'pass': break;

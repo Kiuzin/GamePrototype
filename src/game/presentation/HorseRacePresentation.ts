@@ -2,6 +2,7 @@ import { GameObjects, Scene } from 'phaser';
 import { BonusLayoutConfig } from '../config/BonusLayoutConfig';
 import { BonusThemeConfig } from '../config/BonusThemeConfig';
 import type { HorseRaceResult, HorseRaceRunner } from '../logic/HorseRaceFeature';
+import { Money } from '../logic/Money';
 
 /** Interface visual da Corrida de Tratores, isolada das regras de prêmio. */
 export class HorseRacePresentation {
@@ -221,7 +222,7 @@ export class HorseRacePresentation {
                 content,
             });
         });
-        const prize = payout > 0 ? `PRÊMIO ${payout.toFixed(2)}` : 'SEM PREMIAÇÃO';
+        const prize = payout > 0 ? `PRÊMIO ${Money.format(payout)}` : 'SEM PREMIAÇÃO';
         const prizeText = this.scene.add.text(width / 2, layout.prizeY, `SEU TRATOR: ${result.selectedRank}º LUGAR\n${prize}`, { fontFamily: BonusThemeConfig.fontFamily, fontSize: layout.prizeFontSize, color: payout > 0 ? theme.colors.highlight : theme.colors.primaryText, align: 'center', fontStyle: 'bold' }).setOrigin(0.5).setAlpha(0);
         const continueButton = this.scene.add.rectangle(width / 2, layout.continueButton.y, layout.continueButton.width, layout.continueButton.height, theme.podium.buttonColor).setStrokeStyle(theme.podium.buttonStrokeWidth, theme.podium.buttonStrokeColor).setAlpha(0);
         const continueText = this.scene.add.text(width / 2, layout.continueButton.y, 'CONTINUAR', { fontFamily: BonusThemeConfig.fontFamily, fontSize: layout.continueButton.fontSize, color: theme.colors.primaryText, fontStyle: 'bold' }).setOrigin(0.5).setAlpha(0);

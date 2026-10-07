@@ -1,5 +1,8 @@
+import { Money } from './Money';
+import type { MoneyCredits } from './Money';
+
 export class BetManager {
-    private readonly betValues: readonly number[];
+    private readonly betValues: readonly MoneyCredits[];
 
     private currentIndex: number;
 
@@ -25,11 +28,12 @@ export class BetManager {
             );
         }
 
-        this.betValues =
-            [...betValues];
+        this.betValues = betValues.map(
+            value => Money.fromAmount(value)
+        );
 
         const defaultIndex =
-            this.betValues.indexOf(defaultBet);
+            this.betValues.indexOf(Money.fromAmount(defaultBet));
 
         this.currentIndex =
             defaultIndex >= 0
@@ -40,7 +44,7 @@ export class BetManager {
     /**
      * Retorna a aposta atualmente selecionada.
      */
-    public getCurrentBet(): number {
+    public getCurrentBet(): MoneyCredits {
         return this.betValues[
             this.currentIndex
         ];
@@ -49,7 +53,7 @@ export class BetManager {
     /**
      * Vai para a próxima aposta.
      */
-    public increase(): number {
+    public increase(): MoneyCredits {
         if (!this.canIncrease()) {
             return this.getCurrentBet();
         }
@@ -62,7 +66,7 @@ export class BetManager {
     /**
      * Vai para a aposta anterior.
      */
-    public decrease(): number {
+    public decrease(): MoneyCredits {
         if (!this.canDecrease()) {
             return this.getCurrentBet();
         }

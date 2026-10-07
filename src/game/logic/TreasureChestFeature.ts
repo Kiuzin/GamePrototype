@@ -1,5 +1,7 @@
 import { FeatureConfig } from '../config/FeatureConfig';
-import { normalizeProbability, shuffle } from './RandomUtils';
+import { validateProbability, shuffle } from './RandomUtils';
+import type { BonusFeatureLifecycle } from './BonusFeatureLifecycle';
+import { Money } from './Money';
 
 export type TreasureChestContent =
     | { type: 'reward'; multiplier: number }
@@ -19,7 +21,7 @@ export interface TreasureChestRound {
 }
 
 /** Regras isoladas do bônus de baús, sem dependência de interface Phaser. */
-export class TreasureChestFeature {
+export class TreasureChestFeature implements BonusFeatureLifecycle {
     private readonly settings = FeatureConfig.treasureChest;
 
     private readonly random: () => number;
@@ -33,7 +35,7 @@ export class TreasureChestFeature {
     public tryStart(): boolean {
         return this.settings.enabled &&
             !this.currentRound &&
-            this.random() < normalizeProbability(this.settings.activationChance);
+            this.random() < validateProbability(this.settings.activationChance);
     }
 
     public start(): TreasureChestRound {
@@ -82,7 +84,10 @@ export class TreasureChestFeature {
     }
 
     public getExtraPayout(basePayout: number): number {
-        return Math.max(0, basePayout) * this.requireRound().accumulatedMultiplier;
+        return Money.multiply(
+            Math.max(0, basePayout),
+            this.requireRound().accumulatedMultiplier
+        );
     }
 
     public finish(): void {

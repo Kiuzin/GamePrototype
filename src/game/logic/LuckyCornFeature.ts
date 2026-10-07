@@ -1,6 +1,7 @@
 import { FeatureConfig } from '../config/FeatureConfig';
 import { SymbolConfig } from '../config/SymbolConfig';
-import { normalizeProbability } from './RandomUtils';
+import { validateProbability } from './RandomUtils';
+import type { BonusFeatureLifecycle } from './BonusFeatureLifecycle';
 
 export interface LuckyCornActivation {
     selectedSymbolId: string;
@@ -45,7 +46,7 @@ export interface LuckyCornFeatureOptions {
  * sem a interface do jogo. Cada instância corresponde a uma única
  * execução da funcionalidade por vez.
  */
-export class LuckyCornFeature {
+export class LuckyCornFeature implements BonusFeatureLifecycle {
     private readonly settings: LuckyCornFeatureSettings;
 
     private readonly random: () => number;
@@ -76,18 +77,18 @@ export class LuckyCornFeature {
     }
 
     /**
-     * Sorteia e inicia a funcionalidade quando ela está habilitada.
+     * Verifica se a funcionalidade pode ser ativada sem alterar seu estado.
      */
-    public tryStart(): LuckyCornActivation | null {
-        if (
-            !this.settings.enabled ||
-            this.isActive() ||
-            this.random() >=
-                normalizeProbability(
-                    this.settings.activationChance
-                )
-        ) {
-            return null;
+    public tryStart(): boolean {
+        return this.settings.enabled &&
+            !this.isActive() &&
+            this.random() < validateProbability(this.settings.activationChance);
+    }
+
+    /** Inicia uma ativação elegível e prepara sua grade travada. */
+    public start(): LuckyCornActivation {
+        if (this.isActive()) {
+            throw new Error('O Milho da Sorte já está ativo.');
         }
 
         const selectedSymbolId =
@@ -271,13 +272,13 @@ export class LuckyCornFeature {
         const roll = this.random();
 
         const selectedSymbolChance =
-            normalizeProbability(
+            validateProbability(
                 this.settings
                     .selectedSymbolChance
             );
 
         const wildChance =
-            normalizeProbability(
+            validateProbability(
                 this.settings.wildChance
             );
 

@@ -5,6 +5,8 @@ import {
 import type {
     WinningLineResult,
 } from './WinChecker';
+import { Money } from './Money';
+import type { MoneyCredits } from './Money';
 
 export interface LinePayoutResult {
 
@@ -16,14 +18,14 @@ export interface LinePayoutResult {
 
     multiplier: number;
 
-    payout: number;
+    payout: MoneyCredits;
 }
 
 export interface SpinPayoutResult {
 
     wins: LinePayoutResult[];
 
-    totalPayout: number;
+    totalPayout: MoneyCredits;
 }
 
 export class PayoutCalculator {
@@ -45,13 +47,16 @@ export class PayoutCalculator {
             win => ({
                 ...win,
                 multiplier: win.multiplier * validMultiplier,
-                payout: win.payout * validMultiplier,
+                payout: Money.multiply(win.payout, validMultiplier),
             })
         );
 
         return {
             wins,
-            totalPayout: payout.totalPayout * validMultiplier,
+            totalPayout: wins.reduce(
+                (total, win) => total + win.payout,
+                0
+            ),
         };
     }
 
@@ -64,9 +69,11 @@ export class PayoutCalculator {
         winningLines:
             WinningLineResult[],
 
-        bet: number
+        bet: MoneyCredits
 
     ): SpinPayoutResult {
+
+        Money.assertCredits(bet);
 
         const wins = winningLines.map(win => {
             const symbol =
@@ -97,8 +104,7 @@ export class PayoutCalculator {
 
                 multiplier,
 
-                payout:
-                    bet * multiplier,
+                payout: Money.multiply(bet, multiplier),
             };
         });
 

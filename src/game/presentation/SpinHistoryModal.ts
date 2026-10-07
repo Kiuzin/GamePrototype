@@ -1,6 +1,7 @@
 import { GameObjects, Scene } from 'phaser';
 import { GameConfig } from '../config/GameConfig';
 import type { SpinHistoryEntry } from '../logic/SlotSession';
+import { Money } from '../logic/Money';
 
 export class SpinHistoryModal {
     private modal?: GameObjects.Container;
@@ -36,8 +37,8 @@ export class SpinHistoryModal {
         const text = entries.length === 0
             ? 'NENHUMA JOGADA REALIZADA.'
             : entries.map((entry, index) => {
-                const result = entry.winningLines > 0 ? `GANHO ${entry.payout.toFixed(2)}` : 'SEM GANHO';
-                return `${index + 1}. APOSTA ${entry.bet.toFixed(2)} | ${result}`;
+                const result = entry.winningLines > 0 ? `GANHO ${Money.format(entry.payout)}` : 'SEM GANHO';
+                return `${index + 1}. APOSTA ${Money.format(entry.bet)} | ${result}`;
             }).join('\n\n');
 
         return this.scene.add.text(x, y, text, {

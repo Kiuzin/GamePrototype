@@ -1,10 +1,12 @@
 import { GameObjects, Scene } from 'phaser';
 import { GameConfig } from '../config/GameConfig';
+import { Money } from '../logic/Money';
+import type { MoneyCredits } from '../logic/Money';
 
 export interface WalletModalCallbacks {
-    getBalance: () => number;
-    deposit: (amount: number) => boolean;
-    withdraw: (amount: number) => boolean;
+    getBalance: () => MoneyCredits;
+    deposit: (credits: MoneyCredits) => boolean;
+    withdraw: (credits: MoneyCredits) => boolean;
 }
 
 export class WalletModal {
@@ -54,21 +56,21 @@ export class WalletModal {
         });
         this.amountButtons = amountButtons;
         const depositButton = this.createActionButton(width / 2 - 185, layout.actionButtonsY, 'DEPOSITAR', theme.depositButtonColor, () => {
-            const succeeded = this.callbacks.deposit(this.selectedAmount);
+            const succeeded = this.callbacks.deposit(Money.fromAmount(this.selectedAmount));
             this.updateBalance();
             this.setStatus(
                 succeeded
-                    ? `R$ ${this.selectedAmount.toFixed(2)} depositados.`
+                    ? `R$ ${Money.format(Money.fromAmount(this.selectedAmount))} depositados.`
                     : 'Operação disponível somente com servidor.',
                 !succeeded
             );
         });
         const withdrawButton = this.createActionButton(width / 2 + 185, layout.actionButtonsY, 'SACAR', theme.withdrawButtonColor, () => {
-            const succeeded = this.callbacks.withdraw(this.selectedAmount);
+            const succeeded = this.callbacks.withdraw(Money.fromAmount(this.selectedAmount));
             this.updateBalance();
             this.setStatus(
                 succeeded
-                    ? `R$ ${this.selectedAmount.toFixed(2)} sacados.`
+                    ? `R$ ${Money.format(Money.fromAmount(this.selectedAmount))} sacados.`
                     : 'Operação disponível somente com servidor.',
                 !succeeded
             );
@@ -106,7 +108,7 @@ export class WalletModal {
     }
 
     private updateBalance(): void {
-        this.balanceText?.setText(`SALDO DISPONÍVEL: R$ ${this.callbacks.getBalance().toFixed(2)}`);
+        this.balanceText?.setText(`SALDO DISPONÍVEL: R$ ${Money.format(this.callbacks.getBalance())}`);
     }
 
     private updateAmountButtons(): void {

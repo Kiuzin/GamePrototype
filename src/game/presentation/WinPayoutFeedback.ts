@@ -1,5 +1,6 @@
 import { GameObjects, Scene } from 'phaser';
 import { GameConfig } from '../config/GameConfig';
+import { Money } from '../logic/Money';
 
 /** Apresenta o valor acumulado das linhas e o transfere visualmente ao saldo. */
 export class WinPayoutFeedback {
@@ -88,6 +89,6 @@ export class WinPayoutFeedback {
     }
 
     private formatAmount(amount: number): string {
-        return `+ ${amount.toFixed(2)}`;
+        return `+ ${Money.format(Math.round(amount))}`;
     }
 }

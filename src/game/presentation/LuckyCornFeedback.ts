@@ -6,6 +6,7 @@ import {
 } from 'phaser';
 import { BonusLayoutConfig } from '../config/BonusLayoutConfig';
 import { BonusThemeConfig } from '../config/BonusThemeConfig';
+import { Money } from '../logic/Money';
 
 /**
  * Apresentação visual transitória do Milho da Sorte.
@@ -81,7 +82,7 @@ export class LuckyCornFeedback {
                 onUpdate: tween => {
                     const currentValue = tween.getValue() ?? 0;
                     valueText.setText(
-                        currentValue.toFixed(2)
+                        Money.format(Math.round(currentValue))
                     );
                 },
                 onComplete: () => {

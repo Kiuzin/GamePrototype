@@ -51,6 +51,8 @@ import { WheelBonusPresentation } from '../presentation/WheelBonusPresentation';
 import { SlotHud } from '../presentation/SlotHud';
 import { RulesModal } from '../presentation/RulesModal';
 import { WalletModal } from '../presentation/WalletModal';
+import type { BonusFeatureLifecycle } from '../logic/BonusFeatureLifecycle';
+import { Money } from '../logic/Money';
 
 export class SlotMachine extends Scene {
     private reels: Reel[] = [];
@@ -873,7 +875,13 @@ export class SlotMachine extends Scene {
         // conteúdo visual dos rolos enquanto o giro normal ainda acontece.
         const luckyCornRound =
             luckyCornActivation
-                ? this.luckyCornFeature.playRound()
+                ? this.runFeatureStep(
+                    this.luckyCornFeature,
+                    () => {
+                    this.luckyCornFeature.start();
+                    return this.luckyCornFeature.playRound();
+                    }
+                )
                 : undefined;
 
         // A corrida é um bônus de continuação: só pode ser sorteada
@@ -1048,6 +1056,27 @@ export class SlotMachine extends Scene {
             : GameConfig.reel.reelStartDelay;
     }
 
+    /**
+     * Protege a inicialização e os callbacks das features. Se qualquer etapa
+     * síncrona falhar, o estado da feature é liberado antes de propagar o erro.
+     */
+    private runFeatureStep<T>(
+        feature: BonusFeatureLifecycle,
+        operation: () => T
+    ): T {
+        let completed = false;
+
+        try {
+            const result = operation();
+            completed = true;
+            return result;
+        } finally {
+            if (!completed) {
+                feature.finish();
+            }
+        }
+    }
+
     // =====================================================
     // CORRIDA DE TRATORES
     // =====================================================
@@ -1060,10 +1089,15 @@ export class SlotMachine extends Scene {
             return;
         }
 
-        presentation.showSelection(this.horseRaceFeature.getRunners(), selectedRunnerId => {
-            const result = this.horseRaceFeature.run(selectedRunnerId);
-            presentation.playRace(result, FeatureConfig.horseRace.segmentDuration, () => {
-                this.completeHorseRace(basePayout, result);
+        this.runFeatureStep(this.horseRaceFeature, () => {
+            this.horseRaceFeature.start();
+            presentation.showSelection(this.horseRaceFeature.getRunners(), selectedRunnerId => {
+                this.runFeatureStep(this.horseRaceFeature, () => {
+                    const result = this.horseRaceFeature.run(selectedRunnerId);
+                    presentation.playRace(result, FeatureConfig.horseRace.segmentDuration, () => {
+                        this.completeHorseRace(basePayout, result);
+                    });
+                });
             });
         });
     }
@@ -1098,10 +1132,12 @@ export class SlotMachine extends Scene {
             return;
         }
 
-        this.showTreasureChestRound(
-            basePayout,
-            this.treasureChestFeature.start()
-        );
+        this.runFeatureStep(this.treasureChestFeature, () => {
+            this.showTreasureChestRound(
+                basePayout,
+                this.treasureChestFeature.start()
+            );
+        });
     }
 
     private showTreasureChestRound(basePayout: number, round: TreasureChestRound): void {
@@ -1112,19 +1148,23 @@ export class SlotMachine extends Scene {
             return;
         }
 
-        presentation.show(
-            round,
-            basePayout,
-            chestId => {
-                const updatedRound = this.treasureChestFeature.select(chestId);
-                if (updatedRound.isFinished) {
-                    this.completeTreasureChest(basePayout, updatedRound);
-                    return;
-                }
+        this.runFeatureStep(this.treasureChestFeature, () => {
+            presentation.show(
+                round,
+                basePayout,
+                chestId => {
+                    this.runFeatureStep(this.treasureChestFeature, () => {
+                        const updatedRound = this.treasureChestFeature.select(chestId);
+                        if (updatedRound.isFinished) {
+                            this.completeTreasureChest(basePayout, updatedRound);
+                            return;
+                        }
 
-                this.showTreasureChestRound(basePayout, updatedRound);
-            }
-        );
+                        this.showTreasureChestRound(basePayout, updatedRound);
+                    });
+                }
+            );
+        });
     }
 
     private completeTreasureChest(basePayout: number, round: TreasureChestRound): void {
@@ -1156,11 +1196,13 @@ export class SlotMachine extends Scene {
             return;
         }
 
-        this.cardDoublePresentation.beginBonus();
-        this.showCardDoubleRound(
-            basePayout,
-            this.cardDoubleFeature.start(basePayout)
-        );
+        this.runFeatureStep(this.cardDoubleFeature, () => {
+            this.cardDoublePresentation?.beginBonus();
+            this.showCardDoubleRound(
+                basePayout,
+                this.cardDoubleFeature.start(basePayout)
+            );
+        });
     }
 
     private showCardDoubleRound(
@@ -1175,23 +1217,29 @@ export class SlotMachine extends Scene {
             return;
         }
 
-        presentation.showRound(
-            round,
-            (guess: CardGuess) => {
-                this.showCardDoubleRound(
-                    basePayout,
-                    this.cardDoubleFeature.guess(guess)
-                );
-            },
-            () => {
-                this.showCardDoubleRound(
-                    basePayout,
-                    this.cardDoubleFeature.continue()
-                );
-            },
-            () => this.cashOutCardDouble(basePayout),
-            () => this.loseCardDouble(basePayout)
-        );
+        this.runFeatureStep(this.cardDoubleFeature, () => {
+            presentation.showRound(
+                round,
+                (guess: CardGuess) => {
+                    this.runFeatureStep(this.cardDoubleFeature, () => {
+                        this.showCardDoubleRound(
+                            basePayout,
+                            this.cardDoubleFeature.guess(guess)
+                        );
+                    });
+                },
+                () => {
+                    this.runFeatureStep(this.cardDoubleFeature, () => {
+                        this.showCardDoubleRound(
+                            basePayout,
+                            this.cardDoubleFeature.continue()
+                        );
+                    });
+                },
+                () => this.cashOutCardDouble(basePayout),
+                () => this.loseCardDouble(basePayout)
+            );
+        });
     }
 
     private cashOutCardDouble(basePayout: number): void {
@@ -1251,8 +1299,10 @@ export class SlotMachine extends Scene {
             return;
         }
 
-        presentation.resetWheelPosition();
-        this.showWheelBonusRound(this.wheelBonusFeature.start(basePayout));
+        this.runFeatureStep(this.wheelBonusFeature, () => {
+            presentation.resetWheelPosition();
+            this.showWheelBonusRound(this.wheelBonusFeature.start(basePayout));
+        });
     }
 
     private showWheelBonusRound(round: WheelBonusRound): void {
@@ -1263,12 +1313,20 @@ export class SlotMachine extends Scene {
             return;
         }
 
-        presentation.showRound(
-            round,
-            () => this.wheelBonusFeature.spin(),
-            () => this.wheelBonusFeature.skip(),
-            completedRound => this.completeWheelBonus(completedRound)
-        );
+        this.runFeatureStep(this.wheelBonusFeature, () => {
+            presentation.showRound(
+                round,
+                () => this.runFeatureStep(
+                    this.wheelBonusFeature,
+                    () => this.wheelBonusFeature.spin()
+                ),
+                () => this.runFeatureStep(
+                    this.wheelBonusFeature,
+                    () => this.wheelBonusFeature.skip()
+                ),
+                completedRound => this.completeWheelBonus(completedRound)
+            );
+        });
     }
 
     private completeWheelBonus(round: WheelBonusRound): void {
@@ -1281,7 +1339,7 @@ export class SlotMachine extends Scene {
         this.resultText?.setText(
             round.accumulatedPayout <= 0
                 ? 'ROLETA: PRÊMIO PERDIDO'
-                : `ROLETA: PRÊMIO ${round.accumulatedPayout.toFixed(2)}`
+                : `ROLETA: PRÊMIO ${Money.format(round.accumulatedPayout)}`
         );
         this.finishSpinInteraction();
     }
@@ -1297,35 +1355,37 @@ export class SlotMachine extends Scene {
             FeatureConfig.luckyCorn
                 .suspenseStartDelay,
             () => {
-                if (
-                    !this.isSpinning ||
-                    !this.luckyCornFeature.isActive()
-                ) {
-                    return;
-                }
-
-                this.luckyCornFeedback?.showSuspense(
-                    FeatureConfig.luckyCorn
-                        .suspenseDisplayDuration
-                );
-
-                const featureSpinSymbols =
-                    this.luckyCornFeature.getSpinSymbols();
-
-                this.reels.forEach(
-                    (reel, index) => {
-                        reel.replaceSpinStrip(
-                            round.grid[index],
-                            featureSpinSymbols,
-                            FeatureConfig.luckyCorn
-                                .reelTransitionDuration
-                        );
+                this.runFeatureStep(this.luckyCornFeature, () => {
+                    if (
+                        !this.isSpinning ||
+                        !this.luckyCornFeature.isActive()
+                    ) {
+                        return;
                     }
-                );
 
-                this.resultText?.setText(
-                    'O MILHO DA SORTE ESTÁ CHEGANDO...'
-                );
+                    this.luckyCornFeedback?.showSuspense(
+                        FeatureConfig.luckyCorn
+                            .suspenseDisplayDuration
+                    );
+
+                    const featureSpinSymbols =
+                        this.luckyCornFeature.getSpinSymbols();
+
+                    this.reels.forEach(
+                        (reel, index) => {
+                            reel.replaceSpinStrip(
+                                round.grid[index],
+                                featureSpinSymbols,
+                                FeatureConfig.luckyCorn
+                                    .reelTransitionDuration
+                            );
+                        }
+                    );
+
+                    this.resultText?.setText(
+                        'O MILHO DA SORTE ESTÁ CHEGANDO...'
+                    );
+                });
             }
         );
     }
@@ -1334,23 +1394,25 @@ export class SlotMachine extends Scene {
         currentBet: number,
         baseGrid: string[][]
     ): void {
-        const round =
-            this.luckyCornFeature.playRound();
+        this.runFeatureStep(this.luckyCornFeature, () => {
+            const round =
+                this.luckyCornFeature.playRound();
 
-        this.resultText?.setText(
-            'MILHO DA SORTE'
-        );
+            this.resultText?.setText(
+                'MILHO DA SORTE'
+            );
 
-        this.spinLuckyCornReels(
-            round,
-            () => {
-                this.completeLuckyCornRound(
-                    currentBet,
-                    round,
-                    baseGrid
-                );
-            }
-        );
+            this.spinLuckyCornReels(
+                round,
+                () => {
+                    this.completeLuckyCornRound(
+                        currentBet,
+                        round,
+                        baseGrid
+                    );
+                }
+            );
+        });
     }
 
     private spinLuckyCornReels(
@@ -1403,85 +1465,87 @@ export class SlotMachine extends Scene {
         round: LuckyCornRound,
         baseGrid: string[][]
     ): void {
-        this.applyLuckyCornLocks(
-            round.lockedGrid
-        );
+        this.runFeatureStep(this.luckyCornFeature, () => {
+            this.applyLuckyCornLocks(
+                round.lockedGrid
+            );
 
-        if (round.shouldRespin) {
-            const playNextRound = (): void => {
-                this.playLuckyCornRound(
-                    currentBet,
-                    baseGrid
+            if (round.shouldRespin) {
+                const playNextRound = (): void => {
+                    this.playLuckyCornRound(
+                        currentBet,
+                        baseGrid
+                    );
+                };
+
+                this.time.delayedCall(
+                    FeatureConfig.luckyCorn
+                        .respinDelay,
+                    playNextRound
                 );
-            };
-
-            this.time.delayedCall(
-                FeatureConfig.luckyCorn
-                    .respinDelay,
-                playNextRound
-            );
-
-            return;
-        }
-
-        const playResult =
-            SlotCore.resolve(
-                currentBet,
-                round.grid
-            );
-
-        const payoutMultiplier =
-            this.luckyCornFeature.calculatePayoutMultiplier();
-
-        const multipliedPlayResult = {
-            ...playResult,
-            payout: PayoutCalculator.applyMultiplier(
-                playResult.payout,
-                payoutMultiplier
-            ),
-        };
-
-        this.luckyCornFeature.finish();
-
-        this.clearReelLocks();
-
-        const finishFeature = (): void => {
-            this.finishSpin(multipliedPlayResult);
-        };
-
-        // Sem prêmio, a funcionalidade retorna diretamente ao fluxo
-        // normal e não exibe a apresentação de Jackpot.
-        if (
-            multipliedPlayResult.payout.totalPayout <= 0 ||
-            !this.luckyCornFeedback
-        ) {
-            // A última grade especial pode conter apenas espaços vazios.
-            // Restaura a rodada normal antes de liberar a próxima aposta.
-            this.restoreBaseGrid(baseGrid);
-
-            if (!this.luckyCornFeedback) {
-                finishFeature();
 
                 return;
             }
 
-            this.luckyCornFeedback.showNoWin(
-                FeatureConfig.luckyCorn.noWinDisplayDuration,
+            const playResult =
+                SlotCore.resolve(
+                    currentBet,
+                    round.grid
+                );
+
+            const payoutMultiplier =
+                this.luckyCornFeature.calculatePayoutMultiplier();
+
+            const multipliedPlayResult = {
+                ...playResult,
+                payout: PayoutCalculator.applyMultiplier(
+                    playResult.payout,
+                    payoutMultiplier
+                ),
+            };
+
+            this.luckyCornFeature.finish();
+
+            this.clearReelLocks();
+
+            const finishFeature = (): void => {
+                this.finishSpin(multipliedPlayResult);
+            };
+
+        // Sem prêmio, a funcionalidade retorna diretamente ao fluxo
+        // normal e não exibe a apresentação de Jackpot.
+            if (
+                multipliedPlayResult.payout.totalPayout <= 0 ||
+                !this.luckyCornFeedback
+            ) {
+            // A última grade especial pode conter apenas espaços vazios.
+            // Restaura a rodada normal antes de liberar a próxima aposta.
+                this.restoreBaseGrid(baseGrid);
+
+                if (!this.luckyCornFeedback) {
+                    finishFeature();
+
+                    return;
+                }
+
+                this.luckyCornFeedback.showNoWin(
+                    FeatureConfig.luckyCorn.noWinDisplayDuration,
+                    finishFeature
+                );
+
+                return;
+            }
+
+            this.luckyCornFeedback.showFinalPayout(
+                multipliedPlayResult.payout.totalPayout,
+                payoutMultiplier,
+                FeatureConfig.luckyCorn
+                    .finalDisplayDuration,
+                FeatureConfig.luckyCorn
+                    .finalDisplayPause,
                 finishFeature
             );
-
-            return;
-        }
-
-        this.luckyCornFeedback.showFinalPayout(
-            multipliedPlayResult.payout.totalPayout,
-            payoutMultiplier,
-            FeatureConfig.luckyCorn
-                .finalDisplayDuration,
-            FeatureConfig.luckyCorn
-                .finalDisplayPause,
-            finishFeature
-        );
+        });
     }
 
     private applyLuckyCornLocks(
@@ -1678,9 +1742,7 @@ export class SlotMachine extends Scene {
 
     private updateBalanceUI(): void {
         this.balanceValueText?.setText(
-            this.session.getBalance().toFixed(
-                2
-            )
+            Money.format(this.session.getBalance())
         );
     }
 
@@ -1689,7 +1751,7 @@ export class SlotMachine extends Scene {
             this.session.betManager.getCurrentBet();
 
         this.betValueText?.setText(
-            currentBet.toFixed(2)
+            Money.format(currentBet)
         );
     }
 

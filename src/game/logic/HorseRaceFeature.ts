@@ -1,5 +1,7 @@
 import { FeatureConfig } from '../config/FeatureConfig';
-import { normalizeProbability } from './RandomUtils';
+import { validateProbability } from './RandomUtils';
+import type { BonusFeatureLifecycle } from './BonusFeatureLifecycle';
+import { Money } from './Money';
 
 export type HorseRaceRunner =
     typeof FeatureConfig.horseRace.runners[number];
@@ -18,13 +20,15 @@ export interface HorseRaceResult {
     segmentCount: number;
 }
 
+type HorseRaceStatus = 'inactive' | 'selecting' | 'finished';
+
 /** Simulação pura e testável da Corrida de Tratores. */
-export class HorseRaceFeature {
+export class HorseRaceFeature implements BonusFeatureLifecycle {
     private readonly settings = FeatureConfig.horseRace;
 
     private readonly random: () => number;
 
-    private isRunning = false;
+    private status: HorseRaceStatus = 'inactive';
 
     constructor(random: () => number = Math.random) {
         this.random = random;
@@ -33,14 +37,22 @@ export class HorseRaceFeature {
     public tryStart(): boolean {
         if (
             !this.settings.enabled ||
-            this.isRunning ||
-            this.random() >= normalizeProbability(this.settings.activationChance)
+            this.status !== 'inactive' ||
+            this.random() >= validateProbability(this.settings.activationChance)
         ) {
             return false;
         }
 
-        this.isRunning = true;
         return true;
+    }
+
+    /** Inicia a ativação após a cena confirmar que a feature foi sorteada. */
+    public start(): void {
+        if (this.status !== 'inactive') {
+            throw new Error('A Corrida de Tratores já está ativa.');
+        }
+
+        this.status = 'selecting';
     }
 
     public getRunners(): readonly HorseRaceRunner[] {
@@ -80,23 +92,29 @@ export class HorseRaceFeature {
             throw new Error('Não foi possível classificar o trator selecionado.');
         }
 
-        return {
+        const result = {
             runners,
             selectedRunnerId,
             selectedRank: selectedRunner.rank,
             winningTotal: rankedRunners[0].totalSpeed,
             segmentCount: this.settings.segmentCount,
         };
+
+        // A corrida é definida uma única vez por ativação. O resultado
+        // permanece disponível para a apresentação até finish() encerrar o bônus.
+        this.status = 'finished';
+
+        return result;
     }
 
     /** Aplica o multiplicador da colocação sobre o ganho da rodada base. */
     public getPayout(basePayout: number, rank: number): number {
         const multiplier = this.settings.payouts[rank as 1 | 2 | 3] ?? 0;
-        return basePayout * multiplier;
+        return Money.multiply(basePayout, multiplier);
     }
 
     public finish(): void {
-        this.isRunning = false;
+        this.status = 'inactive';
     }
 
     private createRunnerResult(runner: HorseRaceRunner): HorseRaceResultRunner {
@@ -114,8 +132,12 @@ export class HorseRaceFeature {
     }
 
     private validateSelectedRunner(selectedRunnerId: string): void {
-        if (!this.isRunning) {
+        if (this.status === 'inactive') {
             throw new Error('A Corrida de Tratores não está ativa.');
+        }
+
+        if (this.status === 'finished') {
+            throw new Error('A Corrida de Tratores já foi realizada nesta ativação.');
         }
 
         if (!this.settings.runners.some(runner => runner.id === selectedRunnerId)) {

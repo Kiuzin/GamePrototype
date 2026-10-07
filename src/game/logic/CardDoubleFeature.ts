@@ -1,5 +1,8 @@
 import { FeatureConfig } from '../config/FeatureConfig';
-import { normalizeProbability, shuffle } from './RandomUtils';
+import { validateProbability, shuffle } from './RandomUtils';
+import type { BonusFeatureLifecycle } from './BonusFeatureLifecycle';
+import { Money } from './Money';
+import type { MoneyCredits } from './Money';
 
 export type CardGuess = 'lower' | 'higher';
 
@@ -17,7 +20,7 @@ export interface CardDoubleCard {
 }
 
 export interface CardDoubleRound {
-    currentPayout: number;
+    currentPayout: MoneyCredits;
     remainingCardCount: number;
     status: CardDoubleStatus;
     revealedCard?: CardDoubleCard;
@@ -27,14 +30,14 @@ export interface CardDoubleRound {
  * Regras do bônus Dobra de Cartas. O baralho permanece entre ativações,
  * permitindo que o jogador acompanhe as cartas que já saíram.
  */
-export class CardDoubleFeature {
+export class CardDoubleFeature implements BonusFeatureLifecycle {
     private readonly settings = FeatureConfig.cardDouble;
 
     private readonly random: () => number;
 
     private deck: CardDoubleCard[] = [];
 
-    private currentPayout = 0;
+    private currentPayout: MoneyCredits = 0;
 
     private status?: CardDoubleStatus;
 
@@ -47,11 +50,11 @@ export class CardDoubleFeature {
     public tryStart(): boolean {
         return this.settings.enabled &&
             !this.isActive() &&
-            this.random() < normalizeProbability(this.settings.activationChance);
+            this.random() < validateProbability(this.settings.activationChance);
     }
 
-    public start(basePayout: number): CardDoubleRound {
-        if (!Number.isFinite(basePayout) || basePayout <= 0) {
+    public start(basePayout: MoneyCredits): CardDoubleRound {
+        if (!Number.isSafeInteger(basePayout) || basePayout <= 0) {
             throw new Error('A Dobra de Cartas requer um prêmio positivo.');
         }
 
@@ -86,7 +89,7 @@ export class CardDoubleFeature {
             return this.getRound();
         }
 
-        this.currentPayout *= 2;
+        this.currentPayout = Money.multiply(this.currentPayout, 2);
         this.status = 'won';
         return this.getRound();
     }
@@ -103,7 +106,7 @@ export class CardDoubleFeature {
         return this.getRound();
     }
 
-    public getCurrentPayout(): number {
+    public getCurrentPayout(): MoneyCredits {
         return this.currentPayout;
     }
 

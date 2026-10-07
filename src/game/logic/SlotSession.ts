@@ -1,9 +1,11 @@
 import { GameSettings } from '../config/GameSettings';
 import { BetManager } from './BetManager';
+import { Money } from './Money';
+import type { MoneyCredits } from './Money';
 
 export interface SpinHistoryEntry {
-    bet: number;
-    payout: number;
+    bet: MoneyCredits;
+    payout: MoneyCredits;
     winningLines: number;
 }
 
@@ -14,11 +16,11 @@ export class SlotSession {
         GameSettings.bet.defaultBet
     );
 
-    private balance: number = GameSettings.bet.initialBalance;
+    private balance: MoneyCredits = Money.fromAmount(GameSettings.bet.initialBalance);
 
     private readonly history: SpinHistoryEntry[] = [];
 
-    public getBalance(): number {
+    public getBalance(): MoneyCredits {
         return this.balance;
     }
 
@@ -26,7 +28,7 @@ export class SlotSession {
         return this.balance >= this.betManager.getCurrentBet();
     }
 
-    public placeBet(): number {
+    public placeBet(): MoneyCredits {
         const bet = this.betManager.getCurrentBet();
 
         if (this.balance < bet) {
@@ -38,10 +40,8 @@ export class SlotSession {
     }
 
     /** Aplica uma variaÃ§Ã£o validada de saldo, positiva ou negativa. */
-    public adjustBalance(amount: number): void {
-        if (!Number.isFinite(amount)) {
-            throw new Error('Balance adjustment must be a finite number.');
-        }
+    public adjustBalance(amount: MoneyCredits): void {
+        Money.assertCredits(amount);
 
         const nextBalance = this.balance + amount;
 
@@ -52,9 +52,9 @@ export class SlotSession {
         this.balance = nextBalance;
     }
 
-    public withdraw(amount: number): boolean {
+    public withdraw(amount: MoneyCredits): boolean {
         if (
-            !Number.isFinite(amount) ||
+            !Number.isSafeInteger(amount) ||
             amount <= 0 ||
             amount > this.balance
         ) {
@@ -68,8 +68,8 @@ export class SlotSession {
 
     public addHistoryEntry(entry: SpinHistoryEntry): void {
         if (
-            !Number.isFinite(entry.bet) ||
-            !Number.isFinite(entry.payout) ||
+            !Number.isSafeInteger(entry.bet) ||
+            !Number.isSafeInteger(entry.payout) ||
             !Number.isInteger(entry.winningLines) ||
             entry.winningLines < 0
         ) {
@@ -83,10 +83,8 @@ export class SlotSession {
         );
     }
 
-    public addPayoutToLatestHistory(payout: number): void {
-        if (!Number.isFinite(payout)) {
-            throw new Error('History payout must be a finite number.');
-        }
+    public addPayoutToLatestHistory(payout: MoneyCredits): void {
+        Money.assertCredits(payout);
 
         const latestEntry = this.history[0];
 

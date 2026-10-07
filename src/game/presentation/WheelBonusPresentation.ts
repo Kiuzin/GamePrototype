@@ -3,6 +3,7 @@ import { BonusLayoutConfig } from '../config/BonusLayoutConfig';
 import { BonusThemeConfig } from '../config/BonusThemeConfig';
 import { FeatureConfig } from '../config/FeatureConfig';
 import type { WheelBonusRound } from '../logic/WheelBonusFeature';
+import { Money } from '../logic/Money';
 
 /** Interface e animação da roleta do bônus. */
 export class WheelBonusPresentation {
@@ -35,7 +36,7 @@ export class WheelBonusPresentation {
         const layout = BonusLayoutConfig.wheelBonus;
         const theme = BonusThemeConfig.wheelBonus;
         const overlay = this.scene.add.rectangle(width / 2, height / 2, width, height, theme.overlay.color, theme.overlay.alpha).setInteractive();
-        const status = `GIROS RESTANTES: ${round.remainingSpins}  |  ACUMULADO: ${round.accumulatedPayout.toFixed(2)}`;
+        const status = `GIROS RESTANTES: ${round.remainingSpins}  |  ACUMULADO: ${Money.format(round.accumulatedPayout)}`;
         this.wheel = this.createWheel();
         const pointer = this.scene.add.triangle(layout.wheel.pointerX, layout.wheel.pointerY, 0, 0, -layout.wheel.pointerHalfWidth, -layout.wheel.pointerHeight, layout.wheel.pointerHalfWidth, -layout.wheel.pointerHeight, theme.pointerColor);
 
@@ -44,7 +45,7 @@ export class WheelBonusPresentation {
             this.scene.add.rectangle(width / 2, layout.header.y, width, layout.header.height, theme.headerColor),
             this.scene.add.text(width / 2, layout.header.titleY, 'ROULETA DA COLHEITA', { fontFamily: BonusThemeConfig.fontFamily, fontSize: layout.header.titleFontSize, color: theme.colors.highlight, fontStyle: 'bold' }).setOrigin(0.5),
             this.scene.add.text(width / 2, layout.header.statusY, status, { fontFamily: BonusThemeConfig.fontFamily, fontSize: layout.header.statusFontSize, color: theme.colors.secondaryText, fontStyle: 'bold' }).setOrigin(0.5),
-            this.scene.add.text(width / 2, layout.header.prizeY, `PRÊMIO-BASE: ${round.basePayout.toFixed(2)}`, { fontFamily: BonusThemeConfig.fontFamily, fontSize: layout.header.prizeFontSize, color: theme.colors.primaryText }).setOrigin(0.5),
+            this.scene.add.text(width / 2, layout.header.prizeY, `PRÊMIO-BASE: ${Money.format(round.basePayout)}`, { fontFamily: BonusThemeConfig.fontFamily, fontSize: layout.header.prizeFontSize, color: theme.colors.primaryText }).setOrigin(0.5),
             this.wheel,
             pointer,
             this.scene.add.text(width / 2, layout.feedback.y, 'Gire a roleta ou pule o bônus e fique com o prêmio atual.', { fontFamily: BonusThemeConfig.fontFamily, fontSize: layout.feedback.fontSize, color: theme.colors.primaryText, align: 'center', wordWrap: { width: layout.feedback.width } }).setOrigin(0.5),
@@ -77,7 +78,7 @@ export class WheelBonusPresentation {
         const layout = BonusLayoutConfig.wheelBonus;
         const theme = BonusThemeConfig.wheelBonus;
         const lost = round.accumulatedPayout <= 0;
-        const message = lost ? 'A ROLETA LEVOU TODO O PRÊMIO.' : `PRÊMIO FINAL: ${round.accumulatedPayout.toFixed(2)}`;
+        const message = lost ? 'A ROLETA LEVOU TODO O PRÊMIO.' : `PRÊMIO FINAL: ${Money.format(round.accumulatedPayout)}`;
         const overlay = this.scene.add.rectangle(width / 2, height / 2, width, height, theme.overlay.color, theme.overlay.alpha).setInteractive();
         this.container = this.scene.add.container(0, 0, [
             overlay,

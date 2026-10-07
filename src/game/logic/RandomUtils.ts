@@ -1,14 +1,12 @@
-/** Normaliza probabilidades aceitando frações (0.25) ou percentuais (25). */
-export const normalizeProbability = (value: number): number => {
-    if (!Number.isFinite(value)) {
-        return 0;
+/** Valida uma probabilidade fracionária no intervalo fechado de 0 a 1. */
+export const validateProbability = (value: number): number => {
+    if (!Number.isFinite(value) || value < 0 || value > 1) {
+        throw new RangeError(
+            'A probabilidade deve ser uma fração entre 0 e 1.'
+        );
     }
 
-    const probability = value > 1
-        ? value / 100
-        : value;
-
-    return Math.min(1, Math.max(0, probability));
+    return value;
 };
 
 /** Retorna uma nova lista embaralhada, sem alterar a lista de origem. */

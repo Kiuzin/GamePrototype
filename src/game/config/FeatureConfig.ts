@@ -3,7 +3,7 @@
  *
  * A alteração de `enabled` é suficiente para habilitar ou
  * desabilitar o Milho da Sorte sem alterar o fluxo da cena.
- * Chances aceitam frações (0.12) ou percentuais (12).
+ * Probabilidades usam apenas frações entre 0 e 1: 0.01 equivale a 1%.
  */
 export const FeatureConfig = {
     luckyCorn: {
@@ -92,7 +92,7 @@ export const FeatureConfig = {
     },
     cardDouble: {
         enabled: true,
-        activationChance: 100,
+        activationChance: 1,
         thresholdRank: 7,
         // Um baralho de 26 cartas: cada valor existe uma vez em cada cor.
         // O Ás vale 1, deixando seis valores abaixo e seis acima do 7.

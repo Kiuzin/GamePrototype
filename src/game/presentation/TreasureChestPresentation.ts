@@ -3,6 +3,7 @@ import { BonusLayoutConfig } from '../config/BonusLayoutConfig';
 import { BonusThemeConfig } from '../config/BonusThemeConfig';
 import { FeatureConfig } from '../config/FeatureConfig';
 import type { TreasureChestRound, TreasureChestState } from '../logic/TreasureChestFeature';
+import { Money } from '../logic/Money';
 
 interface TreasureChestCard {
     container: GameObjects.Container;
@@ -52,12 +53,12 @@ export class TreasureChestPresentation {
 
         const layout = BonusLayoutConfig.treasureChest.final;
         const theme = BonusThemeConfig.treasureChest;
-        const extraPayout = basePayout * round.accumulatedMultiplier;
+        const extraPayout = Money.multiply(basePayout, round.accumulatedMultiplier);
         const totalPayout = basePayout + extraPayout;
         const detail = this.scene.add.text(
             this.scene.scale.gameSize.width / 2,
             layout.detailY,
-            `GANHO BASE ${basePayout.toFixed(2)}  |  EXTRAS ${extraPayout.toFixed(2)}`,
+            `GANHO BASE ${Money.format(basePayout)}  |  EXTRAS ${Money.format(extraPayout)}`,
             {
                 fontFamily: BonusThemeConfig.fontFamily,
                 fontSize: layout.detailFontSize,
@@ -86,7 +87,7 @@ export class TreasureChestPresentation {
                     to: totalPayout,
                     duration: FeatureConfig.treasureChest.payoutCountDuration,
                     ease: 'Quad.easeOut',
-                    onUpdate: tween => total.setText((tween.getValue() ?? 0).toFixed(2)),
+                    onUpdate: tween => total.setText(Money.format(Math.round(tween.getValue() ?? 0))),
                     onComplete: () => {
                         this.payoutCounter = undefined;
                         this.addContinueButton(onComplete);
@@ -320,8 +321,8 @@ export class TreasureChestPresentation {
         basePayout: number
     ): string {
         if (chest.content.type === 'ending') return 'FIM DO BÔNUS';
-        const amount = basePayout * chest.content.multiplier;
-        return `+${chest.content.multiplier.toFixed(2)}x\n+${amount.toFixed(2)}`;
+        const amount = Money.multiply(basePayout, chest.content.multiplier);
+        return `+${chest.content.multiplier.toFixed(2)}x\n+${Money.format(amount)}`;
     }
 
     private addAccumulatedMultiplier(

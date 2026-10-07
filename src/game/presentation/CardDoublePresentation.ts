@@ -7,6 +7,7 @@ import type {
     CardDoubleRound,
     CardGuess,
 } from '../logic/CardDoubleFeature';
+import { Money } from '../logic/Money';
 
 /** Interface visual do bônus Dobra de Cartas. */
 export class CardDoublePresentation {
@@ -56,7 +57,7 @@ export class CardDoublePresentation {
             overlay,
             this.scene.add.rectangle(width / 2, layout.header.y, width, layout.header.height, theme.headerColor),
             title,
-            this.scene.add.text(width / 2, layout.header.prizeY, `PRÊMIO EM JOGO: ${round.currentPayout.toFixed(2)}`, { fontFamily: BonusThemeConfig.fontFamily, fontSize: layout.header.prizeFontSize, color: theme.colors.primaryText, fontStyle: 'bold' }).setOrigin(0.5),
+            this.scene.add.text(width / 2, layout.header.prizeY, `PRÊMIO EM JOGO: ${Money.format(round.currentPayout)}`, { fontFamily: BonusThemeConfig.fontFamily, fontSize: layout.header.prizeFontSize, color: theme.colors.primaryText, fontStyle: 'bold' }).setOrigin(0.5),
             this.scene.add.text(width / 2, layout.header.deckY, `CARTAS RESTANTES: ${round.remainingCardCount}`, { fontFamily: BonusThemeConfig.fontFamily, fontSize: layout.header.deckFontSize, color: theme.colors.secondaryText }).setOrigin(0.5),
             card,
             this.scene.add.text(width / 2, layout.prompt.y, feedback.text, { fontFamily: BonusThemeConfig.fontFamily, fontSize: feedback.fontSize, color: feedback.color, fontStyle: 'bold', align: 'center', wordWrap: { width: layout.prompt.width } }).setOrigin(0.5),
@@ -92,7 +93,7 @@ export class CardDoublePresentation {
         const { width, height } = this.scene.scale.gameSize;
         const layout = BonusLayoutConfig.cardDouble;
         const theme = BonusThemeConfig.cardDouble;
-        const totalText = this.scene.add.text(width / 2, layout.feedback.finalY, basePayout.toFixed(2), { fontFamily: BonusThemeConfig.fontFamily, fontSize: layout.feedback.finalFontSize, color: theme.colors.highlight, fontStyle: 'bold' }).setOrigin(0.5);
+        const totalText = this.scene.add.text(width / 2, layout.feedback.finalY, Money.format(basePayout), { fontFamily: BonusThemeConfig.fontFamily, fontSize: layout.feedback.finalFontSize, color: theme.colors.highlight, fontStyle: 'bold' }).setOrigin(0.5);
 
         const overlay = this.scene.add.rectangle(
             width / 2,
@@ -106,7 +107,7 @@ export class CardDoublePresentation {
         this.container = this.scene.add.container(0, 0, [
             overlay,
             this.scene.add.text(width / 2, layout.header.titleY, 'PRÊMIO DOBRADO!', { fontFamily: BonusThemeConfig.fontFamily, fontSize: layout.header.titleFontSize, color: theme.colors.win, fontStyle: 'bold' }).setOrigin(0.5),
-            this.scene.add.text(width / 2, layout.prompt.y, `${basePayout.toFixed(2)}  →  ${totalPayout.toFixed(2)}`, { fontFamily: BonusThemeConfig.fontFamily, fontSize: layout.feedback.fontSize, color: theme.colors.secondaryText }).setOrigin(0.5),
+            this.scene.add.text(width / 2, layout.prompt.y, `${Money.format(basePayout)}  →  ${Money.format(totalPayout)}`, { fontFamily: BonusThemeConfig.fontFamily, fontSize: layout.feedback.fontSize, color: theme.colors.secondaryText }).setOrigin(0.5),
             totalText,
         ]).setDepth(layout.depth);
         this.animateFinalEntrance();
@@ -116,7 +117,7 @@ export class CardDoublePresentation {
             to: totalPayout,
             duration: FeatureConfig.cardDouble.finalDisplayDuration,
             ease: 'Quad.easeOut',
-            onUpdate: tween => totalText.setText((tween.getValue() ?? 0).toFixed(2)),
+            onUpdate: tween => totalText.setText(Money.format(Math.round(tween.getValue() ?? 0))),
             onComplete: () => {
                 this.payoutCounter = undefined;
                 this.addButton(width / 2, layout.buttons.cashoutY, 'RECOLHER PRÊMIO', theme.buttons.cashoutColor, () => this.dismiss(onComplete));
