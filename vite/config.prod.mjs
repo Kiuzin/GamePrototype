@@ -19,6 +19,8 @@ const phasermsg = () => {
 export default defineConfig({
     base: './',
     logLevel: 'warning',
+    // Apenas variáveis explicitamente públicas podem chegar ao bundle cliente.
+    envPrefix: 'VITE_PUBLIC_',
     build: {
         sourcemap: false,
         rollupOptions: {

@@ -54,6 +54,8 @@ import { WalletModal } from '../presentation/WalletModal';
 import type { BonusFeatureLifecycle } from '../logic/BonusFeatureLifecycle';
 import { Money } from '../logic/Money';
 import { FeatureRegistry } from '../logic/FeatureRegistry';
+import { RoundStateMachine } from '../logic/RoundStateMachine';
+import { createRoundSeed, createSeededRandom } from '../logic/SeededRandom';
 
 export class SlotMachine extends Scene {
     private reels: Reel[] = [];
@@ -157,6 +159,10 @@ export class SlotMachine extends Scene {
      * ao final da rodada atual.
      */
     private isAutoSpinning = false;
+
+    private readonly roundState = new RoundStateMachine();
+
+    private roundId = 0;
 
     private roundPayout = 0;
 
@@ -819,7 +825,7 @@ export class SlotMachine extends Scene {
     // =====================================================
 
     private spin(): void {
-        if (this.isSpinning) {
+        if (!this.roundState.canStart()) {
             return;
         }
 
@@ -861,6 +867,7 @@ export class SlotMachine extends Scene {
         // INICIA SPIN
         // -----------------------------------------
 
+        this.roundState.start();
         this.isSpinning = true;
 
         this.disableControls();
@@ -882,12 +889,20 @@ export class SlotMachine extends Scene {
         const luckyCornActivation =
             this.luckyCornFeature.tryStart();
 
-        const playResult =
-            SlotCore.play(currentBet);
+        const seed = createRoundSeed();
+        const playResult = SlotCore.play(
+            currentBet,
+            createSeededRandom(seed)
+        );
 
         this.roundPayout = 0;
         this.roundWinningLines = 0;
-        this.session.beginRoundHistory(currentBet);
+        this.session.beginRoundHistory({
+            id: `round-${++this.roundId}`,
+            seed,
+            bet: currentBet,
+            baseGrid: playResult.grid,
+        });
 
         // A primeira grade especial é sorteada agora, mas só substitui o
         // conteúdo visual dos rolos enquanto o giro normal ainda acontece.
@@ -1621,6 +1636,7 @@ export class SlotMachine extends Scene {
             this.roundPayout,
             this.roundWinningLines
         );
+        this.roundState.settle();
         this.isSpinning = false;
 
         this.enableControls();
@@ -1641,6 +1657,7 @@ export class SlotMachine extends Scene {
 
     private completeSpin(onComplete?: () => void): void {
         if (onComplete) {
+            this.roundState.enterBonus();
             onComplete();
             return;
         }

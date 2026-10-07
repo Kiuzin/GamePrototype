@@ -17,12 +17,13 @@ export class RandomGenerator {
      */
     static generateOutcome(
         reels = 3,
-        rows = 3
+        rows = 3,
+        randomSource: () => number = Math.random
     ): string[][] {
         return Array.from({ length: reels }, () => {
             return Array.from(
                 { length: rows },
-                () => SymbolConfig.getWeightedRandom().id
+                () => SymbolConfig.getWeightedRandom(randomSource).id
             );
         });
     }

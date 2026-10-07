@@ -5,9 +5,12 @@ import type { MoneyCredits } from './Money';
 import { GameError } from './GameError';
 
 export interface SpinHistoryEntry {
+    id: string;
+    seed: number;
     bet: MoneyCredits;
     payout: MoneyCredits;
     winningLines: number;
+    baseGrid: string[][];
 }
 
 /** Estado mutável da sessão, independente da interface Phaser. */
@@ -21,7 +24,7 @@ export class SlotSession {
 
     private readonly history: SpinHistoryEntry[] = [];
 
-    private pendingHistoryBet?: MoneyCredits;
+    private pendingHistory?: Pick<SpinHistoryEntry, 'id' | 'seed' | 'bet' | 'baseGrid'>;
 
     public getBalance(): MoneyCredits {
         return this.balance;
@@ -69,17 +72,22 @@ export class SlotSession {
         return true;
     }
 
-    public beginRoundHistory(bet: MoneyCredits): void {
-        Money.assertCredits(bet);
+    public beginRoundHistory(
+        entry: Pick<SpinHistoryEntry, 'id' | 'seed' | 'bet' | 'baseGrid'>
+    ): void {
+        Money.assertCredits(entry.bet);
 
-        if (this.pendingHistoryBet !== undefined) {
+        if (this.pendingHistory) {
             throw new GameError(
                 'ROUND_IN_PROGRESS',
                 'Já existe uma rodada pendente no histórico.'
             );
         }
 
-        this.pendingHistoryBet = bet;
+        this.pendingHistory = {
+            ...entry,
+            baseGrid: entry.baseGrid.map(column => [...column]),
+        };
     }
 
     public completeRoundHistory(
@@ -95,20 +103,23 @@ export class SlotSession {
             );
         }
 
-        if (this.pendingHistoryBet === undefined) {
+        if (!this.pendingHistory) {
             return;
         }
 
         this.history.unshift({
-            bet: this.pendingHistoryBet,
+            ...this.pendingHistory,
             payout,
             winningLines,
         });
         this.history.length = Math.min(this.history.length, GameSettings.history.maxEntries);
-        this.pendingHistoryBet = undefined;
+        this.pendingHistory = undefined;
     }
 
     public getHistory(): readonly SpinHistoryEntry[] {
-        return this.history.map(entry => ({ ...entry }));
+        return this.history.map(entry => ({
+            ...entry,
+            baseGrid: entry.baseGrid.map(column => [...column]),
+        }));
     }
 }

@@ -24,6 +24,7 @@ import type {
 import { Money } from './Money';
 import type { MoneyCredits } from './Money';
 import { GameError } from './GameError';
+import { createSeededRandom } from './SeededRandom';
 
 export interface SpinResult {
     bet: MoneyCredits;
@@ -43,12 +44,14 @@ export interface SpinResult {
  */
 export class SlotCore {
     public static play(
-        bet: MoneyCredits
+        bet: MoneyCredits,
+        randomSource: () => number = Math.random
     ): SpinResult {
         const grid =
             RandomGenerator.generateOutcome(
                 GameConfig.reels,
-                GameConfig.rows
+                GameConfig.rows,
+                randomSource
             );
 
         return this.resolve(
@@ -95,5 +98,17 @@ export class SlotCore {
             winningLines,
             payout,
         };
+    }
+
+    /** Reproduz o resultado-base de uma rodada auditada a partir da seed. */
+    public static replay(
+        bet: MoneyCredits,
+        seed: number
+    ): SpinResult {
+        if (!Number.isSafeInteger(seed) || seed < 0) {
+            throw new GameError('INVALID_CONFIGURATION', 'A seed da rodada é inválida.');
+        }
+
+        return this.play(bet, createSeededRandom(seed));
     }
 }

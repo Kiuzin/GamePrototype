@@ -120,9 +120,11 @@ const getById = (id: string): SlotSymbol | undefined =>
 const getTotalWeight = (): number =>
     symbols.reduce((total, symbol) => total + symbol.weight, 0);
 
-export const getWeightedRandomSymbol = (): SlotSymbol => {
+export const getWeightedRandomSymbol = (
+    randomSource: () => number = Math.random
+): SlotSymbol => {
     const totalWeight = getTotalWeight();
-    let random = Math.random() * totalWeight;
+    let random = randomSource() * totalWeight;
 
     for (const symbol of symbols) {
         random -= symbol.weight;
