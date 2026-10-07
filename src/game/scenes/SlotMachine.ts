@@ -11,8 +11,6 @@ import {
     SlotCore,
 } from '../logic/SlotCore';
 
-import { PayoutCalculator } from '../logic/PayoutCalculator';
-
 import type {
     SpinResult,
 } from '../logic/SlotCore';
@@ -21,11 +19,6 @@ import { SlotSession } from '../logic/SlotSession';
 
 import {
     LuckyCornFeature,
-} from '../logic/LuckyCornFeature';
-
-import type {
-    LuckyCornLockedGrid,
-    LuckyCornRound,
 } from '../logic/LuckyCornFeature';
 
 import { Reel } from '../objects/Reel';
@@ -56,6 +49,7 @@ import { Money } from '../logic/Money';
 import { FeatureRegistry } from '../logic/FeatureRegistry';
 import { RoundStateMachine } from '../logic/RoundStateMachine';
 import { createRoundSeed, createSeededRandom } from '../logic/SeededRandom';
+import { LuckyCornFeatureFlow } from '../logic/LuckyCornFeatureFlow';
 
 export class SlotMachine extends Scene {
     private reels: Reel[] = [];
@@ -86,6 +80,8 @@ export class SlotMachine extends Scene {
 
     private luckyCornFeedback?:
         LuckyCornFeedback;
+
+    private luckyCornFlow?: LuckyCornFeatureFlow;
 
     private horseRacePresentation?: HorseRacePresentation;
 
@@ -256,6 +252,15 @@ export class SlotMachine extends Scene {
         this.createWinPresentation();
 
         this.createLuckyCornFeedback();
+        this.luckyCornFlow = new LuckyCornFeatureFlow({
+            scene: this,
+            reels: this.reels,
+            feature: this.luckyCornFeature,
+            feedback: this.luckyCornFeedback,
+            isSpinActive: () => this.isSpinning,
+            setResultText: text => this.resultText?.setText(text),
+            finishSpin: result => this.finishSpin(result),
+        });
         this.horseRacePresentation = new HorseRacePresentation(this);
         this.treasureChestPresentation = new TreasureChestPresentation(this);
         this.cardDoublePresentation = new CardDoublePresentation(this);
@@ -960,9 +965,7 @@ export class SlotMachine extends Scene {
             );
 
         if (luckyCornRound) {
-            this.scheduleLuckyCornSuspense(
-                luckyCornRound
-            );
+            this.luckyCornFlow?.scheduleSuspense(luckyCornRound);
         }
 
         this.reels.forEach(
@@ -981,7 +984,7 @@ export class SlotMachine extends Scene {
                                     this.reels.length
                                 ) {
                                     if (luckyCornRound) {
-                                        this.completeLuckyCornRound(
+                                        this.luckyCornFlow?.completeRound(
                                             currentBet,
                                             luckyCornRound,
                                             playResult.grid
@@ -1309,228 +1312,6 @@ export class SlotMachine extends Scene {
                 : `ROLETA: PRÊMIO ${Money.format(round.accumulatedPayout)}`
         );
         this.finishSpinInteraction();
-    }
-
-    // =====================================================
-    // MILHO DA SORTE
-    // =====================================================
-
-    private scheduleLuckyCornSuspense(
-        round: LuckyCornRound
-    ): void {
-        this.time.delayedCall(
-            FeatureConfig.luckyCorn
-                .suspenseStartDelay,
-            () => {
-                this.runFeatureStep(this.luckyCornFeature, () => {
-                    if (
-                        !this.isSpinning ||
-                        !this.luckyCornFeature.isActive()
-                    ) {
-                        return;
-                    }
-
-                    this.luckyCornFeedback?.showSuspense(
-                        FeatureConfig.luckyCorn
-                            .suspenseDisplayDuration
-                    );
-
-                    const featureSpinSymbols =
-                        this.luckyCornFeature.getSpinSymbols();
-
-                    this.reels.forEach(
-                        (reel, index) => {
-                            reel.replaceSpinStrip(
-                                round.grid[index],
-                                featureSpinSymbols,
-                                FeatureConfig.luckyCorn
-                                    .reelTransitionDuration
-                            );
-                        }
-                    );
-
-                    this.resultText?.setText(
-                        'O MILHO DA SORTE ESTÁ CHEGANDO...'
-                    );
-                });
-            }
-        );
-    }
-
-    private playLuckyCornRound(
-        currentBet: number,
-        baseGrid: string[][]
-    ): void {
-        this.runFeatureStep(this.luckyCornFeature, () => {
-            const round =
-                this.luckyCornFeature.playRound();
-
-            this.resultText?.setText(
-                'MILHO DA SORTE'
-            );
-
-            this.spinLuckyCornReels(
-                round,
-                () => {
-                    this.completeLuckyCornRound(
-                        currentBet,
-                        round,
-                        baseGrid
-                    );
-                }
-            );
-        });
-    }
-
-    private spinLuckyCornReels(
-        round: LuckyCornRound,
-        onComplete: () => void
-    ): void {
-        let stoppedReels = 0;
-
-        const featureSpinSymbols =
-            this.luckyCornFeature.getSpinSymbols();
-
-        this.reels.forEach(
-            (reel, index) => {
-                reel.setLockedRows(
-                    round.lockedGridBeforeSpin[index]
-                );
-
-                this.time.delayedCall(
-                    index *
-                        GameConfig.reel
-                            .reelStartDelay,
-                    () => {
-                        reel.setOnComplete(
-                            () => {
-                                stoppedReels++;
-
-                                if (
-                                    stoppedReels ===
-                                    this.reels.length
-                                ) {
-                                    onComplete();
-                                }
-                            }
-                        );
-
-                        reel.startSpin(
-                            round.grid[index],
-                            GameConfig.reel
-                                .spinDuration,
-                            featureSpinSymbols
-                        );
-                    }
-                );
-            }
-        );
-    }
-
-    private completeLuckyCornRound(
-        currentBet: number,
-        round: LuckyCornRound,
-        baseGrid: string[][]
-    ): void {
-        this.runFeatureStep(this.luckyCornFeature, () => {
-            this.applyLuckyCornLocks(
-                round.lockedGrid
-            );
-
-            if (round.shouldRespin) {
-                const playNextRound = (): void => {
-                    this.playLuckyCornRound(
-                        currentBet,
-                        baseGrid
-                    );
-                };
-
-                this.time.delayedCall(
-                    FeatureConfig.luckyCorn
-                        .respinDelay,
-                    playNextRound
-                );
-
-                return;
-            }
-
-            const playResult =
-                SlotCore.resolve(
-                    currentBet,
-                    round.grid
-                );
-
-            const payoutMultiplier =
-                this.luckyCornFeature.calculatePayoutMultiplier();
-
-            const multipliedPlayResult = {
-                ...playResult,
-                payout: PayoutCalculator.applyMultiplier(
-                    playResult.payout,
-                    payoutMultiplier
-                ),
-            };
-
-            this.luckyCornFeature.finish();
-
-            this.clearReelLocks();
-
-            const finishFeature = (): void => {
-                this.finishSpin(multipliedPlayResult);
-            };
-
-        // Sem prêmio, a funcionalidade retorna diretamente ao fluxo
-        // normal e não exibe a apresentação de Jackpot.
-            if (
-                multipliedPlayResult.payout.totalPayout <= 0 ||
-                !this.luckyCornFeedback
-            ) {
-            // A última grade especial pode conter apenas espaços vazios.
-            // Restaura a rodada normal antes de liberar a próxima aposta.
-                this.restoreBaseGrid(baseGrid);
-
-                if (!this.luckyCornFeedback) {
-                    finishFeature();
-
-                    return;
-                }
-
-                this.luckyCornFeedback.showNoWin(
-                    FeatureConfig.luckyCorn.noWinDisplayDuration,
-                    finishFeature
-                );
-
-                return;
-            }
-
-            this.luckyCornFeedback.showFinalPayout(
-                multipliedPlayResult.payout.totalPayout,
-                payoutMultiplier,
-                FeatureConfig.luckyCorn
-                    .finalDisplayDuration,
-                FeatureConfig.luckyCorn
-                    .finalDisplayPause,
-                finishFeature
-            );
-        });
-    }
-
-    private applyLuckyCornLocks(
-        lockedGrid: LuckyCornLockedGrid
-    ): void {
-        this.reels.forEach(
-            (reel, reelIndex) => {
-                reel.setLockedRows(
-                    lockedGrid[reelIndex]
-                );
-            }
-        );
-    }
-
-    private restoreBaseGrid(baseGrid: readonly string[][]): void {
-        this.reels.forEach((reel, index) => {
-            reel.showResult(baseGrid[index]);
-        });
     }
 
     private clearReelLocks(): void {
